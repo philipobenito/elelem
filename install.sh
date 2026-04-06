@@ -244,10 +244,12 @@ else
 fi
 
 if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
-  echo
-  read -rp "Install skills from ./skills/ to $skills_target/? [Y/n]: " install_skills
-  install_skills="${install_skills:-Y}"
-  if [[ "$install_skills" =~ ^[yY]$ ]]; then
+  echo "Skills:"
+  skills_items=("Install skills")
+  skills_defaults=(1)
+  multiselect skills_selected skills_items skills_defaults
+
+  if (( ${#skills_selected[@]} > 0 )); then
     echo "Installing skills -> $skills_target/"
     rm -rf "$skills_target"
     mkdir -p "$skills_target"
