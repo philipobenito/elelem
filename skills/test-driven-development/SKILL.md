@@ -1,11 +1,13 @@
 ---
 name: test-driven-development
-description: Runs the red-green-refactor cycle. Writes a failing test, verifies it fails for the right reason, writes minimal code to pass, then refactors while green. For the rules on when TDD applies, see instructions/common/testing.md.
+description: Runs the red-green-refactor cycle. Writes a failing test, verifies it fails for the right reason, writes minimal code to pass, then refactors while green. Enforces the iron law that no production code is written without a failing test first.
 ---
 
 # Test-Driven Development
 
-This skill executes the red-green-refactor cycle. The rules for when TDD applies, the Iron Law, rationalisation prevention, and good-test criteria live in `instructions/common/testing.md` and apply throughout.
+This skill executes the red-green-refactor cycle. The iron-law rules (the iron law itself, when TDD applies, the verification requirement, YAGNI during GREEN, good-test criteria) live in `../../rules/common/testing.md` and apply throughout. The procedural rules that bind once this skill is running (the rationalisation table, the red-flags stop list) live in `RULES.md` alongside this file.
+
+Before running the cycle below, you **MUST** read `RULES.md` (sibling file in this skill directory) using the Read tool if you have not already read it in this session.
 
 ## The Cycle
 
@@ -204,7 +206,7 @@ Before claiming a cycle complete, confirm every box:
 - [ ] Tests exercise real code, mocks only at true boundaries
 - [ ] Edge cases and error paths covered
 
-If any box is unchecked, you skipped part of the cycle. The rules in `instructions/common/testing.md` apply.
+If any box is unchecked, you skipped part of the cycle. The rules in `../../rules/common/testing.md` apply.
 
 ## When Stuck
 

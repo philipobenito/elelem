@@ -32,14 +32,7 @@ You **MUST** use Conventional Commits:
 
 ## Pushes Are Forbidden
 
-You **MUST NOT** run `git push` (or any variant) under any circumstances, including:
-
-- `git push`
-- `git push -u origin <branch>`
-- `git push --force` / `--force-with-lease`
-- `git push --tags`
-
-The user will push when they are ready. If a workflow appears to require a push (e.g. opening a pull request), stop and tell the user what needs to happen next.
+You **MUST NOT** run `git push` (or any variant) under any circumstances. The user will push when they are ready. If a workflow appears to require a push (e.g. opening a pull request), stop and tell the user what needs to happen next.
 
 ## Destructive Commands Are Forbidden
 
@@ -57,22 +50,7 @@ You **MUST NOT** run destructive version control commands without explicit, spec
 - `git tag -d` of pushed tags
 - Any `rm` or file deletion of tracked files intended as part of version control
 
-## What You May Do Freely
-
-Read-only inspection commands are always permitted:
-
-- `git status`, `git log`, `git diff`, `git show`
-- `git branch`, `git remote -v`, `git config --get`
-- `git blame`, `git reflog`
-
-Non-destructive mutating commands are permitted as part of workflows the user has asked you to perform:
-
-- `git add`, `git restore --staged`
-- `git stash push` (but not `drop` or `clear`)
-- `git switch <branch>`, `git checkout <branch>` (to an existing branch, not `--`)
-- `git fetch`
-- `git commit` (subject to the format rules above)
-- `git merge` and non-pushed `git rebase` (only when the user has asked for it)
+Anything else read-only or non-destructive (`git status`, `git log`, `git diff`, `git add`, `git commit`, `git fetch`, `git switch <existing-branch>`, `git stash push`) is permitted as part of workflows the user has asked you to perform.
 
 ## Co-Authored-By
 

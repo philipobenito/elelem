@@ -84,16 +84,10 @@ Every thought below means **stop and invoke the skill**:
 | Thought                             | Reality                                                       |
 |-------------------------------------|---------------------------------------------------------------|
 | "This is just a simple question"    | Questions are tasks. Check for skills.                        |
-| "I need more context first"         | Skill check comes before clarifying questions.                |
 | "Let me explore the codebase first" | Skills tell you how to explore. Check first.                  |
-| "I can check git or files quickly"  | Files lack conversation context. Check for skills.            |
-| "Let me gather information first"   | Skills tell you how to gather information.                    |
 | "This does not need a formal skill" | If a skill exists, use it.                                    |
 | "I remember this skill"             | Skills evolve. Invoke the current version.                    |
-| "This does not count as a task"     | Action is a task. Check for skills.                           |
 | "The skill is overkill"             | Simple things become complex. Use it.                         |
-| "I will just do this one thing"     | Check before doing anything.                                  |
-| "This feels productive"             | Undisciplined action wastes time. Skills prevent this.        |
 | "I know what that skill means"      | Knowing the concept is not using the skill. Invoke it.        |
 
 ## No Exceptions
