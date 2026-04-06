@@ -24,8 +24,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RULES_SOURCE="$SCRIPT_DIR/instructions"
 SKILLS_SOURCE="$SCRIPT_DIR/skills"
 
-if [ ! -t 0 ]; then
-  echo "Error: this script requires an interactive terminal (stdin is not a TTY)." >&2
+if ! { : >/dev/tty; } 2>/dev/null; then
+  echo "Error: this script requires an interactive terminal (/dev/tty is not accessible)." >&2
   exit 1
 fi
 
@@ -188,6 +188,7 @@ case "$scope" in
     (( ${#confirm_selected[@]} > 0 )) || { echo "Aborted."; exit 0; }
     ;;
   *)
+    # Unreachable: multiselect constrains scope to "p" or "u".
     echo "Invalid choice." >&2
     exit 1
     ;;
@@ -281,7 +282,7 @@ fi
 
 if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
   echo
-  echo "Skills:"
+  echo "Skills (target: $skills_target):"
   skills_items=("Install skills")
   skills_defaults=(1)
   multiselect skills_selected skills_items skills_defaults
