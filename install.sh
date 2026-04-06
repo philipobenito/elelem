@@ -48,7 +48,9 @@ multiselect() {
   local items_ref="$2"
   local defaults_ref="$3"
 
-  [[ "$result_var" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "multiselect: invalid result variable name: $result_var" >&2; return 1; }
+  [[ "$result_var"   =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "multiselect: invalid result variable name: $result_var"   >&2; return 1; }
+  [[ "$items_ref"    =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "multiselect: invalid items variable name: $items_ref"    >&2; return 1; }
+  [[ "$defaults_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "multiselect: invalid defaults variable name: $defaults_ref" >&2; return 1; }
 
   # Read items and defaults via indirect expansion (bash 3.2 compatible).
   # eval into local arrays to avoid nameref.
@@ -65,13 +67,16 @@ multiselect() {
 
   local cursor=0
 
-  # Hide cursor; restore on EXIT/INT/TERM.
+  # Hide cursor; restore cursor and prior traps on EXIT/INT/TERM.
+  # The restore commands are baked into the trap string so they fire even if
+  # the function is interrupted by a signal (not just when it returns normally).
   tput civis || true
   local _ms_old_exit _ms_old_int _ms_old_term
   _ms_old_exit="$(trap -p EXIT)"
   _ms_old_int="$(trap -p INT)"
   _ms_old_term="$(trap -p TERM)"
-  trap 'tput cnorm || true' EXIT INT TERM
+  # shellcheck disable=SC2064
+  trap "tput cnorm || true; eval \"${_ms_old_exit:-trap - EXIT}\"; eval \"${_ms_old_int:-trap - INT}\"; eval \"${_ms_old_term:-trap - TERM}\"" EXIT INT TERM
 
   _multiselect_draw() {
     echo "Select items (↑↓ to move, space to toggle, enter to confirm):"
