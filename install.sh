@@ -140,10 +140,26 @@ multiselect() {
   unset -f _multiselect_draw
 }
 
+scope_items=("project  ->  <project>/.claude/" "user  ->  ~/.claude/")
+scope_defaults=(0 0)
 echo "Install scope:"
-echo "  (p) project  -> <project>/.claude/"
-echo "  (u) user     -> ~/.claude/"
-read -rp "Choose [p/u]: " scope
+multiselect scope_selected scope_items scope_defaults
+
+if (( ${#scope_selected[@]} == 0 )); then
+  echo "No scope selected." >&2
+  exit 1
+fi
+if (( ${#scope_selected[@]} > 1 )); then
+  echo "Please select only one scope." >&2
+  exit 1
+fi
+
+scope=""
+if [[ "${scope_selected[0]}" == project* ]]; then
+  scope=p
+elif [[ "${scope_selected[0]}" == user* ]]; then
+  scope=u
+fi
 
 case "$scope" in
   p|P)
@@ -161,8 +177,10 @@ case "$scope" in
     echo "Warning: user-scope path-scoped rules have known issues."
     echo "  See https://github.com/anthropics/claude-code/issues/21858"
     echo "  Common rules (no frontmatter) are unaffected and will load normally."
-    read -rp "Continue? [y/N]: " confirm
-    [[ "$confirm" =~ ^[yY]$ ]] || { echo "Aborted."; exit 0; }
+    confirm_items=("I understand, continue")
+    confirm_defaults=(0)
+    multiselect confirm_selected confirm_items confirm_defaults
+    (( ${#confirm_selected[@]} > 0 )) || { echo "Aborted."; exit 0; }
     ;;
   *)
     echo "Invalid choice." >&2
@@ -212,8 +230,10 @@ multiselect common_selected common_items common_defaults
 
 if (( ${#common_selected[@]} == 0 )); then
   echo "Warning: no common instructions selected."
-  read -rp "No common instructions selected. Continue anyway? [y/N]: " _confirm_common
-  [[ "$_confirm_common" =~ ^[yY]$ ]] || { echo "Aborted."; exit 0; }
+  confirm_common_items=("Continue with no common instructions")
+  confirm_common_defaults=(0)
+  multiselect confirm_common_selected confirm_common_items confirm_common_defaults
+  (( ${#confirm_common_selected[@]} > 0 )) || { echo "Aborted."; exit 0; }
 else
   mkdir -p "$rules_target/common"
   for _item in "${common_selected[@]}"; do
