@@ -187,10 +187,30 @@ substitute_tool_names() {
 }
 
 echo
-echo "Installing common rules -> $rules_target/common/"
-rm -rf "$rules_target/common"
-cp -r "$RULES_SOURCE/common" "$rules_target/common"
-substitute_tool_names "$rules_target/common"
+echo "Common instruction files to install:"
+common_items=()
+common_defaults=()
+for _f in "$RULES_SOURCE/common/"*.md; do
+  [[ -f "$_f" ]] || continue
+  _base="$(basename "$_f" .md)"
+  common_items+=("$_base")
+  common_defaults+=(1)
+done
+
+multiselect common_selected common_items common_defaults
+
+if (( ${#common_selected[@]} == 0 )); then
+  echo "Warning: no common instructions selected."
+  read -rp "No common instructions selected. Continue anyway? [y/N]: " _confirm_common
+  [[ "$_confirm_common" =~ ^[yY]$ ]] || { echo "Aborted."; exit 0; }
+else
+  mkdir -p "$rules_target/common"
+  for _item in "${common_selected[@]}"; do
+    cp "$RULES_SOURCE/common/${_item}.md" "$rules_target/common/${_item}.md"
+  done
+  substitute_tool_names "$rules_target/common"
+  echo "  installed: ${common_selected[*]}"
+fi
 
 lang_dirs=()
 for dir in "$RULES_SOURCE"/*/; do
