@@ -27,7 +27,7 @@ The detection of which ticketing system is in use lives in the `detect-ticketing
    | Cross-cutting concern (auth, logging, config) | Task                                              |
    | Integration between components                | Task, depends on component Tasks                  |
 
-   Per `skills/_shared/tickets.md`, each Task **MUST** fit in a single focused session with acceptance criteria in three to five bullets. If a component does not fit, split it before creation. Stories **MUST** contain between 2 and 6 child Tasks per `skills/_shared/tickets.md`'s sizing rule.
+   Per `skills/_shared/tickets.md`, each Task **MUST** fit in a single focused session with acceptance criteria in three to five bullets. If a component does not fit, split it before creation. Stories **MUST** contain between 2 and 6 child Tasks per `skills/_shared/tickets.md`'s Sizing and Validation sections.
 
    **Decide whether to introduce a Story tier (D2 rule).** A Story is introduced **only when all** of the following hold:
 
@@ -169,7 +169,7 @@ With Linear MCP tools. Use {{ASK_USER_QUESTION_TOOL}} to ask the user for team a
 
 Use Issue + sub-issue + sub-issue with `tier:epic` / `tier:story` / `tier:task` labels. **Do not** map Epic to Linear Project: Project is a different lifecycle concept and conflating it would break recovery.
 
-If Linear's nesting caps at one level in practice, **degrade to two-tier in Linear**:
+Attempt the two-level nest first; on rejection from Linear's API, **degrade to two-tier in Linear**:
 
 - Each Task carries `tier:task` and a slugified Story label `story:<slug>` where the slug is lowercase, hyphenated, ASCII, derived from the Story theme statement.
 - The Story grouping is preserved in the epic body's `## Design` under `### Story: <name>`.

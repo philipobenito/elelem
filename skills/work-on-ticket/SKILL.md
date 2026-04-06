@@ -32,7 +32,7 @@ You **MUST** complete these steps in order. Do not skip a step and do not reorde
 
 4. **Extract the design.** `resolve_epic_context` returns the Epic and (if walked through one) the Story's theme statement. Extract the Epic body's `## Design` section. This becomes the approved design input for the implementation workflow.
 
-   If `resolve_epic_context` succeeds but the resolved Epic has **no** `## Design` section at all (tickets created manually or by an older workflow predating the rule), follow the manual fallback in `skills/_shared/tickets.md`: read whatever context is in the epic body, read sibling tickets to understand scope boundaries, present what you have to the user, and ask whether they can supply additional context before proceeding. You **MUST NOT** guess the design and proceed.
+   If `resolve_epic_context` succeeds but the resolved Epic has **no** `## Design` section at all (tickets created manually or by an older workflow predating the rule), follow the manual fallback documented in `skills/_shared/tickets.md` under "Recovery Before Implementation". You **MUST NOT** guess the design and proceed.
 
    If `resolve_epic_context` fails (any error condition above), surface the specific failure to the user and stop. You **MUST NOT** proceed to implementation with partial context.
 
@@ -119,7 +119,7 @@ With Linear MCP tools. Response includes the `parent` field. The tier marker is 
 
 `resolve_epic_context` finds parents using the system's native parent mechanism, not by inspecting body text where a native mechanism exists. The mechanisms by system are:
 
-- **GitHub Issues**: `issue_read` returns a parent issue reference if one exists. For tickets created via the `gh` CLI fallback (or for legacy tickets), scan the body for `Part of #N` and `Epic: #N` references.
+- **GitHub Issues**: use the native parent field on `issue_read` first; if absent, scan the body for `Part of #N` and `Epic: #N` references (used by the `gh` CLI fallback and by legacy tickets).
 - **Jira**: the `parent` or `epic` field on `getJiraIssue`. Jira natively supports Epic-Story and Story-Sub-task relationships.
 - **Linear**: the `parent` field on the issue.
 - **GitLab**: epic associations (where group Epics are available) or `Part of #N` references in the body (where they are not).
