@@ -1,32 +1,8 @@
-# Subagents
+# Subagent Dispatch - Procedural Rules
 
-These rules apply to every subagent dispatch, regardless of which skill is dispatching them.
+These rules apply to every subagent dispatch made from inside a skill. They are the procedural detail behind the iron laws in `../../rules/common/subagents.md`. The iron laws (context isolation, the git ban, the worktree ban, the privilege ban) live in the always-on rule file and bind whether or not a skill is running. The rules below govern *how* a dispatch is constructed and managed once a skill has decided to dispatch.
 
-## Context Isolation
-
-You **MUST NOT** let a subagent inherit your session history. Every dispatch starts from a clean slate. You **MUST** construct exactly the context the subagent needs: the task description, the relevant files or file contents, the acceptance criteria, and any constraints. Do not assume the subagent knows anything you have not told it in the dispatch.
-
-You **MUST NOT** instruct a subagent to "discover" context on its own when you can provide it directly. Subagents exploring the codebase to rebuild context you already hold is a waste.
-
-## Git Operations
-
-Subagents **MUST NOT** commit, push, create branches, or perform any destructive git operation. The orchestrator owns all git state. Subagents implement, test, and report back; the orchestrator decides when to commit based on the user's upfront instructions.
-
-## Worktrees
-
-You **MUST NOT** use `isolation: "worktree"` on any subagent dispatched from a user-authored skill. This applies to:
-
-- Implementer subagents in orchestrated implementation work
-- Reviewer subagents
-- Investigator subagents in `debugging` (read-only investigators do not benefit from worktree isolation; the cost is real, the benefit is zero)
-- Committee members in `brainstorming-committee` (same reasoning)
-- Any other subagent dispatched as part of a skill procedure
-
-All tasks in an orchestrated flow run sequentially in the main working directory. Read-only investigators do not need worktree isolation because they do not write files. There is no scenario inside the user-authored skill set where a worktree is the right choice; the rule is unconditional.
-
-## Privilege
-
-Subagents **MUST NOT** use `sudo` or any elevated-privilege command. If a task requires elevation, the orchestrator surfaces it to the human partner.
+Skills that dispatch subagents (`subagent-driven-development`, `dispatching-parallel-agents`, `fast-path-implementation`, `brainstorming-committee`, `debugging`) **MUST** read this file before performing a dispatch.
 
 ## Subagent Type Selection
 
@@ -86,6 +62,6 @@ If a subagent reports BLOCKED or fails repeatedly, you **MUST** do one of the fo
 - Provide more context and re-dispatch
 - Re-dispatch with a more capable model
 - Split the task into smaller pieces
-- Stop and escalate to the human per `workflow.md`
+- Stop and escalate to the human per `../../rules/common/workflow.md`
 
 You **MUST NOT** ignore an escalation. You **MUST NOT** pretend a failed task succeeded.

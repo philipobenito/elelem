@@ -58,7 +58,7 @@ The detection of which ticketing system is in use lives in the `detect-ticketing
    - **Dependencies**: explicit references to parent epic and any other tickets that must exist before this work
    - **Labels**: based on work type (feature, infrastructure, testing, documentation)
 
-5. **Order the tickets.** Present the child tickets to the user in the implementation order required by `workflow.md`: foundations and dependencies first, features next, integration after dependencies, polish last.
+5. **Order the tickets.** Present the child tickets to the user in the implementation order required by `../../rules/common/workflow.md`: foundations and dependencies first, features next, integration after dependencies, polish last.
 
 6. **Create the epic, then the children.** Use the API appropriate to the detected system (see "Per-system creation" below). Create the epic first so that child tickets can reference it as their parent.
 

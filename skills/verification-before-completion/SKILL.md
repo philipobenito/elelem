@@ -1,11 +1,13 @@
 ---
 name: verification-before-completion
-description: Runs the gate function that produces fresh verification evidence before a completion claim. For the rules on when verification is required and what counts as a completion claim, see instructions/common/verification.md.
+description: Runs the gate function that produces fresh verification evidence before a completion claim. Identifies the proving command, runs it fresh in the current message, reads the output, and only states the claim with cited evidence.
 ---
 
 # Verification Before Completion
 
-The governing rules live in `instructions/common/verification.md`. This skill is the procedure that produces the evidence those rules require. The rules apply whether this skill has been invoked; invoking the skill is how you comply with them at the moment of a completion claim.
+The iron-law rules (the iron law itself, what counts as a completion claim, when the rule fires) live in `../../rules/common/verification.md`. The procedural rules that bind once this skill is running (the common-failures table, the rationalisation prevention table, the red-flags stop list) live in `RULES.md` alongside this file. This skill is the procedure that produces the evidence those rules require.
+
+Before running the gate function below, you **MUST** read `RULES.md` (sibling file in this skill directory) using the Read tool if you have not already read it in this session.
 
 ## The Gate Function
 
@@ -43,7 +45,7 @@ Incorrect: "Linter passed, build should be fine." The linter is not the build.
 
 ### Regression Test for a Bug Fix
 
-See `instructions/common/testing.md` for the full red-green rules. The verification-layer procedure is:
+See `../../rules/common/testing.md` for the full red-green rules. The verification-layer procedure is:
 
 1. Identify: the reproducing test command, and the fix revert step
 2. Run the test against the fix: must pass
@@ -61,7 +63,7 @@ A regression test that has only been observed to pass once has not been verified
 4. Compare: do the changes match the task spec, and do the verifications pass?
 5. State: "Subagent task complete: diff matches spec (N files, expected changes), `<verify command>` exit 0"
 
-You **MUST NOT** propagate a subagent's "success" report without running steps 2 and 3 yourself. See `instructions/common/subagents.md`.
+You **MUST NOT** propagate a subagent's "success" report without running steps 2 and 3 yourself. See `../../rules/common/subagents.md`.
 
 ### Requirements Checklist
 

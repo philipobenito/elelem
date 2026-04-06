@@ -1,37 +1,6 @@
-# Verification
+# Verification Before Completion - Procedural Rules
 
-## The Iron Law
-
-**You MUST NOT claim work is complete, fixed, passing, working, or ready without fresh verification evidence produced in the current message.**
-
-"Fresh" means the verification command was run after the last change you made to the code it verifies. A run from a previous message, a previous task, or before your most recent edit does **not** count.
-
-"Evidence" means the command's actual output: exit code, pass/fail counts, build status. Your belief that the command would pass is not evidence.
-
-If you have not run the verification command in the current message, you **MUST NOT** state or imply that the work is done.
-
-## Scope: What Counts as a Completion Claim
-
-This rule applies to every statement that asserts or implies success, including but not limited to:
-
-- Direct claims: "tests pass", "build succeeds", "it works", "fixed", "done", "complete", "ready"
-- Satisfaction language: "Great!", "Perfect!", "All good", "Looks good"
-- Hedged claims: "should pass", "should work now", "probably fine", "seems to work"
-- Implicit claims: moving to the next task, committing, opening a PR, handing back to the user, marking a todo complete
-- Paraphrases and synonyms belonging to any of the above
-
-You **MUST NOT** evade this rule by choosing different wording. Spirit over letter. If the reader could take your message to mean the work is done, the rule applies.
-
-## When the Rule Fires
-
-You **MUST** run fresh verification before any of:
-
-- Committing, pushing, opening, or updating a pull request
-- Claiming a task, subtask, or todo is complete
-- Moving on to the next task in a sequence
-- Handing control back to the human partner with any implication of success
-- Accepting a subagent's report that it succeeded (see `subagents.md`: trust nothing, verify the diff)
-- Stating that a bug is fixed, a regression is closed, or a requirement is met
+These rules apply once the `verification-before-completion` skill has been invoked. They are the procedural detail behind the iron law in `../../rules/common/verification.md`. The iron law itself, the scope of what counts as a completion claim, and the trigger conditions live in the always-on rule file and bind every message. The rules below help you recognise common failure modes and rationalisations once you are running the gate function.
 
 ## Common Failures
 
@@ -40,8 +9,8 @@ You **MUST** run fresh verification before any of:
 | Tests pass             | Test command output in this message, exit 0, 0 failures | Previous run, "should pass", linter ok |
 | Linter clean           | Linter output in this message, 0 errors, 0 warnings     | Partial file check, extrapolation      |
 | Build succeeds         | Build command output in this message, exit 0            | Linter passing, logs "look fine"       |
-| Bug fixed              | Failing test now passes; see `testing.md` for red-green | Code changed, assumed fixed            |
-| Regression test works  | Red-green cycle executed per `testing.md`               | Test passed once after the fix         |
+| Bug fixed              | Failing test now passes; see `../../rules/common/testing.md` for red-green | Code changed, assumed fixed            |
+| Regression test works  | Red-green cycle executed per `../../rules/common/testing.md`               | Test passed once after the fix         |
 | Subagent task complete | VCS diff inspected, verification commands re-run        | Subagent's own "success" report        |
 | Requirements met       | Line-by-line checklist against the approved design      | Tests passing in general               |
 
@@ -55,7 +24,7 @@ Every excuse below means **stop and run the verification**:
 | "I'm confident"                           | Confidence is not evidence.                           |
 | "Just this once"                          | No exceptions.                                        |
 | "The linter passed"                       | The linter is not the compiler and not the tests.     |
-| "The subagent said it succeeded"          | Verify independently. See `subagents.md`.             |
+| "The subagent said it succeeded"          | Verify independently. See `../../rules/common/subagents.md`.             |
 | "I'm tired"                               | Exhaustion is not an exemption.                       |
 | "A partial check is enough"               | Partial checks prove nothing about the whole.         |
 | "I verified earlier in the session"       | Not fresh. Run it again after the last change.        |
@@ -72,7 +41,3 @@ If any of the following is true, you **MUST** stop, run verification, and only t
 - You are about to trust a subagent's self-report without inspecting the diff
 - You are about to rely on verification output from earlier in the session
 - You are about to say "just this once" or "this case is different"
-
-## Procedure
-
-For the executable procedure (the Gate Function), invoke the `verification-before-completion` skill. This file is the rule set the skill enforces. The rules here apply whether the skill has been invoked.

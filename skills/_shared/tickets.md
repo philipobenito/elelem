@@ -23,7 +23,7 @@ If the epic is too large for the ticketing system's body limit, split the design
 
 ## Recovery Before Implementation
 
-When picking up a ticket for implementation, you **MUST** fetch the parent epic and extract its `## Design` section before any implementation step. Implementing a ticket without the epic's design context is forbidden: per `workflow.md`, implementation requires an approved design, and the epic's design section is the approved design in this workflow.
+When picking up a ticket for implementation, you **MUST** fetch the parent epic and extract its `## Design` section before any implementation step. Implementing a ticket without the epic's design context is forbidden: per `../../rules/common/workflow.md`, implementation requires an approved design, and the epic's design section is the approved design in this workflow.
 
 If the epic has no `## Design` section (for example, because the tickets were created manually or by an older workflow), you **MUST**:
 
@@ -39,7 +39,7 @@ Each ticket **MUST** be achievable in a single focused session. Each ticket's ac
 
 ## Ordering
 
-The implementation order of tickets follows the sequencing rule in `workflow.md`: foundations and dependencies first, features next, integration after dependencies, polish last. You **MUST NOT** reorder tickets to make progress look faster or to avoid a harder ticket.
+The implementation order of tickets follows the sequencing rule in `../../rules/common/workflow.md`: foundations and dependencies first, features next, integration after dependencies, polish last. You **MUST NOT** reorder tickets to make progress look faster or to avoid a harder ticket.
 
 ## Procedures
 

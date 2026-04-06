@@ -7,7 +7,7 @@ description: "Lightweight design capture for cases where structured brainstormin
 
 The escape hatch for the brainstorming router. The user has indicated they already have a clear design and do not want to go through structured dialogue, walkthrough, or committee deliberation. This skill captures the user's design as a brief statement, gets explicit approval via plan mode, and hands off to implementation.
 
-For the rule that no implementation may begin until the user has approved a design, see `instructions/common/workflow.md`. The skip path satisfies that rule by capturing a brief design statement and getting explicit approval through `{{EXIT_PLAN_TOOL}}`.
+For the rule that no implementation may begin until the user has approved a design, see `../../rules/common/workflow.md`. The skip path satisfies that rule by capturing a brief design statement and getting explicit approval through `{{EXIT_PLAN_TOOL}}`.
 
 ## Preconditions
 
@@ -108,5 +108,5 @@ If any one of these is false, the gate has not been crossed, and you **MUST NOT*
 | Stacking multiple clarifying questions                           | Skip is the lightweight path. If you need a dialogue, the user should be in standard or guided mode instead.                                   |
 | Skipping the `{{EXIT_PLAN_TOOL}}` step                           | `{{EXIT_PLAN_TOOL}}` is how the user approves. Without it, you have not satisfied the workflow.md "explicit approval" requirement.             |
 | Running `design-review`                                          | The user explicitly chose a lightweight path. Running design-review defeats the purpose. The reviewer is the user.                             |
-| Inventing requirements not in the user's statement               | YAGNI per `instructions/common/coding-style.md`. The design covers what the user asked for, not what you would also build.                     |
+| Inventing requirements not in the user's statement               | YAGNI per `../../rules/common/coding-style.md`. The design covers what the user asked for, not what you would also build.                     |
 | Routing to skip yourself instead of letting the user pick        | The router asks; the user picks. You **MUST NOT** invoke this skill except as a hand-off from the router after the user explicitly picks skip. |

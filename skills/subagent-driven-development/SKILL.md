@@ -7,7 +7,9 @@ description: Implements an approved design by decomposing it into sequential tas
 
 Implement an approved design by decomposing it into ordered tasks, then executing each task with an isolated subagent plus a combined review and a user checkpoint.
 
-The rules on subagent dispatch, context isolation, git ownership, worktrees, model selection, and process discipline live in `instructions/common/subagents.md` and apply throughout this skill. The rule that implementation requires an approved design lives in `instructions/common/workflow.md`.
+The iron-law rules (context isolation, git ownership, worktree ban, privilege ban) live in `../../rules/common/subagents.md`. The procedural rules that bind once this skill is dispatching subagents (subagent type selection, model selection, process discipline, escalation) live in `../_shared/subagent-dispatch.md` and apply throughout this skill. The rule that implementation requires an approved design lives in `../../rules/common/workflow.md`.
+
+Before running the procedure below, you **MUST** read `../_shared/subagent-dispatch.md` using the Read tool if you have not already read it in this session.
 
 ## When to Run
 
@@ -43,7 +45,7 @@ Decompose the design into implementable tasks before dispatching any subagent.
 
 ### File Structure
 
-Map out which files will be created or modified and what each file is responsible for. Lock these decisions in before any code is written. Each file should have one clear responsibility with a well-defined interface (see `instructions/common/code-organisation.md`). In existing codebases, follow established patterns; files that change together should live together.
+Map out which files will be created or modified and what each file is responsible for. Lock these decisions in before any code is written. Each file should have one clear responsibility with a well-defined interface (see `../../rules/common/code-organisation.md`). In existing codebases, follow established patterns; files that change together should live together.
 
 ### Task Granularity
 
@@ -71,7 +73,7 @@ Tasks execute sequentially in this order. If two tasks have no dependency betwee
 Produce a `{{TASK_TRACKER_TOOL}}` with every task. Each entry includes:
 
 - Task name and description
-- Recommended subagent type (selected per `instructions/common/subagents.md`)
+- Recommended subagent type (selected per `../../rules/common/subagents.md`)
 - Recommended model (default `haiku`, escalate only with justification)
 - Files to create or modify (exact paths)
 - Acceptance criteria
@@ -94,7 +96,7 @@ digraph per_task_pipeline {
     "Dispatch reviewer subagent\n(./reviewer-prompt.md)" [shape=box];
     "Reviewer approves?" [shape=diamond];
     "Implementer subagent fixes issues" [shape=box];
-    "Verification gate (orchestrator):\ngit diff + re-run task verification\n(instructions/common/verification.md)" [shape=box, style=bold];
+    "Verification gate (orchestrator):\ngit diff + re-run task verification\n(../../rules/common/verification.md)" [shape=box, style=bold];
     "Verification passes?" [shape=diamond];
     "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [shape=box, style=bold];
     "Mark task complete in {{TASK_TRACKER_TOOL}}" [style=bold];
@@ -108,8 +110,8 @@ digraph per_task_pipeline {
     "Dispatch reviewer subagent\n(./reviewer-prompt.md)" -> "Reviewer approves?";
     "Reviewer approves?" -> "Implementer subagent fixes issues" [label="no"];
     "Implementer subagent fixes issues" -> "Dispatch reviewer subagent\n(./reviewer-prompt.md)" [label="re-review"];
-    "Reviewer approves?" -> "Verification gate (orchestrator):\ngit diff + re-run task verification\n(instructions/common/verification.md)" [label="yes"];
-    "Verification gate (orchestrator):\ngit diff + re-run task verification\n(instructions/common/verification.md)" -> "Verification passes?";
+    "Reviewer approves?" -> "Verification gate (orchestrator):\ngit diff + re-run task verification\n(../../rules/common/verification.md)" [label="yes"];
+    "Verification gate (orchestrator):\ngit diff + re-run task verification\n(../../rules/common/verification.md)" -> "Verification passes?";
     "Verification passes?" -> "Implementer subagent fixes issues" [label="no"];
     "Verification passes?" -> "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [label="yes"];
     "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" -> "Mark task complete in {{TASK_TRACKER_TOOL}}";
@@ -118,7 +120,7 @@ digraph per_task_pipeline {
 
 ## Verification Gate
 
-After the reviewer approves and **before** the user checkpoint, the orchestrator **MUST** run the verification gate against the implementer's work. This is the "trust but verify" step that `instructions/common/verification.md` requires when accepting any subagent's success report. The reviewer reads the code; the orchestrator confirms the artefacts.
+After the reviewer approves and **before** the user checkpoint, the orchestrator **MUST** run the verification gate against the implementer's work. This is the "trust but verify" step that `../../rules/common/verification.md` requires when accepting any subagent's success report. The reviewer reads the code; the orchestrator confirms the artefacts.
 
 The procedure is the gate function from the `verification-before-completion` skill, applied to the per-task scope:
 
@@ -128,7 +130,7 @@ The procedure is the gate function from the `verification-before-completion` ski
 4. **Read the output.** Capture exit codes and pass/fail counts. The output is the evidence.
 5. **Compare to the spec.** Does the diff match the task spec? Did the verification commands all pass? Does the TDD evidence cover every new behaviour in the diff?
 
-If any check fails, re-dispatch the implementer with the specific failure as fix instructions and re-run the gate after the fix. Do **not** patch the issue manually in the orchestrator context, that pollutes context and defeats the isolation rules in `instructions/common/subagents.md`.
+If any check fails, re-dispatch the implementer with the specific failure as fix instructions and re-run the gate after the fix. Do **not** patch the issue manually in the orchestrator context, that pollutes context and defeats the isolation rules in `../../rules/common/subagents.md`.
 
 The gate output (commands run, exit codes, pass/fail counts) is shown to the user as part of the user checkpoint, alongside the diff. "The reviewer said it was fine" is not a substitute for the gate.
 
@@ -152,7 +154,7 @@ If the user chose auto-commit:
 5. Commit immediately after presenting the summary
 6. Proceed to the next task
 
-The checkpoint summary exists regardless of commit preference. The commit question is the part conditional on the upfront choice. The verification evidence is non-optional, without it, you have not satisfied `instructions/common/verification.md`.
+The checkpoint summary exists regardless of commit preference. The commit question is the part conditional on the upfront choice. The verification evidence is non-optional, without it, you have not satisfied `../../rules/common/verification.md`.
 
 ## Handling Implementer Status
 
@@ -161,9 +163,9 @@ Implementer subagents report one of four statuses:
 - **DONE**: proceed to review
 - **DONE_WITH_CONCERNS**: read the concerns. If they are about correctness or scope, address them before review. If they are observations ("this file is getting large"), note them and proceed to review.
 - **NEEDS_CONTEXT**: provide the missing information and re-dispatch
-- **BLOCKED**: assess the blocker. If it is context, re-dispatch with more context. If it is a reasoning-capacity problem, re-dispatch with a more capable model. If the task is too large, break it into smaller pieces. If the plan itself is wrong, stop and surface to the human per `instructions/common/workflow.md`.
+- **BLOCKED**: assess the blocker. If it is context, re-dispatch with more context. If it is a reasoning-capacity problem, re-dispatch with a more capable model. If the task is too large, break it into smaller pieces. If the plan itself is wrong, stop and surface to the human per `../../rules/common/workflow.md`.
 
-The rules in `instructions/common/subagents.md` forbid ignoring an escalation or forcing the same model to retry without changing anything.
+The rules in `../../rules/common/subagents.md` forbid ignoring an escalation or forcing the same model to retry without changing anything.
 
 ## Final Feature-Level Review
 
@@ -172,15 +174,15 @@ After the per-task pipeline has been run for every task in the decomposition and
 The procedure:
 
 1. **Identify the feature range.** Capture the base commit (the parent of the first task's first commit, or the commit at session start) and the head commit (current `HEAD`).
-2. **Invoke `requesting-code-review`** against that range. The skill dispatches a `code-reviewer` subagent (or a more specific reviewer per `instructions/common/subagents.md`) using `skills/requesting-code-review/code-reviewer.md`. This is the production-readiness review mandated by `instructions/common/code-review.md`; the per-task reviews do not replace it.
-3. **Process the reviewer output via `receiving-code-review`.** Apply severity discipline per `instructions/common/code-review.md`:
+2. **Invoke `requesting-code-review`** against that range. The skill dispatches a `code-reviewer` subagent (or a more specific reviewer per `../../rules/common/subagents.md`) using `skills/requesting-code-review/code-reviewer.md`. This is the production-readiness review mandated by `../../rules/common/code-review.md`; the per-task reviews do not replace it.
+3. **Process the reviewer output via `receiving-code-review`.** Apply severity discipline per `../../rules/common/code-review.md`:
    - **Critical** issues: stop, fix before reporting completion. Re-dispatch the implementer for the affected task scope, re-run the per-task pipeline including the verification gate, and re-run the feature-level review.
    - **Important** issues: same as Critical for orchestrated work, fix before completion.
    - **Minor** issues: log them in the completion report; the user decides whether to address them in this session or later.
 4. **Run `verification-before-completion`** against the feature range. The per-task verification gates verified each task in isolation; this final pass verifies the feature as a whole. Run the project's full test suite, the linter, the build, and any feature-specific verification the design called out. Cite the output.
 5. **Report completion** with: the list of tasks completed, the feature-level review verdict, the verification commands and their outputs, and any deferred Minor issues.
 
-You **MUST NOT** report the feature complete without steps 2 and 4 having been run in this message. The per-task verification gates do not satisfy `instructions/common/verification.md` for the feature claim; only a fresh feature-level run does.
+You **MUST NOT** report the feature complete without steps 2 and 4 having been run in this message. The per-task verification gates do not satisfy `../../rules/common/verification.md` for the feature claim; only a fresh feature-level run does.
 
 ## Worked Example
 

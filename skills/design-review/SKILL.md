@@ -7,7 +7,7 @@ description: "Reviews a consolidated design summary for completeness, consistenc
 
 Runs a holistic review, passes over a consolidated design summary, catches issues that incremental approval missed, and either returns an approved design or escalates after the iteration budget is exhausted.
 
-For the rule that no implementation may begin until a design has been approved, see `instructions/common/workflow.md`. For the rules on dispatching the reviewer subagent (context isolation, type selection, model selection), see `instructions/common/subagents.md`.
+For the rule that no implementation may begin until a design has been approved, see `../../rules/common/workflow.md`. For the rules on dispatching the reviewer subagent (context isolation, type selection, model selection), see `../../rules/common/subagents.md`.
 
 ## Preconditions
 
@@ -16,7 +16,7 @@ This skill **MUST NOT** be invoked until the caller has produced a consolidated 
 ## Procedure
 
 1. **Confirm the summary is consolidated.** If the caller has not produced a single design summary block, stop and tell the caller to consolidate before invoking this skill.
-2. **Dispatch the reviewer.** Use `{{DISPATCH_AGENT_TOOL}}` to dispatch a reviewer subagent following `design-reviewer-prompt.md`. Paste the full design summary into the prompt. Do not pass session history. Default model: `haiku`. Escalate to `sonnet` only if the design is architecturally complex enough that the reviewer needs deeper reasoning, per the model selection rules in `subagents.md`.
+2. **Dispatch the reviewer.** Use `{{DISPATCH_AGENT_TOOL}}` to dispatch a reviewer subagent following `design-reviewer-prompt.md`. Paste the full design summary into the prompt. Do not pass session history. Default model: `haiku`. Escalate to `sonnet` only if the design is architecturally complex enough that the reviewer needs deeper reasoning, per the model selection rules in `../../rules/common/subagents.md`.
 3. **Read the reviewer's status.**
    - **Approved**: return the design summary unchanged to the caller. Done.
    - **Issues Found**: extract each issue, decide whether the fix is a wording change, a missing section, or a substantive design change.

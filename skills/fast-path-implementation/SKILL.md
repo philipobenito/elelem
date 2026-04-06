@@ -5,7 +5,9 @@ description: Implements a batch of uniformly simple changes via a single impleme
 
 # Fast Path Implementation
 
-When `complexity-triage` has classified the work as SIMPLE with full evidence, implementation collapses to two subagent dispatches plus a user checkpoint. This skill covers that shortened process. The rules on subagent dispatch, context isolation, git ownership, worktrees, and model selection live in `instructions/common/subagents.md` and apply throughout.
+When `complexity-triage` has classified the work as SIMPLE with full evidence, implementation collapses to two subagent dispatches plus a user checkpoint. This skill covers that shortened process. The iron-law rules on subagent dispatch (context isolation, git ownership, worktree ban, privilege ban) live in `../../rules/common/subagents.md`. The procedural rules (subagent type selection, model selection, escalation) live in `../_shared/subagent-dispatch.md` and apply throughout.
+
+Before running the procedure below, you **MUST** read `../_shared/subagent-dispatch.md` using the Read tool if you have not already read it in this session.
 
 ## Precondition
 
@@ -17,7 +19,7 @@ The caller of this skill is responsible for having asked the commit preference q
 
 ### 1. Single Implementation Dispatch
 
-Dispatch one implementer with every change as a single batch. Use `../subagent-driven-development/implementer-prompt.md` with the task description covering the full scope of changes. Select the specialised subagent type for the work per `instructions/common/subagents.md`. Use `model: "haiku"`: if the work is simple enough for this path, it is simple enough for the cheapest model.
+Dispatch one implementer with every change as a single batch. Use `../subagent-driven-development/implementer-prompt.md` with the task description covering the full scope of changes. Select the specialised subagent type for the work per `../../rules/common/subagents.md`. Use `model: "haiku"`: if the work is simple enough for this path, it is simple enough for the cheapest model.
 
 ### 2. Single Combined Review
 
@@ -31,7 +33,7 @@ The reviewer returns one of three outcomes:
 
 ### 3. Verification Gate
 
-After the reviewer approves and **before** the user checkpoint, run the verification gate against the implementer's work yourself. This is the same gate as the per-task pipeline in `subagent-driven-development.md` and is required by `instructions/common/verification.md`. Even on the fast path, "the reviewer said it was fine" is not a substitute for running the verification yourself.
+After the reviewer approves and **before** the user checkpoint, run the verification gate against the implementer's work yourself. This is the same gate as the per-task pipeline in `../subagent-driven-development/SKILL.md` and is required by `../../rules/common/verification.md`. Even on the fast path, "the reviewer said it was fine" is not a substitute for running the verification yourself.
 
 1. **Inspect the diff yourself.** Run `git status` and `git diff`. Confirm the files changed match the spec and nothing else changed.
 2. **Confirm the implementer's TDD evidence.** Per `../subagent-driven-development/implementer-prompt.md`, the implementer report includes RED to GREEN evidence for each new behaviour. If the SIMPLE work introduced new behaviour (rare on the fast path; pure string replacements do not), the evidence **MUST** be present.
@@ -65,7 +67,7 @@ digraph fast_path {
     "Reviewer result?" [shape=diamond];
     "Implementer fixes issues" [shape=box];
     "Hand back to subagent-driven-development\n(re-decompose)" [shape=box];
-    "Verification gate (orchestrator):\ngit diff + re-run verification\n(instructions/common/verification.md)" [shape=box, style=bold];
+    "Verification gate (orchestrator):\ngit diff + re-run verification\n(../../rules/common/verification.md)" [shape=box, style=bold];
     "Verification passes?" [shape=diamond];
     "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [shape=box, style=bold];
 
@@ -76,11 +78,11 @@ digraph fast_path {
     "Implementer asks questions?" -> "Implementer implements, tests, self-reviews" [label="no"];
     "Implementer implements, tests, self-reviews" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku)";
     "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku)" -> "Reviewer result?";
-    "Reviewer result?" -> "Verification gate (orchestrator):\ngit diff + re-run verification\n(instructions/common/verification.md)" [label="PASS"];
+    "Reviewer result?" -> "Verification gate (orchestrator):\ngit diff + re-run verification\n(../../rules/common/verification.md)" [label="PASS"];
     "Reviewer result?" -> "Implementer fixes issues" [label="FAIL"];
     "Reviewer result?" -> "Hand back to subagent-driven-development\n(re-decompose)" [label="TRIAGE_INVALID"];
     "Implementer fixes issues" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku)" [label="re-review"];
-    "Verification gate (orchestrator):\ngit diff + re-run verification\n(instructions/common/verification.md)" -> "Verification passes?";
+    "Verification gate (orchestrator):\ngit diff + re-run verification\n(../../rules/common/verification.md)" -> "Verification passes?";
     "Verification passes?" -> "Implementer fixes issues" [label="no"];
     "Verification passes?" -> "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [label="yes"];
 }

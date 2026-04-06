@@ -2,9 +2,9 @@
 
 Use this template when dispatching an implementer subagent.
 
-**Subagent type selection:** Replace `[SPECIALISED_SUBAGENT_TYPE]` with the most specific implementer type available for the task per `instructions/common/subagents.md`. Examples: `typescript-pro` for a TypeScript task, `python-pro` for Python, `react-specialist` for React components, `golang-pro` for Go, `rust-engineer` for Rust. Use `general-purpose` only when no specialised type fits. The recommended type for each task should already be in the task entry the orchestrator created during decomposition.
+**Subagent type selection:** Replace `[SPECIALISED_SUBAGENT_TYPE]` with the most specific implementer type available for the task per `../../rules/common/subagents.md`. Examples: `typescript-pro` for a TypeScript task, `python-pro` for Python, `react-specialist` for React components, `golang-pro` for Go, `rust-engineer` for Rust. Use `general-purpose` only when no specialised type fits. The recommended type for each task should already be in the task entry the orchestrator created during decomposition.
 
-**Model selection:** Default to `haiku`. Escalate to `sonnet` only on evidence per `instructions/common/subagents.md`.
+**Model selection:** Default to `haiku`. Escalate to `sonnet` only on evidence per `../../rules/common/subagents.md`.
 
 ```
 {{DISPATCH_AGENT_TOOL}} ([SPECIALISED_SUBAGENT_TYPE]):

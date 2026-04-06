@@ -1,11 +1,13 @@
 ---
 name: requesting-code-review
-description: Dispatches a code-reviewer subagent against a specific git range with the context it needs to assess production readiness. For the rules on when reviews are mandatory and how to act on their output, see instructions/common/code-review.md. For subagent dispatch rules, see instructions/common/subagents.md.
+description: Dispatches a code-reviewer subagent against a specific git range with the context it needs to assess production readiness. Selects the most specific reviewer type available, starts on the cheapest capable model, and applies severity discipline to the result.
 ---
 
 # Requesting Code Review
 
-The rules on when review is mandatory, how to respond to feedback, and how to handle severities live in `instructions/common/code-review.md`. Subagent dispatch rules (context isolation, no session history, subagent type selection, model selection) live in `instructions/common/subagents.md`. This skill is the procedure that dispatches a reviewer.
+The iron-law rules (when reviews are mandatory, forbidden response phrases) live in `../../rules/common/code-review.md`. The procedural rules that bind once a review skill is running (verify before acting, severity discipline, when to push back, GitHub inline reply procedure) live in `../_shared/code-review.md`. Subagent iron-law rules live in `../../rules/common/subagents.md` and the dispatch procedure rules live in `../_shared/subagent-dispatch.md`. This skill is the procedure that dispatches a reviewer.
+
+Before running the procedure below, you **MUST** read `../_shared/code-review.md` and `../_shared/subagent-dispatch.md` using the Read tool if you have not already read them in this session.
 
 ## Procedure
 
@@ -18,7 +20,7 @@ The rules on when review is mandatory, how to respond to feedback, and how to ha
 
    In orchestrated work, `BASE_SHA` is the commit at the start of the current task and `HEAD_SHA` is the current commit.
 
-2. **Select the subagent type.** Per `subagents.md`, pick the most specific reviewer type available. A `code-reviewer` specialist is the default; a language- or framework-specific reviewer (for example, a TypeScript reviewer for a TypeScript-only change) is preferred when one exists.
+2. **Select the subagent type.** Per `../../rules/common/subagents.md`, pick the most specific reviewer type available. A `code-reviewer` specialist is the default; a language- or framework-specific reviewer (for example, a TypeScript reviewer for a TypeScript-only change) is preferred when one exists.
 
 3. **Fill the template.** Open `code-reviewer.md` in this skill directory and populate:
 
@@ -27,9 +29,9 @@ The rules on when review is mandatory, how to respond to feedback, and how to ha
    - `{PLAN_REFERENCE}`: a pointer to the approved design, ticket, or plan the work is delivering against
    - `{BASE_SHA}` and `{HEAD_SHA}`: the commits from step 1
 
-4. **Dispatch.** Send the filled template to the reviewer subagent. Start with the cheapest capable model per `subagents.md` (default `haiku`; escalate to `sonnet` only when the change involves cross-file integration reasoning or architectural judgement).
+4. **Dispatch.** Send the filled template to the reviewer subagent. Start with the cheapest capable model per `../../rules/common/subagents.md` (default `haiku`; escalate to `sonnet` only when the change involves cross-file integration reasoning or architectural judgement).
 
-5. **Act on the output.** Process the reviewer's findings through `receiving-code-review` and apply the severity discipline in `code-review.md`: fix Critical before anything else, fix Important before the next task or merge, log Minor for later.
+5. **Act on the output.** Process the reviewer's findings through `receiving-code-review` and apply the severity discipline in `../_shared/code-review.md`: fix Critical before anything else, fix Important before the next task or merge, log Minor for later.
 
 ## Worked Example
 
@@ -55,7 +57,7 @@ The reviewer returns:
 - Minor: magic number (100) for the reporting interval
 - Assessment: ready to proceed with Important fixed
 
-Fix the Important issue, leave the Minor one logged, then move to Task 3. Do not proceed while the Important issue is unfixed (see `code-review.md`).
+Fix the Important issue, leave the Minor one logged, then move to Task 3. Do not proceed while the Important issue is unfixed (see `../_shared/code-review.md`).
 
 ## Template
 

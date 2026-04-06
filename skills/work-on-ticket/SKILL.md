@@ -113,7 +113,7 @@ If no parent can be found, the ticket is either a standalone issue or was create
 
 ## Handling Multiple Tickets
 
-If the user wants to work on multiple tickets, work on them one at a time in dependency order per `workflow.md`. Complete one ticket through the full `subagent-driven-development` cycle (including reviews) before starting the next. If the user wants genuinely parallel work, suggest separate sessions rather than trying to parallelise in one.
+If the user wants to work on multiple tickets, work on them one at a time in dependency order per `../../rules/common/workflow.md`. Complete one ticket through the full `subagent-driven-development` cycle (including reviews) before starting the next. If the user wants genuinely parallel work, suggest separate sessions rather than trying to parallelise in one.
 
 ## Edge Cases
 

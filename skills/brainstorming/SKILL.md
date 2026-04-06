@@ -5,14 +5,14 @@ description: "You MUST use this before any code edit: creating features, fixing 
 
 # Brainstorming (Router)
 
-This skill is the procedural entry point for the design step required by `instructions/common/workflow.md`. Its only job is to put the session into plan mode and then hand off to one of four mode skills:
+This skill is the procedural entry point for the design step required by `../../rules/common/workflow.md`. Its only job is to put the session into plan mode and then hand off to one of four mode skills:
 
 - `brainstorming-standard`: interactive dialogue, user knows the codebase
 - `brainstorming-guided`: interactive dialogue with codebase walkthrough, user is new to the area
 - `brainstorming-committee`: hands-off deliberation by three subagents, user reviews the final design
 - `brainstorming-skip`: lightweight design capture for cases where structured brainstorming would be overkill
 
-For the rule that no implementation may begin until a design has been approved, see `instructions/common/workflow.md`. For the rule that this skill must be invoked before any code edit, see `instructions/common/skills-policy.md`.
+For the rule that no implementation may begin until a design has been approved, see `../../rules/common/workflow.md`. For the rule that this skill must be invoked before any code edit, see `../../rules/common/skills-policy.md`.
 
 ## When to Run
 
@@ -20,7 +20,7 @@ Invoke this skill before any code edit, no matter how small. The four modes give
 
 ## Procedure
 
-1. **Enter plan mode.** Use `{{ENTER_PLAN_TOOL}}`. Plan mode's read-only safety enforces the design-before-implementation rule from `workflow.md` for the duration of the session, regardless of which mode is chosen.
+1. **Enter plan mode.** Use `{{ENTER_PLAN_TOOL}}`. Plan mode's read-only safety enforces the design-before-implementation rule from `../../rules/common/workflow.md` for the duration of the session, regardless of which mode is chosen.
 2. **Ask the user which mode.** Use `{{ASK_USER_QUESTION_TOOL}}` exactly as specified below. **MUST NOT** ask as plain text, and **MUST NOT** assume a default mode without asking.
 3. **Hand off via `{{INVOKE_SKILL_TOOL}}`.** Invoke the chosen mode skill and stop. Do not run any of the steps yourself; the mode skill owns the entire procedure from this point. **MUST NOT** invoke more than one mode skill, and **MUST NOT** invoke `create-tickets` or `subagent-driven-development` directly: those are downstream of the mode skill, not of the router.
 

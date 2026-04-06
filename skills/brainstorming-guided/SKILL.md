@@ -7,7 +7,7 @@ description: "Turns an idea into an approved design through interactive dialogue
 
 Interactive design dialogue with built-in teaching for a user who does not know the codebase well. Same outcome as `brainstorming-standard`, but every phase explicitly surfaces what was found in the codebase and why it matters, so the user finishes the session with both a design and a working mental model of the area they will be touching.
 
-For the rule that no implementation may begin until the user has approved a design, see `instructions/common/workflow.md`. The design review step is delegated to the `design-review` skill.
+For the rule that no implementation may begin until the user has approved a design, see `../../rules/common/workflow.md`. The design review step is delegated to the `design-review` skill.
 
 ## Preconditions
 
@@ -36,7 +36,7 @@ These principles apply at every step of the procedure. They are what makes this 
 
 ## What Guided Mode Does Not Change
 
-- The hard gate from `workflow.md` still applies. No implementation before approval.
+- The hard gate from `../../rules/common/workflow.md` still applies. No implementation before approval.
 - One question per message, multiple choices are preferred.
 - YAGNI applies. Teaching the user about the codebase is not a licence to design extra features.
 - The completion gate is identical to `brainstorming-standard`: consolidated summary, `design-review` Approved, explicit final approval.

@@ -7,11 +7,16 @@ description: "Turns an idea into an approved design through autonomous deliberat
 
 Hands-off design dialogue. The user provides the initial brief, then three subagents with deliberately different perspectives deliberate on each design decision and converge on consensus. The user only sees the final design.
 
-For the rule that no implementation may begin until the user has approved a design, see `instructions/common/workflow.md`. For the rules on dispatching subagents (context isolation, type selection, model selection, git ban, worktree ban), see `instructions/common/subagents.md`. The design review step is delegated to the `design-review` skill.
+For the rule that no implementation may begin until the user has approved a design, see `../../rules/common/workflow.md`. The iron-law rules on subagent dispatch (context isolation, git ban, worktree ban, privilege ban) live in `../../rules/common/subagents.md`. The procedural dispatch rules (subagent type selection, model selection, escalation) live in `../_shared/subagent-dispatch.md`. The design review step is delegated to the `design-review` skill.
 
-## Load the Committee Member Prompts First
+## Load Required Files First
 
-This skill depends on the prompt templates in `committee-member-prompt.md` (sibling file in this skill directory). Those templates are **not** always in context; they are loaded only when this skill is invoked. Before running the procedure below, you **MUST** read `committee-member-prompt.md` using the {{READ_FILE_TOOL}} tool if you have not already read it in this session. The committee dispatch in step 4 paste-fills those templates with codebase context and decision lists, so they need to be in your context first.
+This skill depends on two sibling/shared files that are **not** always in context:
+
+- `committee-member-prompt.md` (sibling) - prompt templates paste-filled in step 4
+- `../_shared/subagent-dispatch.md` - procedural rules for dispatching the committee members
+
+Before running the procedure below, you **MUST** read both files using the {{READ_FILE_TOOL}} tool if you have not already read them in this session.
 
 ## Preconditions
 
@@ -42,7 +47,7 @@ Each committee member uses a specialised subagent type that reinforces its persp
 | Architect   | Patterns, separation of concerns, well-defined interfaces, testability               | `architect-reviewer`    |
 | Advocate    | Correctness, edge cases, robustness under failure, hard-to-misuse interfaces         | `qa-expert`             |
 
-For the general rule that specialised subagent types **MUST** be preferred over `general-purpose`, see `instructions/common/subagents.md`. The mapping above is the committee-specific instance of that rule.
+For the general rule that specialised subagent types **MUST** be preferred over `general-purpose`, see `../../rules/common/subagents.md`. The mapping above is the committee-specific instance of that rule.
 
 ### Pragmatist Type Mapping
 
@@ -95,8 +100,8 @@ You **MUST NOT** invoke `create-tickets` or `subagent-driven-development` until 
 |------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
 | Asking the user clarifying questions during deliberation               | The committee replaces user questioning. The only allowed user questions are step 1 and the optional step 2 escape hatch.      |
 | Dispatching committee members sequentially                             | They **MUST** run concurrently. One message, three tool calls.                                                                 |
-| Passing session history to committee members                           | Violates context isolation from `subagents.md`. Pass the brief, the codebase context, the decisions, and prior consensus only. |
-| Using `general-purpose` when a specialised type is available           | Violates the type-selection rule in `subagents.md`.                                                                            |
+| Passing session history to committee members                           | Violates context isolation from `../../rules/common/subagents.md`. Pass the brief, the codebase context, the decisions, and prior consensus only. |
+| Using `general-purpose` when a specialised type is available           | Violates the type-selection rule in `../../rules/common/subagents.md`.                                                                            |
 | Showing the user the full deliberation transcripts                     | The user wants the design, not the process. Surface only the result, splits, and flagged risks.                                |
 | Skipping `design-review` because the committee already reviewed itself | The committee deliberates, it does not review. `design-review` is a separate, holistic check.                                  |
 | Running more than one tiebreaking round                                | If one tiebreaker cannot converge, the decision is genuinely unresolved and belongs to the user.                               |

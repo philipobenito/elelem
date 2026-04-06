@@ -1,11 +1,13 @@
 ---
 name: dispatching-parallel-agents
-description: Dispatches multiple focused subagents concurrently in a single message when a problem decomposes into independent domains. For the standing rules on context isolation, subagent type selection, and model selection, see instructions/common/subagents.md.
+description: Dispatches multiple focused subagents concurrently in a single message when a problem decomposes into independent domains. Each agent gets isolated context and a self-contained task; the orchestrator reconciles their outputs.
 ---
 
 # Dispatching Parallel Agents
 
-The standing rules on every subagent dispatch (context isolation, git ownership, subagent type selection, model selection, answering subagent questions, escalation) live in `instructions/common/subagents.md`. This skill is the procedure for the specific case where the work decomposes into two or more independent problem domains that can be investigated or fixed concurrently.
+The iron-law rules on every subagent dispatch (context isolation, git ownership, worktree ban, privilege ban) live in `../../rules/common/subagents.md`. The procedural rules (subagent type selection, model selection, answering subagent questions, escalation) live in `../_shared/subagent-dispatch.md`. This skill is the procedure for the specific case where the work decomposes into two or more independent problem domains that can be investigated or fixed concurrently.
+
+Before running the procedure below, you **MUST** read `../_shared/subagent-dispatch.md` using the Read tool if you have not already read it in this session.
 
 ## When This Skill Applies
 
@@ -22,9 +24,9 @@ If any of these is false, a parallel dispatch is not valid. Either investigate s
 
 1. **Identify independent domains.** Group the work by what is broken or what needs building. Each group **MUST** map to exactly one problem domain with no shared files, shared state, or shared causal chain. If you cannot cleanly partition the work, stop. This skill does not apply.
 
-2. **Annotate each task with its subagent type and model.** Per `subagents.md`, pick the most specific subagent type for each task (for example `typescript-pro` for a TypeScript test file, `python-pro` for a Python module, `debugger` for diagnostic work). Start every dispatch on `haiku` and escalate only on evidence.
+2. **Annotate each task with its subagent type and model.** Per `../../rules/common/subagents.md`, pick the most specific subagent type for each task (for example `typescript-pro` for a TypeScript test file, `python-pro` for a Python module, `debugger` for diagnostic work). Start every dispatch on `haiku` and escalate only on evidence.
 
-3. **Construct each task prompt.** Per `subagents.md`, do not let any subagent inherit your session history. For each agent, write a self-contained prompt containing:
+3. **Construct each task prompt.** Per `../../rules/common/subagents.md`, do not let any subagent inherit your session history. For each agent, write a self-contained prompt containing:
 
    - The specific scope (one file, one subsystem, one failing behaviour)
    - The failing symptoms, including exact test names and error messages where relevant
@@ -38,13 +40,13 @@ If any of these is false, a parallel dispatch is not valid. Either investigate s
    - Read the full summary
    - Check for file-level conflicts: did any two agents touch the same file? If yes, read both diffs and confirm the edits do not overwrite each other
    - Check for systematic errors: agents operating in isolation can reach the same wrong conclusion
-   - Run the full verification suite against the merged state per `instructions/common/verification.md`. Per-agent local verification is not sufficient; the parallel fixes only pass the gate once they pass together.
+   - Run the full verification suite against the merged state per `../../rules/common/verification.md`. Per-agent local verification is not sufficient; the parallel fixes only pass the gate once they pass together.
 
-6. **Act on failure modes.** If reconciliation fails (edit conflict, systematic error, merged verification red), follow the escalation ladder in `subagents.md`: more context and re-dispatch, more capable model, smaller scope, or escalation to the human partner. You **MUST NOT** patch the output manually in the orchestrator context.
+6. **Act on failure modes.** If reconciliation fails (edit conflict, systematic error, merged verification red), follow the escalation ladder in `../../rules/common/subagents.md`: more context and re-dispatch, more capable model, smaller scope, or escalation to the human partner. You **MUST NOT** patch the output manually in the orchestrator context.
 
 ## Parallel-Specific Mistakes
 
-These are the mistakes that are unique to parallel dispatch. General subagent-dispatch mistakes are covered in `subagents.md`.
+These are the mistakes that are unique to parallel dispatch. General subagent-dispatch mistakes are covered in `../../rules/common/subagents.md`.
 
 | Mistake                                                | Correct                                                                        |
 |--------------------------------------------------------|--------------------------------------------------------------------------------|
@@ -79,4 +81,4 @@ On return:
 - Agent 2 fixed a misplaced `threadId` field in the batch completion event
 - Agent 3 added a wait for async tool execution in the approval path
 
-Reconciliation: check for file-level overlap (none; each agent touched a distinct test file plus a distinct production module). Run the full test suite against the merged working tree per `verification.md`. If green, report the work as complete with the cited command output. If red, identify which fix regressed and escalate per `subagents.md`.
+Reconciliation: check for file-level overlap (none; each agent touched a distinct test file plus a distinct production module). Run the full test suite against the merged working tree per `../../rules/common/verification.md`. If green, report the work as complete with the cited command output. If red, identify which fix regressed and escalate per `../../rules/common/subagents.md`.

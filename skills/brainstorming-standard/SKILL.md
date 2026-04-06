@@ -7,11 +7,11 @@ description: "Turns an idea into an approved design through interactive dialogue
 
 Interactive design dialogue for a user who already knows the codebase. The conversation is the design medium; nothing is written to disk during brainstorming.
 
-For the rule that no implementation may begin until the user has approved a design, see `instructions/common/workflow.md`. For the rule that this skill must be invoked before creative work, see `instructions/common/skills-policy.md`. The design review step is delegated to the `design-review` skill.
+For the rule that no implementation may begin until the user has approved a design, see `../../rules/common/workflow.md`. For the rule that this skill must be invoked before creative work, see `../../rules/common/skills-policy.md`. The design review step is delegated to the `design-review` skill.
 
 ## Preconditions
 
-- You **MUST** be in plan mode before invoking this skill. If you are not, enter plan mode now using `{{ENTER_PLAN_TOOL}}`. Plan mode's read-only safety enforces the design-before-implementation rule from `workflow.md`.
+- You **MUST** be in plan mode before invoking this skill. If you are not, enter plan mode now using `{{ENTER_PLAN_TOOL}}`. Plan mode's read-only safety enforces the design-before-implementation rule from `../../rules/common/workflow.md`.
 - This skill is invoked either directly by the orchestrator or by the `brainstorming` router after the user selects standard mode. If the user has not chosen a mode yet, invoke `brainstorming` instead so they can pick.
 
 ## Procedure
@@ -28,7 +28,7 @@ For the rule that no implementation may begin until the user has approved a desi
 ## Working in Existing Codebases
 
 - Follow existing patterns. Where existing code has problems that affect the work, include targeted improvements in the design.
-- **MUST NOT** propose unrelated refactoring. Per the YAGNI rule in `instructions/common/coding-style.md`, "while we are here" cleanups are forbidden during a brainstorming pass.
+- **MUST NOT** propose unrelated refactoring. Per the YAGNI rule in `../../rules/common/coding-style.md`, "while we are here" cleanups are forbidden during a brainstorming pass.
 
 ## Worked Example
 
@@ -62,5 +62,5 @@ If any one of these is false, the gate has not been crossed, and you **MUST NOT*
 | Skipping the consolidation step and dispatching review against the conversation | `design-review` requires a single summary block. Conversation history is not a design. |
 | Treating "looks fine" as final approval                                         | Explicit approval is required. Ask directly.                                           |
 | Inventing requirements the user did not state                                   | YAGNI. The design covers what was asked for, not what you would also build.            |
-| Invoking an implementation skill before the gate is crossed                     | Violates the `workflow.md` design-before-implementation rule.                          |
+| Invoking an implementation skill before the gate is crossed                     | Violates the `../../rules/common/workflow.md` design-before-implementation rule.                          |
 | Proposing unrelated refactors discovered during exploration                     | Log them as separate items for the user. Do not bundle them into the design.           |
