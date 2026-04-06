@@ -6,6 +6,8 @@
 # <project>/.claude/rules/ (project scope). Common rules (instructions/common/*.md)
 # are always-on and have no frontmatter. Language packs (instructions/<lang>/*.md)
 # use YAML `paths:` frontmatter and are auto-loaded when Claude reads matching files.
+# Note: deselecting a common rule on re-install does not remove the previously
+# installed file; delete it manually from the rules target directory if needed.
 #
 # Skills (./skills/) install to ~/.claude/skills/ or <project>/.claude/skills/.
 # The skills target directory is deleted and regenerated on each install so that
@@ -46,6 +48,8 @@ multiselect() {
   local items_ref="$2"
   local defaults_ref="$3"
 
+  [[ "$result_var" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "multiselect: invalid result variable name: $result_var" >&2; return 1; }
+
   # Read items and defaults via indirect expansion (bash 3.2 compatible).
   # eval into local arrays to avoid nameref.
   local items_list defaults_list
@@ -63,6 +67,10 @@ multiselect() {
 
   # Hide cursor; restore on EXIT/INT/TERM.
   tput civis || true
+  local _ms_old_exit _ms_old_int _ms_old_term
+  _ms_old_exit="$(trap -p EXIT)"
+  _ms_old_int="$(trap -p INT)"
+  _ms_old_term="$(trap -p TERM)"
   trap 'tput cnorm || true' EXIT INT TERM
 
   _multiselect_draw() {
@@ -85,11 +93,11 @@ multiselect() {
   while true; do
     local key
     # Read up to 3 bytes to capture escape sequences.
-    IFS= read -rsn1 key
+    IFS= read -rsn1 key </dev/tty
     if [[ "$key" == $'\x1b' ]]; then
       local seq1 seq2
-      IFS= read -rsn1 -t 0.1 seq1 || true
-      IFS= read -rsn1 -t 0.1 seq2 || true
+      IFS= read -rsn1 -t 0.1 seq1 </dev/tty || true
+      IFS= read -rsn1 -t 0.1 seq2 </dev/tty || true
       key="${key}${seq1}${seq2}"
     fi
 
@@ -119,7 +127,9 @@ multiselect() {
 
   # Restore cursor.
   tput cnorm || true
-  trap - EXIT INT TERM
+  eval "${_ms_old_exit:-trap - EXIT}"
+  eval "${_ms_old_int:-trap - INT}"
+  eval "${_ms_old_term:-trap - TERM}"
 
   # Populate the caller's result variable with selected items.
   local result_items=()
@@ -127,6 +137,7 @@ multiselect() {
     [[ "${selected[$i]}" == "1" ]] && result_items+=("${items_list[$i]}")
   done
   eval "${result_var}=(\"\${result_items[@]}\")"
+  unset -f _multiselect_draw
 }
 
 echo "Install scope:"
@@ -244,6 +255,7 @@ else
 fi
 
 if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
+  echo
   echo "Skills:"
   skills_items=("Install skills")
   skills_defaults=(1)
