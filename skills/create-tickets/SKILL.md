@@ -39,6 +39,8 @@ The detection of which ticketing system is in use lives in the `detect-ticketing
 
    When the rule is satisfied, group children under named Stories and record a **one-sentence rationale per Story** for inclusion in the epic body's `## Design` section under a `### Story: <name>` sub-heading.
 
+   **Single-Story check.** Before drafting any Stories, verify that the grouping produces **at least 2 Stories**. If the proposed grouping yields exactly one Story (one Story wrapping every Task), this is the forbidden single-Story epic shape per `skills/_shared/tickets.md`'s Validation section. Discard the grouping and stay flat (Epic + Tasks). Do not draft Stories in this case.
+
 3. **Draft the epic body.** Per `skills/_shared/tickets.md`, the epic body is the single source of truth and **MUST** contain the full approved design under a `## Design` heading. Use this structure:
 
    ```markdown
@@ -53,14 +55,17 @@ The detection of which ticketing system is in use lives in the `detect-ticketing
     testing strategy, and anything else that emerged from the design
     conversation]
 
-   ### Story: <name>            <!-- only if Stories are introduced -->
+   ### Story: <name>            <!-- nested under ## Design; only if Stories are introduced -->
 
-   [one-sentence rationale for this grouping]
+   [one-sentence rationale for this grouping. This sub-heading is part of the
+    epic's `## Design` block, not a peer section.]
 
    ## Tickets
 
    - [Story or Task title] - [reference once created]
    ```
+
+   The `## Tickets` block above is the human-readable index used inside an epic body in a real ticketing system (GitHub, Jira, Linear, GitLab); the actual parent-child relationships live in the system's native links, not in this list. The Markdown fallback uses a different shape where heading structure carries the tier markers, see "Markdown Fallback" below.
 
    Do not link to external files, conversation transcripts, or commits in place of the `## Design` section. See `skills/_shared/tickets.md` on a single source of truth.
 
@@ -186,9 +191,10 @@ When `detect-ticketing-system` returns "none", write a structured Markdown file 
 
 [The full approved design, the same content that would go in an epic body]
 
-### Story: <name>            <!-- only if Stories are introduced -->
+### Story: <name>            <!-- nested under ## Design; only if Stories are introduced -->
 
-[one-sentence rationale, see "When to introduce the Story tier"]
+[one-sentence rationale, see "When to introduce the Story tier". This sub-heading
+ is part of the `## Design` block, not a peer section.]
 
 ## Tickets
 

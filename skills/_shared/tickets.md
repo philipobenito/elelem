@@ -39,13 +39,13 @@ Stories **MUST NOT** carry a `## Design` heading or any design content. The epic
 
 Every ticket created from a design carries a tier marker so recovery does not need to inspect bodies or guess from link topology. The marker mechanism varies by system:
 
-| System    | Tier marker mechanism |
-|-----------|------------------------|
-| Jira      | Native issue type (Epic, Story, Task or Sub-task) |
-| GitHub    | Label: `tier:epic` / `tier:story` / `tier:task` |
-| Linear    | Label: `tier:epic` / `tier:story` / `tier:task` |
-| GitLab    | Native group Epic where available, otherwise label as for GitHub |
-| Markdown  | Heading level: `##` Epic, `###` Story, `####` Task |
+| System   | Tier marker mechanism                                            |
+|----------|------------------------------------------------------------------|
+| Jira     | Native issue type (Epic, Story, Task or Sub-task)                |
+| GitHub   | Label: `tier:epic` / `tier:story` / `tier:task`                  |
+| Linear   | Label: `tier:epic` / `tier:story` / `tier:task`                  |
+| GitLab   | Native group Epic where available, otherwise label as for GitHub |
+| Markdown | Heading level: `##` Epic, `###` Story, `####` Task               |
 
 Tier markers are mandatory on every ticket the `create-tickets` skill produces. They are the primary discriminator used by `resolve_epic_context` (see "Recovery Before Implementation").
 
@@ -86,15 +86,17 @@ If a parent reference cannot be resolved (the ticket was deleted, or permission 
 
 ### Decision tree
 
-| Node state | Result |
-|------------|--------|
-| Explicit Epic tier marker | Treat as Epic. Extract `## Design`. |
+| Node state                                          | Result                                      |
+|-----------------------------------------------------|---------------------------------------------|
+| Explicit Epic tier marker                           | Treat as Epic. Extract `## Design`.         |
 | Explicit Story tier marker, parent resolves to Epic | Read theme statement, walk one hop to Epic. |
-| Explicit Story tier marker, parent does not resolve | Error: surface unresolved parent. |
-| No tier marker, body has `## Design`, no parent | Treat as Epic (legacy fallback). |
-| No tier marker, body has `## Design`, has parent | Keep walking. **Do not** treat as Epic. |
-| No tier marker, no `## Design`, no parent | Error: cannot recover design. |
-| Any node with `## Design` in a Story body | Error: single-source-of-truth violation. |
+| Explicit Story tier marker, parent does not resolve | Error: surface unresolved parent.           |
+| No tier marker, body has `## Design`, no parent     | Treat as Epic (legacy fallback).            |
+| No tier marker, body has `## Design`, has parent    | Keep walking. **Do not** treat as Epic.     |
+| No tier marker, no `## Design`, no parent           | Error: cannot recover design.               |
+| Any node with `## Design` in a Story body           | Error: single-source-of-truth violation.    |
+
+**Tiebreaker.** An explicit Epic tier marker always wins over a legacy-fallback `## Design` candidate. If the walk passes through a no-marker node with `## Design` and a parent (per the "keep walking" row above), and then reaches an explicit Epic marker, the explicit marker is the Epic. The intermediate `## Design` is ignored and is not treated as an ambiguity error. Ambiguity only triggers when the legacy fallback finds two or more candidates AND no explicit marker resolves the walk.
 
 If the recovered Epic has no `## Design` section at all (for example, because the tickets were created manually or by an older workflow that predates this rule), follow the manual fallback: read whatever context is in the epic body, read sibling tickets to understand scope boundaries, present what you have to the human partner, and ask whether they can provide additional context before proceeding. You **MUST NOT** guess the design and proceed.
 
