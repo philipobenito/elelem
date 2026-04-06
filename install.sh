@@ -222,26 +222,20 @@ for dir in "$RULES_SOURCE"/*/; do
 done
 
 if (( ${#lang_dirs[@]} > 0 )); then
+  lang_defaults=()
+  for _ in "${lang_dirs[@]}"; do
+    lang_defaults+=(0)
+  done
   echo
-  echo "Available language packs: ${lang_dirs[*]}"
-  read -rp "Install which? (space-separated, 'all', or 'none') [none]: " picks
-  picks="${picks:-none}"
+  echo "Language packs to install (none selected by default):"
+  multiselect lang_selected lang_dirs lang_defaults
 
-  if [[ "$picks" == "all" ]]; then
-    picks="${lang_dirs[*]}"
-  fi
-
-  if [[ "$picks" != "none" ]]; then
-    for pick in $picks; do
-      src="$RULES_SOURCE/$pick"
-      if [[ -d "$src" ]]; then
-        rm -rf "$rules_target/$pick"
-        cp -r "$src" "$rules_target/$pick"
-        substitute_tool_names "$rules_target/$pick"
-        echo "  installed: $pick"
-      else
-        echo "  skipped (not found): $pick" >&2
-      fi
+  if (( ${#lang_selected[@]} > 0 )); then
+    for pick in "${lang_selected[@]}"; do
+      rm -rf "$rules_target/$pick"
+      cp -r "$RULES_SOURCE/$pick" "$rules_target/$pick"
+      substitute_tool_names "$rules_target/$pick"
+      echo "  installed: $pick"
     done
   fi
 else
