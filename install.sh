@@ -6,12 +6,13 @@
 # <project>/.claude/rules/ (project scope). Common rules (rules/common/*.md)
 # are always-on and have no frontmatter. Language packs (rules/<lang>/*.md)
 # use YAML `paths:` frontmatter and are auto-loaded when Claude reads matching files.
-# Note: deselecting a common rule on re-install does not remove the previously
-# installed file; delete it manually from the rules target directory if needed.
 #
 # Skills (./skills/) install to ~/.claude/skills/ or <project>/.claude/skills/.
-# The skills target directory is deleted and regenerated on each install so that
-# skills removed from the repo do not linger locally.
+#
+# A manifest file (.elelem-manifest) in this repo tracks which files were
+# installed and where. On re-install to the same target, files present in the
+# old manifest but absent from the new one are removed. Files not in the
+# manifest (user-created) are left untouched.
 #
 # Tool-name placeholders of the form {{TOOL_NAME}} in both rules and skills are
 # substituted with Claude Code tool names during install, so source files stay
@@ -189,6 +190,8 @@ esac
 
 rules_target="$base/rules"
 skills_target="$base/skills"
+manifest_file="$SCRIPT_DIR/.elelem-manifest"
+manifest_entries=()
 
 mkdir -p "$rules_target"
 
@@ -237,6 +240,7 @@ else
   mkdir -p "$rules_target/common"
   for _item in "${common_selected[@]}"; do
     cp "$RULES_SOURCE/common/${_item}.md" "$rules_target/common/${_item}.md"
+    manifest_entries+=("rules/common/${_item}.md")
   done
   substitute_tool_names "$rules_target/common"
   echo "  installed: ${common_selected[*]}"
@@ -262,8 +266,12 @@ if (( ${#lang_dirs[@]} > 0 )); then
 
   if (( ${#lang_selected[@]} > 0 )); then
     for pick in "${lang_selected[@]}"; do
-      rm -rf "$rules_target/$pick"
-      cp -r "$RULES_SOURCE/$pick" "$rules_target/$pick"
+      mkdir -p "$rules_target/$pick"
+      for _f in "$RULES_SOURCE/$pick/"*.md; do
+        [[ -f "$_f" ]] || continue
+        cp "$_f" "$rules_target/$pick/$(basename "$_f")"
+        manifest_entries+=("rules/$pick/$(basename "$_f")")
+      done
       substitute_tool_names "$rules_target/$pick"
       echo "  installed: $pick"
     done
@@ -282,9 +290,13 @@ if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
 
   if (( ${#skills_selected[@]} > 0 )); then
     echo "Installing skills -> $skills_target/"
-    rm -rf "$skills_target"
     mkdir -p "$skills_target"
-    cp -r "$SKILLS_SOURCE"/. "$skills_target"/
+    while IFS= read -r -d '' _f; do
+      _rel="${_f#"$SKILLS_SOURCE"/}"
+      mkdir -p "$skills_target/$(dirname "$_rel")"
+      cp "$_f" "$skills_target/$_rel"
+      manifest_entries+=("skills/$_rel")
+    done < <(find "$SKILLS_SOURCE" -type f -print0)
     substitute_tool_names "$skills_target"
 
     installed_skills=()
@@ -300,6 +312,41 @@ else
   echo
   echo "No skills found in $SKILLS_SOURCE (skipping skills install)."
 fi
+
+if [[ -f "$manifest_file" ]]; then
+  old_base=""
+  removed=0
+  first_line=1
+  while IFS= read -r line; do
+    if (( first_line )); then
+      old_base="$line"
+      first_line=0
+      continue
+    fi
+    [[ -z "$line" ]] && continue
+    if [[ "$old_base" != "$base" ]]; then
+      continue
+    fi
+    found=0
+    for new_entry in "${manifest_entries[@]+"${manifest_entries[@]}"}"; do
+      if [[ "$new_entry" == "$line" ]]; then
+        found=1
+        break
+      fi
+    done
+    if (( found == 0 )) && [[ -f "$base/$line" ]]; then
+      rm "$base/$line"
+      echo "  removed stale: $line"
+      (( removed++ )) || true
+    fi
+  done < "$manifest_file"
+
+  if (( removed > 0 )); then
+    find "$rules_target" "$skills_target" -type d -empty -delete 2>/dev/null || true
+  fi
+fi
+
+{ echo "$base"; printf '%s\n' "${manifest_entries[@]+"${manifest_entries[@]}"}" | sort; } > "$manifest_file"
 
 echo
 echo "Done."
