@@ -2,9 +2,9 @@
 #
 # Installs Claude Code rules and skills from this repo.
 #
-# Rules (./instructions/) install to ~/.claude/rules/ (user scope) or
-# <project>/.claude/rules/ (project scope). Common rules (instructions/common/*.md)
-# are always-on and have no frontmatter. Language packs (instructions/<lang>/*.md)
+# Rules (./rules/) install to ~/.claude/rules/ (user scope) or
+# <project>/.claude/rules/ (project scope). Common rules (rules/common/*.md)
+# are always-on and have no frontmatter. Language packs (rules/<lang>/*.md)
 # use YAML `paths:` frontmatter and are auto-loaded when Claude reads matching files.
 # Note: deselecting a common rule on re-install does not remove the previously
 # installed file; delete it manually from the rules target directory if needed.
@@ -21,7 +21,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RULES_SOURCE="$SCRIPT_DIR/instructions"
+RULES_SOURCE="$SCRIPT_DIR/rules"
 SKILLS_SOURCE="$SCRIPT_DIR/skills"
 
 if ! { : >/dev/tty; } 2>/dev/null; then
@@ -178,14 +178,7 @@ case "$scope" in
     ;;
   u|U)
     base="$HOME/.claude"
-    echo
-    echo "Warning: user-scope path-scoped rules have known issues."
-    echo "  See https://github.com/anthropics/claude-code/issues/21858"
-    echo "  Common rules (no frontmatter) are unaffected and will load normally."
-    confirm_items=("I understand, continue")
-    confirm_defaults=(0)
-    multiselect confirm_selected confirm_items confirm_defaults
-    (( ${#confirm_selected[@]} > 0 )) || { echo "Aborted."; exit 0; }
+    echo "Installing to $HOME/.claude/"
     ;;
   *)
     # Unreachable: multiselect constrains scope to "p" or "u".
@@ -235,8 +228,8 @@ done
 multiselect common_selected common_items common_defaults
 
 if (( ${#common_selected[@]} == 0 )); then
-  echo "Warning: no common instructions selected."
-  confirm_common_items=("Continue with no common instructions")
+  echo "Warning: no common rules selected."
+  confirm_common_items=("Continue with no common rules")
   confirm_common_defaults=(0)
   multiselect confirm_common_selected confirm_common_items confirm_common_defaults
   (( ${#confirm_common_selected[@]} > 0 )) || { echo "Aborted."; exit 0; }
