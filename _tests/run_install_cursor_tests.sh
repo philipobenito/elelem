@@ -492,9 +492,37 @@ EOF
   fi
 }
 
+test_guard_home_with_regex_metacharacters_does_not_misclassify_scope() {
+  local name="guard_home_with_regex_metacharacters_does_not_misclassify_scope"
+
+  local fakehome
+  fakehome="$(mktemp -d -t 'home.with.dots.XXXXXX')"
+  trap "rm -rf '$fakehome'" RETURN
+
+  local sibling_base="${fakehome}X.cursor"
+  mkdir -p "$sibling_base"
+  mkdir -p "${sibling_base}/.claude/rules"
+  ln -s "${sibling_base}/.claude/rules" "$sibling_base/rules"
+
+  local saved_home="$HOME"
+  HOME="$fakehome"
+  local exit_code=0
+  cursor_assert_not_under_claude "$sibling_base" 2>/dev/null || exit_code=$?
+  HOME="$saved_home"
+
+  if [[ $exit_code -ne 0 ]]; then
+    echo "[PASS] $name"
+    (( passed++ )) || true
+  else
+    echo "[FAIL] $name: guard accepted a base whose project-scope rules dir resolves under .claude (HOME contained regex metachars)"
+    (( failed++ )) || true
+  fi
+}
+
 # Run all tests
 test_install_cursor_exists
 test_install_cursor_executable
+test_guard_home_with_regex_metacharacters_does_not_misclassify_scope
 test_guard_user_scope_no_claude
 test_guard_user_scope_rules_symlink_collision
 test_guard_user_scope_skills_symlink_collision

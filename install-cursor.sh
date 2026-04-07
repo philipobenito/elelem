@@ -78,7 +78,7 @@ _cursor_substitute_placeholders() {
     local placeholder="${placeholders[$i]}"
     local substitution="${substitutions[$i]}"
     local escaped_substitution
-    escaped_substitution="$(printf '%s\n' "$substitution" | sed 's:[\\&]:\\&:g')"
+    escaped_substitution="$(printf '%s\n' "$substitution" | sed 's:[\\&|]:\\&:g')"
     perl_expr="${perl_expr}s|\\{\\{${placeholder}\\}\\}|${escaped_substitution}|g; "
   done
 
@@ -211,8 +211,10 @@ cursor_assert_not_under_claude() {
   guarded_paths+=("$HOME/.claude/skills")
 
   # If base is project-scope (does not start with $HOME/.cursor), also guard
-  # the project-level .claude directories.
-  if [[ ! "$base" =~ ^"$HOME"/.cursor ]]; then
+  # the project-level .claude directories. String prefix comparison, not a
+  # regex, so a $HOME containing regex metacharacters does not corrupt the
+  # match.
+  if [[ "$base" != "$HOME/.cursor" && "$base" != "$HOME/.cursor/"* ]]; then
     local project_root
     project_root="${base%/.cursor}"
     guarded_paths+=("$project_root/.claude/rules")
