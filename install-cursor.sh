@@ -272,6 +272,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   rules_target="$base/rules"
   skills_target="$base/skills"
   manifest_entries=()
+  manifest_file="$SCRIPT_DIR/.elelem-manifest-cursor"
   mkdir -p "$rules_target"
 
   echo
@@ -362,8 +363,33 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "No skills found in $SKILLS_SOURCE (skipping skills install)."
   fi
 
+  scan_no_unsubstituted_placeholders "$base" || exit 1
+
+  prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries
+  write_manifest "$manifest_file" "$base" manifest_entries
+
   echo
-  echo "PENDING: Manifest write, scan, and completion summary deferred to Task 4."
-  echo "Install base: $base"
-  exit 0
+  echo "Recommendation: disable third-party config loading in Cursor"
+  echo
+  echo "Cursor will, by default, also load rules and skills from"
+  echo ".claude/, .codex/, and similar directories. If you have"
+  echo "installed elelem for Claude Code on the same machine, Cursor"
+  echo "will end up loading two copies of every rule, one with"
+  echo "Claude tool names and one with Cursor tool names, producing"
+  echo "incoherent guidance."
+  echo
+  echo "To prevent this, open:"
+  echo "  Cursor Settings -> Rules, Skills, Subagents"
+  echo "  -> \"Include third-party Plugins, Skills, and other configs\""
+  echo "and turn it OFF."
+  echo
+
+  echo "Done."
+  echo "Install base:  $base"
+  echo "Manifest:      $manifest_file"
+  echo
+  echo "Cursor placeholder map:"
+  for (( i=0; i<${#CURSOR_PLACEHOLDERS[@]}; i++ )); do
+    printf '  {{%s}} -> %s\n' "${CURSOR_PLACEHOLDERS[$i]}" "${CURSOR_SUBSTITUTIONS[$i]}"
+  done
 fi
