@@ -178,14 +178,23 @@ After any change to rules or skills:
 
 ## FAQ
 
-**Why do you recommend disabling third-party config loading in Cursor and opencode?**
+<details>
+<summary><strong>Why do you recommend disabling third-party config loading in Cursor and opencode?</strong></summary>
 
 Each harness uses different internal tool names. Claude Code uses PascalCase names like `Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob`, `AskUserQuestion`, and `Task`. opencode uses lowercase names like `read`, `write`, `edit`, `bash`, `grep`, `glob`, and `task`. Cursor uses `Read`, `Write`, `StrReplace`, `Shell`, `Grep`, `Glob`, and `AskQuestion` (and has no native subagent or task-tracker primitives). At install time, elelem rewrites `{{TOOL_NAME}}` placeholders to the harness-specific name. If a second harness cross-loads the Claude-substituted rules from `~/.claude/`, the instructions refer to tool names the agent in that harness does not recognise, producing incoherent guidance. Disabling third-party config loading keeps each harness reading only its own rule tree.
 
-**Can I install elelem for more than one harness on the same machine?**
+</details>
+
+<details>
+<summary><strong>Can I install elelem for more than one harness on the same machine?</strong></summary>
 
 Yes. The three installers maintain separate manifest files (`.elelem-manifest-claude`, `.elelem-manifest-opencode`, `.elelem-manifest-cursor`), install to separate directories (`~/.claude/`, `~/.config/opencode/`, `~/.cursor/`), and prune only their own targets on re-install. The recommendation above (disabling third-party config loading) makes coexistence safe by preventing cross-loading.
 
-**Why does the Cursor installer not generate an `AGENTS.md` like the opencode installer?**
+</details>
+
+<details>
+<summary><strong>Why does the Cursor installer not generate an <code>AGENTS.md</code> like the opencode installer?</strong></summary>
 
 Cursor auto-discovers `.cursor/rules/*.mdc` (loaded directly, either Always Apply or by `globs:` matching) and `.cursor/skills/<name>/SKILL.md` (auto-discovered via the `description:` field). There is no opencode-style configuration manifest layer to reproduce; an `AGENTS.md` would be redundant. Setup advice (the third-party-includes toggle) belongs in this README rather than in a generated file, and harness-specific guidance is already substituted into the rules and skills themselves at install time.
+
+</details>
