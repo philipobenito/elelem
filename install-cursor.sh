@@ -242,7 +242,7 @@ cursor_assert_not_under_claude() {
     # Check rules path
     if [[ "$planned_canonical_rules" == "$guarded_canonical" ]] || \
        [[ "$planned_canonical_rules/" == "$guarded_canonical"/* ]]; then
-      echo "ERROR: Refusing to install Cursor files to $planned_canonical_rules." >&2
+      say_err "Refusing to install Cursor files to $planned_canonical_rules."
       echo "This path resolves under $guarded_canonical, which is owned by the Claude Code installer." >&2
       echo "Sharing this directory would silently corrupt installed Claude Code rules or skills because the" >&2
       echo "Cursor installer rewrites tool placeholders into the copies it writes." >&2
@@ -253,7 +253,7 @@ cursor_assert_not_under_claude() {
     # Check skills path
     if [[ "$planned_canonical_skills" == "$guarded_canonical" ]] || \
        [[ "$planned_canonical_skills/" == "$guarded_canonical"/* ]]; then
-      echo "ERROR: Refusing to install Cursor files to $planned_canonical_skills." >&2
+      say_err "Refusing to install Cursor files to $planned_canonical_skills."
       echo "This path resolves under $guarded_canonical, which is owned by the Claude Code installer." >&2
       echo "Sharing this directory would silently corrupt installed Claude Code rules or skills because the" >&2
       echo "Cursor installer rewrites tool placeholders into the copies it writes." >&2
@@ -268,12 +268,12 @@ cursor_assert_not_under_claude() {
 # Main installer flow (only run if script is executed directly, not sourced)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if ! { : >/dev/tty; } 2>/dev/null; then
-    echo "Error: this script requires an interactive terminal (/dev/tty is not accessible)." >&2
+    say_err "this script requires an interactive terminal (/dev/tty is not accessible)."
     exit 1
   fi
 
   if [[ ! -d "$RULES_SOURCE/common" ]]; then
-    echo "Error: $RULES_SOURCE/common does not exist" >&2
+    say_err "$RULES_SOURCE/common does not exist"
     exit 1
   fi
 
@@ -287,7 +287,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   mkdir -p "$rules_target"
 
   echo
-  echo "Common instruction files to install:"
+  say_step "Common instruction files to install:"
   common_items=()
   common_defaults=()
   for _f in "$RULES_SOURCE/common/"*.md; do
@@ -300,11 +300,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   multiselect common_selected common_items common_defaults
 
   if (( ${#common_selected[@]} == 0 )); then
-    echo "Warning: no common rules selected."
+    say_warn "no common rules selected."
     confirm_common_items=("Continue with no common rules")
     confirm_common_defaults=(0)
     multiselect confirm_common_selected confirm_common_items confirm_common_defaults
-    (( ${#confirm_common_selected[@]} > 0 )) || { echo "Aborted."; exit 0; }
+    (( ${#confirm_common_selected[@]} > 0 )) || { say_info "Aborted."; exit 0; }
   else
     common_files=()
     for _item in "${common_selected[@]}"; do
@@ -313,7 +313,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     CURSOR_RULE_GROUP_PREFIX="common"
     install_files_from_dir "$RULES_SOURCE/common" "$rules_target" "rules" manifest_entries common_files _cursor_rule_resolve_dst _cursor_rule_transform
     CURSOR_RULE_GROUP_PREFIX=""
-    echo "  installed: ${common_selected[*]}"
+    say_ok "installed: ${common_selected[*]}"
   fi
 
   lang_dirs=()
@@ -331,7 +331,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       lang_defaults+=(0)
     done
     echo
-    echo "Language packs to install (none selected by default):"
+    say_step "Language packs to install (none selected by default):"
     multiselect lang_selected lang_dirs lang_defaults
 
     if (( ${#lang_selected[@]} > 0 )); then
@@ -344,36 +344,36 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         CURSOR_RULE_GROUP_PREFIX="$pick"
         install_files_from_dir "$RULES_SOURCE/$pick" "$rules_target" "rules" manifest_entries lang_files _cursor_rule_resolve_dst _cursor_rule_transform
         CURSOR_RULE_GROUP_PREFIX=""
-        echo "  installed: $pick"
+        say_ok "installed: $pick"
       done
     fi
   else
     echo
-    echo "No language packs found in $RULES_SOURCE (common-only install)."
+    say_info "No language packs found in $RULES_SOURCE (common-only install)."
   fi
 
   if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
     echo
-    echo "Skills (target: $skills_target):"
+    say_step "Skills (target: $skills_target):"
     skills_items=("Install skills")
     skills_defaults=(1)
     multiselect skills_selected skills_items skills_defaults
 
     if (( ${#skills_selected[@]} > 0 )); then
-      echo "Installing skills -> $skills_target/"
+      say_info "Installing skills -> $skills_target/"
       mkdir -p "$skills_target"
       skills_files=()
       while IFS= read -r -d '' _f; do
         skills_files+=("${_f#"$SKILLS_SOURCE"/}")
       done < <(find "$SKILLS_SOURCE" -type f -print0)
       install_files_from_dir "$SKILLS_SOURCE" "$skills_target" "skills" manifest_entries skills_files _cursor_skill_resolve_dst _cursor_skill_transform
-      echo "  installed ${#skills_files[@]} skill file(s)"
+      say_ok "installed ${#skills_files[@]} skill file(s)"
     else
-      echo "Skipped skills install."
+      say_info "Skipped skills install."
     fi
   else
     echo
-    echo "No skills found in $SKILLS_SOURCE (skipping skills install)."
+    say_info "No skills found in $SKILLS_SOURCE (skipping skills install)."
   fi
 
   scan_no_unsubstituted_placeholders "$rules_target" || exit 1
@@ -383,7 +383,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   write_manifest "$manifest_file" "$base" manifest_entries
 
   echo
-  echo "Recommendation: disable third-party config loading in Cursor"
+  say_step "Recommendation: disable third-party config loading in Cursor"
   echo
   echo "Cursor will, by default, also load rules and skills from"
   echo ".claude/, .codex/, and similar directories. If you have"
@@ -398,7 +398,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "and turn it OFF."
   echo
 
-  echo "Done."
+  say_ok "Done."
   echo "Install base:  $base"
   echo "Manifest:      $manifest_file"
   echo

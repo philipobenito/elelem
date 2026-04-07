@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Installs elelem rules and skills for opencode.
+# Installs elelem rules and skills for OpenCode.
 #
 # Rules (./rules/) install to ~/.config/opencode/rules/ (user scope) or
 # <project>/.opencode/rules/ (project scope). Common rules are always-on.
@@ -11,13 +11,13 @@
 #
 # After install, opencode.json is written with an `instructions` glob array
 # listing every installed rule directory. AGENTS.md is written with a
-# human-readable preamble describing the opencode-specific behaviour.
+# human-readable preamble describing the OpenCode-specific behaviour.
 #
 # A manifest file (.elelem-manifest-opencode) in this repo tracks installed
 # files for prune-on-reinstall.
 #
 # Tool-name placeholders of the form {{TOOL_NAME}} in rules and skills are
-# substituted with opencode tool names during install.
+# substituted with OpenCode tool names during install.
 #
 
 set -euo pipefail
@@ -29,12 +29,12 @@ SKILLS_SOURCE="$SCRIPT_DIR/skills"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_install-common.sh"
 
 if ! { : >/dev/tty; } 2>/dev/null; then
-  echo "Error: this script requires an interactive terminal (/dev/tty is not accessible)." >&2
+  say_err "this script requires an interactive terminal (/dev/tty is not accessible)."
   exit 1
 fi
 
 if [[ ! -d "$RULES_SOURCE/common" ]]; then
-  echo "Error: $RULES_SOURCE/common does not exist" >&2
+  say_err "$RULES_SOURCE/common does not exist"
   exit 1
 fi
 
@@ -55,8 +55,8 @@ OPENCODE_PLACEHOLDERS=(
 
 OPENCODE_SUBSTITUTIONS=(
   'question'
-  'entering plan mode (in opencode, plan mode is toggled by the user pressing Tab; ask the user to enter plan mode before reviewing the design)'
-  'exiting plan mode (in opencode, the user toggles out of plan mode with Tab after approving the design; present the design and wait for explicit approval before any code edit)'
+  'entering plan mode (in OpenCode, plan mode is toggled by the user pressing Tab; ask the user to enter plan mode before reviewing the design)'
+  'exiting plan mode (in OpenCode, the user toggles out of plan mode with Tab after approving the design; present the design and wait for explicit approval before any code edit)'
   'todowrite'
   'task'
   'skill'
@@ -89,7 +89,7 @@ instructions_globs=()
 mkdir -p "$rules_target"
 
 echo
-echo "Common instruction files to install:"
+say_step "Common instruction files to install:"
 common_items=()
 common_defaults=()
 for _f in "$RULES_SOURCE/common/"*.md; do
@@ -102,11 +102,11 @@ done
 multiselect common_selected common_items common_defaults
 
 if (( ${#common_selected[@]} == 0 )); then
-  echo "Warning: no common rules selected."
+  say_warn "no common rules selected."
   confirm_common_items=("Continue with no common rules")
   confirm_common_defaults=(0)
   multiselect confirm_common_selected confirm_common_items confirm_common_defaults
-  (( ${#confirm_common_selected[@]} > 0 )) || { echo "Aborted."; exit 0; }
+  (( ${#confirm_common_selected[@]} > 0 )) || { say_info "Aborted."; exit 0; }
 else
   common_files=()
   for _item in "${common_selected[@]}"; do
@@ -116,7 +116,7 @@ else
   install_files_from_dir "$RULES_SOURCE/common" "$rules_target/common" "rules/common" manifest_entries common_files
   substitute_tool_names "$rules_target/common" OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
   instructions_globs+=("rules/common/*.md")
-  echo "  installed: ${common_selected[*]}"
+  say_ok "installed: ${common_selected[*]}"
 fi
 
 lang_dirs=()
@@ -134,8 +134,8 @@ if (( ${#lang_dirs[@]} > 0 )); then
     lang_defaults+=(0)
   done
   echo
-  echo "Note: opencode loads selected language packs in every session (no path-based activation)."
-  echo "Language packs to install (none selected by default):"
+  say_info "OpenCode loads selected language packs in every session (no path-based activation)."
+  say_step "Language packs to install (none selected by default):"
   multiselect lang_selected lang_dirs lang_defaults
 
   if (( ${#lang_selected[@]} > 0 )); then
@@ -149,23 +149,23 @@ if (( ${#lang_dirs[@]} > 0 )); then
       install_files_from_dir "$RULES_SOURCE/$pick" "$rules_target/$pick" "rules/$pick" manifest_entries lang_files
       substitute_tool_names "$rules_target/$pick" OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
       instructions_globs+=("rules/$pick/*.md")
-      echo "  installed: $pick"
+      say_ok "installed: $pick"
     done
   fi
 else
   echo
-  echo "No language packs found in $RULES_SOURCE (common-only install)."
+  say_info "No language packs found in $RULES_SOURCE (common-only install)."
 fi
 
 if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
   echo
-  echo "Skills (target: $skills_target):"
+  say_step "Skills (target: $skills_target):"
   skills_items=("Install skills")
   skills_defaults=(1)
   multiselect skills_selected skills_items skills_defaults
 
   if (( ${#skills_selected[@]} > 0 )); then
-    echo "Installing skills -> $skills_target/"
+    say_info "Installing skills -> $skills_target/"
     mkdir -p "$skills_target"
     skills_files=()
     while IFS= read -r -d '' _f; do
@@ -179,13 +179,13 @@ if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
       [[ -d "$skill_dir" ]] || continue
       installed_skills+=("$(basename "$skill_dir")")
     done
-    echo "  installed ${#installed_skills[@]} skill(s): ${installed_skills[*]}"
+    say_ok "installed ${#installed_skills[@]} skill(s): ${installed_skills[*]}"
   else
-    echo "Skipped skills install."
+    say_info "Skipped skills install."
   fi
 else
   echo
-  echo "No skills found in $SKILLS_SOURCE (skipping skills install)."
+  say_info "No skills found in $SKILLS_SOURCE (skipping skills install)."
 fi
 
 write_opencode_json() {
@@ -269,7 +269,7 @@ prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries
 write_manifest "$manifest_file" "$base" manifest_entries
 
 echo
-echo "Done."
+say_ok "Done."
 echo "Install base:  $base"
 echo "Manifest:      $manifest_file"
 echo "opencode.json: $base/opencode.json"

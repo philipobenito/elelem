@@ -5,6 +5,47 @@
 #
 [[ "${BASH_SOURCE[0]}" != "${0}" ]] || { echo "_install-common.sh is a library; source it." >&2; exit 1; }
 
+# ANSI colour palette and tiny logging helpers.
+#
+# Colours are emitted only when stdout is a real terminal, NO_COLOR is unset
+# (https://no-color.org), and TERM is not "dumb". When any of those checks fail,
+# every colour variable expands to the empty string, so the helpers degrade to
+# plain ASCII automatically — safe for `./install.sh > log.txt` and CI logs.
+#
+# The visual prefixes ("Error:", "Warning:") are kept literal so existing
+# `grep -E '^(Error|Warning):'` scans of saved logs still work; the colour is
+# only a visual layer on top.
+if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]] && [[ "${TERM:-}" != "dumb" ]]; then
+  ELELEM_C_RESET=$'\033[0m'
+  ELELEM_C_BOLD=$'\033[1m'
+  ELELEM_C_DIM=$'\033[2m'
+  ELELEM_C_RED=$'\033[31m'
+  ELELEM_C_GREEN=$'\033[32m'
+  ELELEM_C_YELLOW=$'\033[33m'
+  ELELEM_C_BLUE=$'\033[34m'
+  ELELEM_C_CYAN=$'\033[36m'
+else
+  ELELEM_C_RESET=""
+  ELELEM_C_BOLD=""
+  ELELEM_C_DIM=""
+  ELELEM_C_RED=""
+  ELELEM_C_GREEN=""
+  ELELEM_C_YELLOW=""
+  ELELEM_C_BLUE=""
+  ELELEM_C_CYAN=""
+fi
+
+# say_step "msg"   - bold blue ==> for major install phases
+# say_info "msg"   - cyan bullet for neutral status
+# say_ok   "msg"   - green for completion / success
+# say_warn "msg"   - yellow "Warning:" to stderr
+# say_err  "msg"   - red "Error:" to stderr
+say_step() { printf '%s==>%s %s%s%s\n' "$ELELEM_C_BLUE"   "$ELELEM_C_RESET" "$ELELEM_C_BOLD" "$*" "$ELELEM_C_RESET"; }
+say_info() { printf '%s -%s %s\n'      "$ELELEM_C_CYAN"   "$ELELEM_C_RESET" "$*"; }
+say_ok()   { printf '%s  ok%s %s\n'    "$ELELEM_C_GREEN"  "$ELELEM_C_RESET" "$*"; }
+say_warn() { printf '%sWarning:%s %s\n' "$ELELEM_C_YELLOW" "$ELELEM_C_RESET" "$*" >&2; }
+say_err()  { printf '%sError:%s %s\n'   "$ELELEM_C_RED"    "$ELELEM_C_RESET" "$*" >&2; }
+
 # Interactive checkbox selector.
 # Usage: multiselect RESULT_VAR items defaults
 #   RESULT_VAR  - name of a global array variable to populate with selected items
@@ -45,7 +86,7 @@ multiselect() {
   trap "tput cnorm || true; eval \"${_ms_old_exit:-trap - EXIT}\"; eval \"${_ms_old_int:-trap - INT}\"; eval \"${_ms_old_term:-trap - TERM}\"" EXIT INT TERM
 
   _multiselect_draw() {
-    echo "Select items (↑↓ to move, space to toggle, enter to confirm):"
+    printf '%sSelect items (↑↓ to move, space to toggle, enter to confirm):%s\n' "$ELELEM_C_DIM" "$ELELEM_C_RESET"
     for (( i=0; i<count; i++ )); do
       local mark="[ ]"
       [[ "${selected[$i]}" == "1" ]] && mark="[x]"
@@ -106,6 +147,95 @@ multiselect() {
   unset -f _multiselect_draw
 }
 
+# Interactive single-choice (radio) selector.
+# Usage: singleselect RESULT_VAR items [default_index]
+#   RESULT_VAR    - name of a global variable to populate with the chosen item label
+#   items         - name of an array variable (in caller scope) with the item labels
+#   default_index - (optional) initial cursor position; defaults to 0
+#
+# The cursor position IS the selection: arrows move, enter confirms. There is no
+# toggle and no way to pick zero or more than one item, so callers do not need
+# the count-checking dance that multiselect requires.
+#
+# Does NOT use local -n; compatible with bash 3.2+.
+singleselect() {
+  local result_var="$1"
+  local items_ref="$2"
+  local cursor="${3:-0}"
+
+  [[ "$result_var" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "singleselect: invalid result variable name: $result_var" >&2; return 1; }
+  [[ "$items_ref"  =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "singleselect: invalid items variable name: $items_ref"  >&2; return 1; }
+
+  local items_list
+  eval "items_list=(\"\${${items_ref}[@]+\${${items_ref}[@]}}\")"
+
+  local count="${#items_list[@]}"
+  if (( count == 0 )); then
+    echo "singleselect: no items to choose from" >&2
+    return 1
+  fi
+  if (( cursor < 0 || cursor >= count )); then
+    cursor=0
+  fi
+
+  tput civis || true
+  local _ss_old_exit _ss_old_int _ss_old_term
+  _ss_old_exit="$(trap -p EXIT)"
+  _ss_old_int="$(trap -p INT)"
+  _ss_old_term="$(trap -p TERM)"
+  # shellcheck disable=SC2064
+  trap "tput cnorm || true; eval \"${_ss_old_exit:-trap - EXIT}\"; eval \"${_ss_old_int:-trap - INT}\"; eval \"${_ss_old_term:-trap - TERM}\"" EXIT INT TERM
+
+  _singleselect_draw() {
+    printf '%sUse ↑↓ to choose, enter to confirm:%s\n' "$ELELEM_C_DIM" "$ELELEM_C_RESET"
+    local i
+    for (( i=0; i<count; i++ )); do
+      if (( i == cursor )); then
+        echo "> (o) ${items_list[$i]}"
+      else
+        echo "  ( ) ${items_list[$i]}"
+      fi
+    done
+  }
+
+  local lines=$(( count + 1 ))
+
+  _singleselect_draw
+
+  while true; do
+    local key
+    IFS= read -rsn1 key </dev/tty
+    if [[ "$key" == $'\x1b' ]]; then
+      local rest
+      IFS= read -rsn2 rest </dev/tty || true
+      key="${key}${rest}"
+    fi
+
+    case "$key" in
+      $'\x1b[A')
+        (( cursor > 0 )) && (( cursor-- )) || true
+        ;;
+      $'\x1b[B')
+        (( cursor < count - 1 )) && (( cursor++ )) || true
+        ;;
+      ''|$'\n'|$'\r')
+        break
+        ;;
+    esac
+
+    tput cuu "$lines" || true
+    _singleselect_draw
+  done
+
+  tput cnorm || true
+  eval "${_ss_old_exit:-trap - EXIT}"
+  eval "${_ss_old_int:-trap - INT}"
+  eval "${_ss_old_term:-trap - TERM}"
+
+  eval "${result_var}=\"\${items_list[$cursor]}\""
+  unset -f _singleselect_draw
+}
+
 # Prompts the user to select an install scope and resolves the base install path.
 # Usage: resolve_install_base RESULT_VAR USER_BASE PROJECT_SUFFIX
 #   RESULT_VAR      - name of a global variable to populate with the resolved base path
@@ -118,25 +248,15 @@ resolve_install_base() {
 
   [[ "$result_var" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "resolve_install_base: invalid result variable name: $result_var" >&2; return 1; }
 
-  local scope_items scope_defaults scope_selected
+  local scope_items scope_choice
   scope_items=("project  ->  <project>/$project_suffix/" "user  ->  $user_base/")
-  scope_defaults=(0 0)
   echo "Install scope:"
-  multiselect scope_selected scope_items scope_defaults
-
-  if (( ${#scope_selected[@]} == 0 )); then
-    echo "No scope selected." >&2
-    return 1
-  fi
-  if (( ${#scope_selected[@]} > 1 )); then
-    echo "Please select only one scope." >&2
-    return 1
-  fi
+  singleselect scope_choice scope_items 1
 
   local scope=""
-  if [[ "${scope_selected[0]}" == project* ]]; then
+  if [[ "$scope_choice" == project* ]]; then
     scope=p
-  elif [[ "${scope_selected[0]}" == user* ]]; then
+  elif [[ "$scope_choice" == user* ]]; then
     scope=u
   fi
 
@@ -147,7 +267,7 @@ resolve_install_base() {
       read -rp "Project path [$(pwd)]: " project_path
       project_path="${project_path:-$(pwd)}"
       if [[ ! -d "$project_path" ]]; then
-        echo "Error: $project_path does not exist" >&2
+        say_err "$project_path does not exist"
         return 1
       fi
       resolved_base="$project_path/$project_suffix"
@@ -177,7 +297,7 @@ resolve_install_base() {
 # expression. Callers MUST NOT pass substitutions containing '/', '\', '$', or
 # '@'. Escape or switch to a different delimiter strategy before passing such
 # values. The current Claude Code placeholder map (defined in install.sh) is
-# verified safe; a future opencode map must be verified before use.
+# verified safe; a future OpenCode map must be verified before use.
 substitute_tool_names() {
   local dir="$1"
   local placeholders_ref="$2"
@@ -224,7 +344,7 @@ rewrite_frontmatter_for_cursor() {
   local src="$1"
 
   if [[ ! -f "$src" ]] || [[ ! -r "$src" ]]; then
-    echo "Error: rewrite_frontmatter_for_cursor: cannot read file: $src" >&2
+    say_err "rewrite_frontmatter_for_cursor: cannot read file: $src"
     return 1
   fi
 
@@ -413,7 +533,7 @@ check_no_collisions() {
   for (( i=0; i<count; i++ )); do
     for (( j=i+1; j<count; j++ )); do
       if [[ "${_cnc_dsts[$i]}" == "${_cnc_dsts[$j]}" ]]; then
-        echo "Error: check_no_collisions: '${_cnc_srcs[$i]}' and '${_cnc_srcs[$j]}' both resolve to '${_cnc_dsts[$i]}'." >&2
+        say_err "check_no_collisions: '${_cnc_srcs[$i]}' and '${_cnc_srcs[$j]}' both resolve to '${_cnc_dsts[$i]}'."
         return 1
       fi
     done
@@ -445,8 +565,8 @@ install_files_from_dir() {
   [[ "$resolve_dst_fn" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_files_from_dir: invalid resolve_dst_fn name: $resolve_dst_fn"        >&2; exit 1; }
   [[ "$transform_fn"  =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_files_from_dir: invalid transform_fn name: $transform_fn"             >&2; exit 1; }
 
-  declare -f "$resolve_dst_fn" >/dev/null 2>&1 || { echo "Error: install_files_from_dir: '$resolve_dst_fn' is not a defined function" >&2; exit 1; }
-  declare -f "$transform_fn"   >/dev/null 2>&1 || { echo "Error: install_files_from_dir: '$transform_fn' is not a defined function"   >&2; exit 1; }
+  declare -f "$resolve_dst_fn" >/dev/null 2>&1 || { say_err "install_files_from_dir: '$resolve_dst_fn' is not a defined function"; exit 1; }
+  declare -f "$transform_fn"   >/dev/null 2>&1 || { say_err "install_files_from_dir: '$transform_fn' is not a defined function";   exit 1; }
 
   local _ifd_files
   eval "_ifd_files=(\"\${${files_ref}[@]+\${${files_ref}[@]}}\")"
@@ -458,7 +578,7 @@ install_files_from_dir() {
     src="$source_dir/$rel"
     dst="$("$resolve_dst_fn" "$src" "$output_dir")"
     if [[ "${dst#$output_dir/}" == "$dst" ]]; then
-      echo "Error: install_files_from_dir: resolve_dst returned '$dst' which is not under output_dir '$output_dir'." >&2
+      say_err "install_files_from_dir: resolve_dst returned '$dst' which is not under output_dir '$output_dir'."
       exit 1
     fi
     _ifd_planned_srcs+=("$src")
@@ -470,7 +590,7 @@ install_files_from_dir() {
   local i entry dst_rel
   for (( i=0; i<${#_ifd_planned_srcs[@]}; i++ )); do
     mkdir -p "$(dirname "${_ifd_planned_dsts[$i]}")"
-    "$transform_fn" "${_ifd_planned_srcs[$i]}" "${_ifd_planned_dsts[$i]}" || { echo "Error: install_files_from_dir: transform failed for: ${_ifd_planned_srcs[$i]}" >&2; exit 1; }
+    "$transform_fn" "${_ifd_planned_srcs[$i]}" "${_ifd_planned_dsts[$i]}" || { say_err "install_files_from_dir: transform failed for: ${_ifd_planned_srcs[$i]}"; exit 1; }
     dst_rel="${_ifd_planned_dsts[$i]#$output_dir/}"
     entry="${manifest_prefix}/${dst_rel}"
     eval "${manifest_ref}+=(\"\$entry\")"
@@ -490,7 +610,7 @@ scan_no_unsubstituted_placeholders() {
   while IFS= read -r -d '' file; do
     hits="$(grep -n -F -e '{{' -e 'TODO:' "$file" 2>/dev/null)" || true
     if [[ -n "$hits" ]]; then
-      echo "Error: scan_no_unsubstituted_placeholders: '$file' contains unsubstituted placeholder or TODO marker:" >&2
+      say_err "scan_no_unsubstituted_placeholders: '$file' contains unsubstituted placeholder or TODO marker:"
       while IFS= read -r hit_line; do
         echo "  $hit_line" >&2
       done <<< "$hits"
@@ -510,7 +630,7 @@ validate_globs_resolve() {
   local pattern
   for pattern in "$@"; do
     if ! compgen -G "$pattern" > /dev/null 2>&1; then
-      echo "Error: glob pattern '$pattern' matched no files." >&2
+      say_err "glob pattern '$pattern' matched no files."
       exit 1
     fi
   done
