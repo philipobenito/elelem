@@ -107,15 +107,19 @@ multiselect() {
 }
 
 # Prompts the user to select an install scope and resolves the base install path.
-# Usage: resolve_install_base RESULT_VAR
-#   RESULT_VAR - name of a global variable to populate with the resolved base path
+# Usage: resolve_install_base RESULT_VAR USER_BASE PROJECT_SUFFIX
+#   RESULT_VAR      - name of a global variable to populate with the resolved base path
+#   USER_BASE       - user-scope base path (e.g. $HOME/.claude or $HOME/.config/opencode)
+#   PROJECT_SUFFIX  - project-scope directory name (e.g. .claude or .opencode)
 resolve_install_base() {
   local result_var="$1"
+  local user_base="$2"
+  local project_suffix="$3"
 
   [[ "$result_var" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "resolve_install_base: invalid result variable name: $result_var" >&2; return 1; }
 
   local scope_items scope_defaults scope_selected
-  scope_items=("project  ->  <project>/.claude/" "user  ->  ~/.claude/")
+  scope_items=("project  ->  <project>/$project_suffix/" "user  ->  $user_base/")
   scope_defaults=(0 0)
   echo "Install scope:"
   multiselect scope_selected scope_items scope_defaults
@@ -146,11 +150,11 @@ resolve_install_base() {
         echo "Error: $project_path does not exist" >&2
         return 1
       fi
-      resolved_base="$project_path/.claude"
+      resolved_base="$project_path/$project_suffix"
       ;;
     u|U)
-      resolved_base="$HOME/.claude"
-      echo "Installing to $HOME/.claude/"
+      resolved_base="$user_base"
+      echo "Installing to $user_base/"
       ;;
     *)
       echo "Invalid choice." >&2

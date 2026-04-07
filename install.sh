@@ -67,7 +67,7 @@ CLAUDE_SUBSTITUTIONS=(
   'Bash'
 )
 
-resolve_install_base base
+resolve_install_base base "$HOME/.claude" ".claude"
 
 rules_target="$base/rules"
 skills_target="$base/skills"
