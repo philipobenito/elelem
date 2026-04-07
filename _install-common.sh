@@ -278,6 +278,144 @@ write_manifest() {
   { echo "$base"; printf '%s\n' "${entries[@]+"${entries[@]}"}" | sort; } > "$manifest_file"
 }
 
+# Default destination resolver used by install_files_from_dir.
+# Usage: _default_resolve_dst src output_root
+#   src         - absolute path to the source file
+#   output_root - absolute path to the destination root directory
+# Prints output_root/basename(src) to stdout.
+_default_resolve_dst() {
+  local src="$1"
+  local output_root="$2"
+  printf '%s/%s\n' "$output_root" "$(basename "$src")"
+}
+
+# Default file transform used by install_files_from_dir.
+# Usage: _default_transform src dst
+#   src - absolute path to the source file
+#   dst - absolute path to the destination file
+# Copies src to dst. Returns 0 on success, non-zero on failure.
+# MUST NOT call exit; the install_files_from_dir loop owns the abort path.
+_default_transform() {
+  local src="$1"
+  local dst="$2"
+  cp "$src" "$dst"
+}
+
+# Checks that no two destination paths share the same basename, preventing
+# silent overwrites when multiple source files resolve to the same output name.
+# Usage: check_no_collisions srcs_ref dsts_ref
+#   srcs_ref - name of an array variable containing absolute source paths
+#   dsts_ref - name of an array variable containing corresponding destination paths
+# Returns 0 if no collisions are found. Writes to stderr and returns 1 on collision.
+check_no_collisions() {
+  local srcs_ref="$1"
+  local dsts_ref="$2"
+
+  [[ "$srcs_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "check_no_collisions: invalid srcs variable name: $srcs_ref" >&2; return 1; }
+  [[ "$dsts_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "check_no_collisions: invalid dsts variable name: $dsts_ref" >&2; return 1; }
+
+  local _cnc_srcs _cnc_dsts
+  eval "_cnc_srcs=(\"\${${srcs_ref}[@]+\${${srcs_ref}[@]}}\")"
+  eval "_cnc_dsts=(\"\${${dsts_ref}[@]+\${${dsts_ref}[@]}}\")"
+
+  local count="${#_cnc_dsts[@]}"
+  local i j bn_i bn_j
+  for (( i=0; i<count; i++ )); do
+    bn_i="$(basename "${_cnc_dsts[$i]}")"
+    for (( j=i+1; j<count; j++ )); do
+      bn_j="$(basename "${_cnc_dsts[$j]}")"
+      if [[ "$bn_i" == "$bn_j" ]]; then
+        echo "Error: check_no_collisions: '${_cnc_srcs[$i]}' and '${_cnc_srcs[$j]}' both resolve to '$bn_i' in the same output directory." >&2
+        return 1
+      fi
+    done
+  done
+}
+
+# Copies a list of source files into an output directory, optionally transforming
+# them, and appends manifest entries for each installed file.
+# Usage: install_files_from_dir source_dir output_dir manifest_prefix manifest_ref files_ref [resolve_dst_fn] [transform_fn]
+#   source_dir      - absolute path to the source directory
+#   output_dir      - absolute path to the destination directory
+#   manifest_prefix - relative prefix prepended to each manifest entry (no trailing slash)
+#   manifest_ref    - name of a caller array variable; new entries are appended
+#   files_ref       - name of an array variable of source paths relative to source_dir
+#   resolve_dst_fn  - (optional) function(src, output_dir) -> dst path; default: _default_resolve_dst
+#   transform_fn    - (optional) function(src, dst) -> 0|non-zero; default: _default_transform
+#                     MUST NOT call exit; this function owns the abort path on transform failure.
+install_files_from_dir() {
+  local source_dir="$1"
+  local output_dir="$2"
+  local manifest_prefix="$3"
+  local manifest_ref="$4"
+  local files_ref="$5"
+  local resolve_dst_fn="${6:-_default_resolve_dst}"
+  local transform_fn="${7:-_default_transform}"
+
+  [[ "$manifest_ref"  =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_files_from_dir: invalid manifest_ref variable name: $manifest_ref"  >&2; exit 1; }
+  [[ "$files_ref"     =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_files_from_dir: invalid files_ref variable name: $files_ref"         >&2; exit 1; }
+  [[ "$resolve_dst_fn" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_files_from_dir: invalid resolve_dst_fn name: $resolve_dst_fn"        >&2; exit 1; }
+  [[ "$transform_fn"  =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_files_from_dir: invalid transform_fn name: $transform_fn"             >&2; exit 1; }
+
+  declare -f "$resolve_dst_fn" >/dev/null 2>&1 || { echo "Error: install_files_from_dir: '$resolve_dst_fn' is not a defined function" >&2; exit 1; }
+  declare -f "$transform_fn"   >/dev/null 2>&1 || { echo "Error: install_files_from_dir: '$transform_fn' is not a defined function"   >&2; exit 1; }
+
+  local _ifd_files
+  eval "_ifd_files=(\"\${${files_ref}[@]+\${${files_ref}[@]}}\")"
+
+  local _ifd_planned_srcs=()
+  local _ifd_planned_dsts=()
+  local rel src dst
+  for rel in "${_ifd_files[@]+"${_ifd_files[@]}"}"; do
+    src="$source_dir/$rel"
+    dst="$("$resolve_dst_fn" "$src" "$output_dir")"
+    _ifd_planned_srcs+=("$src")
+    _ifd_planned_dsts+=("$dst")
+  done
+
+  check_no_collisions _ifd_planned_srcs _ifd_planned_dsts || exit 1
+
+  local i entry dst_rel
+  for (( i=0; i<${#_ifd_planned_srcs[@]}; i++ )); do
+    mkdir -p "$(dirname "${_ifd_planned_dsts[$i]}")"
+    "$transform_fn" "${_ifd_planned_srcs[$i]}" "${_ifd_planned_dsts[$i]}" || { echo "Error: install_files_from_dir: transform failed for: ${_ifd_planned_srcs[$i]}" >&2; exit 1; }
+    dst_rel="${_ifd_planned_dsts[$i]#$output_dir/}"
+    if [[ "$dst_rel" == "${_ifd_planned_dsts[$i]}" ]]; then
+      echo "Error: install_files_from_dir: resolve_dst returned '${_ifd_planned_dsts[$i]}' which is not under output_dir '$output_dir'." >&2
+      exit 1
+    fi
+    entry="${manifest_prefix}/${dst_rel}"
+    eval "${manifest_ref}+=(\"\$entry\")"
+  done
+}
+
+# Scans .mdc files and SKILL.md files under root_dir for unsubstituted placeholders
+# (literal '{{') and TODO markers. Exits 1 with a diagnostic message if any are found.
+# Returns 0 if root_dir does not exist or contains no matching files.
+# Usage: scan_no_unsubstituted_placeholders root_dir
+scan_no_unsubstituted_placeholders() {
+  local root_dir="$1"
+
+  [[ -d "$root_dir" ]] || return 0
+
+  local file found_any=0
+  while IFS= read -r -d '' file; do
+    local hits
+    hits="$(grep -n -F -e '{{' -e 'TODO:' "$file" 2>/dev/null)" || true
+    if [[ -n "$hits" ]]; then
+      echo "Error: scan_no_unsubstituted_placeholders: '$file' contains unsubstituted placeholder or TODO marker:" >&2
+      while IFS= read -r hit_line; do
+        echo "  $hit_line" >&2
+      done <<< "$hits"
+      found_any=1
+    fi
+  done < <(find "$root_dir" \( -name '*.mdc' -o -name 'SKILL.md' \) -type f -print0)
+
+  if (( found_any )); then
+    exit 1
+  fi
+}
+
 # Validates that one or more glob patterns each match at least one file.
 # Aborts with a clear error message on stderr if any pattern matches nothing.
 # Usage: validate_globs_resolve pattern [pattern ...]
