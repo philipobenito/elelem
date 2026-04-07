@@ -301,8 +301,8 @@ _default_transform() {
   cp "$src" "$dst"
 }
 
-# Checks that no two destination paths share the same basename, preventing
-# silent overwrites when multiple source files resolve to the same output name.
+# Checks that no two destination paths are identical, preventing silent overwrites
+# when multiple source files resolve to the same full output path.
 # Usage: check_no_collisions srcs_ref dsts_ref
 #   srcs_ref - name of an array variable containing absolute source paths
 #   dsts_ref - name of an array variable containing corresponding destination paths
@@ -319,13 +319,11 @@ check_no_collisions() {
   eval "_cnc_dsts=(\"\${${dsts_ref}[@]+\${${dsts_ref}[@]}}\")"
 
   local count="${#_cnc_dsts[@]}"
-  local i j bn_i bn_j
+  local i j
   for (( i=0; i<count; i++ )); do
-    bn_i="$(basename "${_cnc_dsts[$i]}")"
     for (( j=i+1; j<count; j++ )); do
-      bn_j="$(basename "${_cnc_dsts[$j]}")"
-      if [[ "$bn_i" == "$bn_j" ]]; then
-        echo "Error: check_no_collisions: '${_cnc_srcs[$i]}' and '${_cnc_srcs[$j]}' both resolve to '$bn_i' in the same output directory." >&2
+      if [[ "${_cnc_dsts[$i]}" == "${_cnc_dsts[$j]}" ]]; then
+        echo "Error: check_no_collisions: '${_cnc_srcs[$i]}' and '${_cnc_srcs[$j]}' both resolve to '${_cnc_dsts[$i]}'." >&2
         return 1
       fi
     done
