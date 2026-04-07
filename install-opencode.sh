@@ -207,43 +207,50 @@ fi
 
 manifest_entries+=("opencode.json")
 
-cat > "$base/AGENTS.md" << 'AGENTS_EOF'
-# elelem opencode configuration
+write_agents_md() {
+  local target="$1"
+  local entries_ref="$2"
 
-This directory was populated by `install-opencode.sh`. Rules are loaded via the
-`instructions` array in `opencode.json`; skills are auto-discovered from
-`skills/` per the opencode skills documentation. See `opencode.json` for the
-loading manifest.
+  [[ "$entries_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "write_agents_md: invalid entries variable name: $entries_ref" >&2; return 1; }
 
-## opencode notes
+  local entries
+  eval "entries=(\"\${${entries_ref}[@]+\${${entries_ref}[@]}}\")"
 
-elelem installs the same rules and skills under Claude Code and opencode.
-Most primitives have direct opencode equivalents and the installer
-substitutes them automatically. Two small differences are worth knowing:
+  local rule_entries=()
+  local entry
+  for entry in "${entries[@]+"${entries[@]}"}"; do
+    [[ "$entry" == rules/*/*.md ]] && rule_entries+=("$entry")
+  done
 
-**Plan mode.** opencode has plan mode, toggled by the user pressing Tab. The
-assistant cannot enter or exit plan mode itself. Skills that currently say
-"enter plan mode" or "exit plan mode" will ask you (the user) to press Tab
-at the relevant point. The design-before-implementation rule still applies.
-Skills affected: brainstorming, brainstorming-standard, brainstorming-guided,
-brainstorming-skip. The skip path still works via explicit user approval but
-is no longer structurally distinct from brainstorming-standard under opencode.
+  {
+    printf '# Project rules\n\n'
+    printf 'The following rule files apply to this project. Each entry links to the installed file relative to this AGENTS.md.\n\n'
 
-**Subagent dispatch.** opencode supports subagents via the `task` tool. The
-installer substitutes `{{DISPATCH_AGENT_TOOL}}` with `task`. Subagent types
-in dispatch templates (e.g. `subagent_type: "general-purpose"`) are advisory
-under opencode; @mention the corresponding opencode subagent if your setup
-requires explicit selection. All skills that dispatch subagents
-(subagent-driven-development, fast-path-implementation, dispatching-parallel-agents,
-design-review, requesting-code-review, brainstorming-committee, debugging's
-Autonomous mode) work under opencode after substitution.
+    if (( ${#rule_entries[@]} == 0 )); then
+      printf 'No rules are currently installed.\n'
+      return 0
+    fi
 
-**User questions.** `{{ASK_USER_QUESTION_TOOL}}` substitutes to opencode's
-built-in `question` tool. No degradation.
+    local sorted
+    sorted=$(printf '%s\n' "${rule_entries[@]}" | LC_ALL=C sort)
 
-No skills are currently unsupported under opencode. If you find a skill that
-does not work as expected, file an issue against the elelem repo.
-AGENTS_EOF
+    local current_group=""
+    local line group heading_initial heading_rest
+    while IFS= read -r line; do
+      group="${line#rules/}"
+      group="${group%%/*}"
+      if [[ "$group" != "$current_group" ]]; then
+        current_group="$group"
+        heading_initial="$(printf '%s' "${group:0:1}" | tr '[:lower:]' '[:upper:]')"
+        heading_rest="${group:1}"
+        printf '\n## %s%s\n\n' "$heading_initial" "$heading_rest"
+      fi
+      printf -- '- [%s](%s)\n' "$line" "$line"
+    done <<< "$sorted"
+  } > "$target"
+}
+
+write_agents_md "$base/AGENTS.md" manifest_entries
 
 manifest_entries+=("AGENTS.md")
 
