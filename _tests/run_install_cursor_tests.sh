@@ -180,17 +180,19 @@ test_install_cursor_executable() {
   fi
 }
 
-test_cursor_rule_resolve_dst_rewrites_md_to_mdc() {
-  local name="cursor_rule_resolve_dst_rewrites_md_to_mdc"
+test_cursor_rule_resolve_dst_emits_flat_prefixed_basename() {
+  local name="cursor_rule_resolve_dst_emits_flat_prefixed_basename"
 
+  CURSOR_RULE_GROUP_PREFIX="common"
   local result
   result="$(_cursor_rule_resolve_dst /foo/bar.md /out)"
+  CURSOR_RULE_GROUP_PREFIX=""
 
-  if [[ "$result" == "/out/bar.mdc" ]]; then
+  if [[ "$result" == "/out/elelem-common-bar.mdc" ]]; then
     echo "[PASS] $name"
     (( passed++ )) || true
   else
-    echo "[FAIL] $name: expected /out/bar.mdc, got $result"
+    echo "[FAIL] $name: expected /out/elelem-common-bar.mdc, got $result"
     (( failed++ )) || true
   fi
 }
@@ -198,14 +200,36 @@ test_cursor_rule_resolve_dst_rewrites_md_to_mdc() {
 test_cursor_rule_resolve_dst_preserves_non_md_basename_structure() {
   local name="cursor_rule_resolve_dst_preserves_non_md_basename_structure"
 
+  CURSOR_RULE_GROUP_PREFIX="python"
   local result
   result="$(_cursor_rule_resolve_dst /foo/bar.baz.md /out)"
+  CURSOR_RULE_GROUP_PREFIX=""
 
-  if [[ "$result" == "/out/bar.baz.mdc" ]]; then
+  if [[ "$result" == "/out/elelem-python-bar.baz.mdc" ]]; then
     echo "[PASS] $name"
     (( passed++ )) || true
   else
-    echo "[FAIL] $name: expected /out/bar.baz.mdc, got $result"
+    echo "[FAIL] $name: expected /out/elelem-python-bar.baz.mdc, got $result"
+    (( failed++ )) || true
+  fi
+}
+
+test_cursor_rule_resolve_dst_groups_do_not_collide() {
+  local name="cursor_rule_resolve_dst_groups_do_not_collide"
+
+  CURSOR_RULE_GROUP_PREFIX="common"
+  local common_dst
+  common_dst="$(_cursor_rule_resolve_dst /src/coding-style.md /out)"
+  CURSOR_RULE_GROUP_PREFIX="python"
+  local python_dst
+  python_dst="$(_cursor_rule_resolve_dst /src/coding-style.md /out)"
+  CURSOR_RULE_GROUP_PREFIX=""
+
+  if [[ "$common_dst" != "$python_dst" ]] && [[ "$common_dst" == */elelem-common-coding-style.mdc ]] && [[ "$python_dst" == */elelem-python-coding-style.mdc ]]; then
+    echo "[PASS] $name"
+    (( passed++ )) || true
+  else
+    echo "[FAIL] $name: groups collided or wrong prefix; common=$common_dst python=$python_dst"
     (( failed++ )) || true
   fi
 }
@@ -528,8 +552,9 @@ test_guard_user_scope_rules_symlink_collision
 test_guard_user_scope_skills_symlink_collision
 test_guard_project_scope_rules_collision
 test_guard_benign_realpath
-test_cursor_rule_resolve_dst_rewrites_md_to_mdc
+test_cursor_rule_resolve_dst_emits_flat_prefixed_basename
 test_cursor_rule_resolve_dst_preserves_non_md_basename_structure
+test_cursor_rule_resolve_dst_groups_do_not_collide
 test_cursor_rule_transform_substitutes_placeholders
 test_cursor_rule_transform_preserves_globs_language_pack
 test_cursor_rule_transform_returns_nonzero_on_empty_globs

@@ -86,17 +86,26 @@ _cursor_substitute_placeholders() {
   return 0
 }
 
+# Tracks the rule group (e.g. "common", "python") that the next install_files_from_dir
+# call is processing. Read by _cursor_rule_resolve_dst to namespace the flat output
+# basename. Cursor does not load nested rule subdirectories at user scope, so all rule
+# files install flat under <base>/rules/ with an elelem-<group>- prefix to avoid
+# collisions across groups and to keep the source group identifiable.
+CURSOR_RULE_GROUP_PREFIX=""
+
 # Resolves the destination path for a Cursor rule file.
 # Usage: _cursor_rule_resolve_dst src output_root
 #   src         - absolute path to the source file (.md)
 #   output_root - absolute path to the destination root directory
-# Prints output_root/basename(src with .md stripped and .mdc appended) to stdout.
+# Prints output_root/elelem-<CURSOR_RULE_GROUP_PREFIX>-<basename>.mdc to stdout.
+# Reads CURSOR_RULE_GROUP_PREFIX from global scope; the caller MUST set it before
+# invoking install_files_from_dir for each rule group.
 _cursor_rule_resolve_dst() {
   local src="$1"
   local output_root="$2"
   local basename
   basename="$(basename "$src" .md)"
-  printf '%s/%s.mdc\n' "$output_root" "$basename"
+  printf '%s/elelem-%s-%s.mdc\n' "$output_root" "$CURSOR_RULE_GROUP_PREFIX" "$basename"
 }
 
 # Transforms a source rule file for Cursor installation.
@@ -301,8 +310,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     for _item in "${common_selected[@]}"; do
       common_files+=("${_item}.md")
     done
-    mkdir -p "$rules_target/common"
-    install_files_from_dir "$RULES_SOURCE/common" "$rules_target/common" "rules/common" manifest_entries common_files _cursor_rule_resolve_dst _cursor_rule_transform
+    CURSOR_RULE_GROUP_PREFIX="common"
+    install_files_from_dir "$RULES_SOURCE/common" "$rules_target" "rules" manifest_entries common_files _cursor_rule_resolve_dst _cursor_rule_transform
+    CURSOR_RULE_GROUP_PREFIX=""
     echo "  installed: ${common_selected[*]}"
   fi
 
@@ -331,8 +341,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
           [[ -f "$_f" ]] || continue
           lang_files+=("$(basename "$_f")")
         done
-        mkdir -p "$rules_target/$pick"
-        install_files_from_dir "$RULES_SOURCE/$pick" "$rules_target/$pick" "rules/$pick" manifest_entries lang_files _cursor_rule_resolve_dst _cursor_rule_transform
+        CURSOR_RULE_GROUP_PREFIX="$pick"
+        install_files_from_dir "$RULES_SOURCE/$pick" "$rules_target" "rules" manifest_entries lang_files _cursor_rule_resolve_dst _cursor_rule_transform
+        CURSOR_RULE_GROUP_PREFIX=""
         echo "  installed: $pick"
       done
     fi

@@ -28,21 +28,24 @@ test_full_install_to_tmp_user_scope() {
 
   cursor_assert_not_under_claude "$tmpbase" || { _fail "$name" "guard rejected benign tmpbase"; return; }
 
-  mkdir -p "$tmpbase/rules/common"
+  mkdir -p "$tmpbase/rules"
   local manifest=()
   local common_files=()
   local f
   for f in "$REPO_ROOT/rules/common/"*.md; do
     common_files+=("$(basename "$f")")
   done
-  install_files_from_dir "$REPO_ROOT/rules/common" "$tmpbase/rules/common" "rules/common" manifest common_files _cursor_rule_resolve_dst _cursor_rule_transform
+  CURSOR_RULE_GROUP_PREFIX="common"
+  install_files_from_dir "$REPO_ROOT/rules/common" "$tmpbase/rules" "rules" manifest common_files _cursor_rule_resolve_dst _cursor_rule_transform
+  CURSOR_RULE_GROUP_PREFIX=""
 
-  mkdir -p "$tmpbase/rules/python"
   local lang_files=()
   for f in "$REPO_ROOT/rules/python/"*.md; do
     lang_files+=("$(basename "$f")")
   done
-  install_files_from_dir "$REPO_ROOT/rules/python" "$tmpbase/rules/python" "rules/python" manifest lang_files _cursor_rule_resolve_dst _cursor_rule_transform
+  CURSOR_RULE_GROUP_PREFIX="python"
+  install_files_from_dir "$REPO_ROOT/rules/python" "$tmpbase/rules" "rules" manifest lang_files _cursor_rule_resolve_dst _cursor_rule_transform
+  CURSOR_RULE_GROUP_PREFIX=""
 
   mkdir -p "$tmpbase/skills"
   local skills_files=()
@@ -51,21 +54,26 @@ test_full_install_to_tmp_user_scope() {
   done < <(find "$REPO_ROOT/skills" -type f -print0)
   install_files_from_dir "$REPO_ROOT/skills" "$tmpbase/skills" "skills" manifest skills_files _cursor_skill_resolve_dst _cursor_skill_transform
 
-  if ! find "$tmpbase/rules/common" -name '*.mdc' | grep -q .; then
-    _fail "$name" "no .mdc files under rules/common"
+  if ! ls "$tmpbase/rules"/elelem-common-*.mdc >/dev/null 2>&1; then
+    _fail "$name" "no elelem-common-*.mdc files at rules root"
+    return
+  fi
+
+  if find "$tmpbase/rules" -mindepth 1 -type d | grep -q .; then
+    _fail "$name" "rules tree contains nested subdirectories; expected flat layout"
     return
   fi
 
   local sample
-  sample="$(find "$tmpbase/rules/common" -name '*.mdc' | head -1)"
+  sample="$(ls "$tmpbase/rules"/elelem-common-*.mdc | head -1)"
   if ! head -5 "$sample" | grep -q 'alwaysApply: true'; then
     _fail "$name" "common rule missing alwaysApply: true in $sample"
     return
   fi
 
-  local pyrule="$tmpbase/rules/python/coding-style.mdc"
+  local pyrule="$tmpbase/rules/elelem-python-coding-style.mdc"
   if [[ ! -f "$pyrule" ]]; then
-    _fail "$name" "expected python coding-style.mdc not present"
+    _fail "$name" "expected elelem-python-coding-style.mdc not present at rules root"
     return
   fi
   if ! head -10 "$pyrule" | grep -q 'globs:'; then
@@ -103,7 +111,8 @@ test_full_install_to_tmp_user_scope() {
     return
   fi
 
-  scan_no_unsubstituted_placeholders "$tmpbase" || { _fail "$name" "scan_no_unsubstituted_placeholders failed"; return; }
+  scan_no_unsubstituted_placeholders "$tmpbase/rules" || { _fail "$name" "scoped rules scan failed"; return; }
+  scan_no_unsubstituted_placeholders "$tmpbase/skills" || { _fail "$name" "scoped skills scan failed"; return; }
 
   _pass "$name"
 }
@@ -122,14 +131,16 @@ test_coexistence_three_manifests() {
 
   local manifest_claude=("rules/common/coding-style.md")
   local manifest_opencode=("rules/common/coding-style.md")
-  local manifest_cursor=("rules/common/coding-style.mdc")
+  local manifest_cursor=()
 
   cp "$REPO_ROOT/rules/common/coding-style.md" "$claude_base/rules/common/"
   cp "$REPO_ROOT/rules/common/coding-style.md" "$opencode_base/rules/common/"
 
-  mkdir -p "$cursor_base/rules/common"
+  mkdir -p "$cursor_base/rules"
   local cursor_files=("coding-style.md")
-  install_files_from_dir "$REPO_ROOT/rules/common" "$cursor_base/rules/common" "rules/common" manifest_cursor cursor_files _cursor_rule_resolve_dst _cursor_rule_transform
+  CURSOR_RULE_GROUP_PREFIX="common"
+  install_files_from_dir "$REPO_ROOT/rules/common" "$cursor_base/rules" "rules" manifest_cursor cursor_files _cursor_rule_resolve_dst _cursor_rule_transform
+  CURSOR_RULE_GROUP_PREFIX=""
 
   local mf_claude="$tmphome/.elelem-manifest-claude"
   local mf_opencode="$tmphome/.elelem-manifest-opencode"
@@ -150,7 +161,7 @@ test_coexistence_three_manifests() {
   if [[ ! -f "$opencode_base/rules/common/coding-style.md" ]]; then
     _fail "$name" "opencode tree missing"; return
   fi
-  if [[ ! -f "$cursor_base/rules/common/coding-style.mdc" ]]; then
+  if [[ ! -f "$cursor_base/rules/elelem-common-coding-style.mdc" ]]; then
     _fail "$name" "cursor .mdc tree missing"; return
   fi
 

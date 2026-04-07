@@ -62,6 +62,8 @@ The Cursor installer prompts for scope (user `~/.cursor/` or project `<project>/
 
 Rule files are renamed from `.md` to `.mdc` on copy and have Cursor-specific frontmatter applied. Common rules become Always Apply rules (`alwaysApply: true`). Language packs become Auto Attached rules with their `globs:` patterns preserved and `alwaysApply: false` added.
 
+All rules install flat under `<base>/rules/` with an `elelem-<group>-` filename prefix (e.g. `elelem-common-coding-style.mdc`, `elelem-python-testing.mdc`). Cursor does not load `.mdc` files from nested subdirectories of `~/.cursor/rules/` at user scope, so the flat layout is required for the rules to be detected. The `elelem-` prefix prevents collisions with rules you author yourself in the same directory and makes installed files easy to grep for.
+
 Skills install to `<base>/skills/<name>/SKILL.md` and Cursor auto-discovers them via their `description:` field. SKILL.md files keep their original `name:` and `description:` frontmatter; no additional frontmatter is generated.
 
 The installer writes `.elelem-manifest-cursor` and prunes stale entries on re-install, using the same model as the Claude and opencode manifests.
