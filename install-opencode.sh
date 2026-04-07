@@ -274,3 +274,26 @@ echo "Install base:  $base"
 echo "Manifest:      $manifest_file"
 echo "opencode.json: $base/opencode.json"
 echo "AGENTS.md:     $base/AGENTS.md"
+
+echo
+echo "============================================================"
+say_warn "ACTION REQUIRED: disable the Claude Code fallback in OpenCode"
+echo "============================================================"
+echo
+echo "OpenCode has a built-in Claude Code fallback that reads rules"
+echo "from ~/.claude/ alongside its own config. If you have also run"
+echo "the Claude installer, OpenCode will load the Claude-substituted"
+echo "rules from there, giving you Claude tool names like Read and"
+echo "Agent in an OpenCode session instead of OpenCode's read and"
+echo "task. The rules still parse, but they refer to tools the"
+echo "OpenCode assistant does not recognise by those names."
+echo
+echo "To prevent this, set OPENCODE_DISABLE_CLAUDE_CODE=1 in your"
+echo "shell environment. To persist it, run one of:"
+echo
+echo "  echo 'export OPENCODE_DISABLE_CLAUDE_CODE=1' >> ~/.zshrc"
+echo "  echo 'export OPENCODE_DISABLE_CLAUDE_CODE=1' >> ~/.bashrc"
+echo
+echo "then restart your shell."
+echo "============================================================"
+echo

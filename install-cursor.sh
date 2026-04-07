@@ -382,8 +382,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries
   write_manifest "$manifest_file" "$base" manifest_entries
 
+  say_ok "Done."
+  echo "Install base:  $base"
+  echo "Manifest:      $manifest_file"
+
   echo
-  say_step "Recommendation: disable third-party config loading in Cursor"
+  echo "============================================================"
+  say_warn "ACTION REQUIRED: disable third-party config loading in Cursor"
+  echo "============================================================"
   echo
   echo "Cursor will, by default, also load rules and skills from"
   echo ".claude/, .codex/, and similar directories. If you have"
@@ -396,14 +402,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "  Cursor Settings -> Rules, Skills, Subagents"
   echo "  -> \"Include third-party Plugins, Skills, and other configs\""
   echo "and turn it OFF."
+  echo "============================================================"
   echo
-
-  say_ok "Done."
-  echo "Install base:  $base"
-  echo "Manifest:      $manifest_file"
-  echo
-  echo "Cursor placeholder map:"
-  for (( i=0; i<${#CURSOR_PLACEHOLDERS[@]}; i++ )); do
-    printf '  {{%s}} -> %s\n' "${CURSOR_PLACEHOLDERS[$i]}" "${CURSOR_SUBSTITUTIONS[$i]}"
-  done
 fi
