@@ -268,6 +268,11 @@ rewrite_frontmatter_for_cursor() {
       }
     }
 
+    if ($i >= scalar @lines || $lines[$i] ne "---\n") {
+      print STDERR "Error: rewrite_frontmatter_for_cursor: unterminated frontmatter in $src\n";
+      exit 1;
+    }
+
     my @body = @lines[$i+1..$#lines];
 
     if (defined $globs_value) {

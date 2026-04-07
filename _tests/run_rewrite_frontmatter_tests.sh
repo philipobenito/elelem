@@ -17,20 +17,19 @@ run_positive_fixture() {
   local expected="$FIXTURE_DIR/${name}.expected"
   local actual_file
   actual_file="$(mktemp)"
+  trap "rm -f '$actual_file'" RETURN
 
   local exit_code=0
   rewrite_frontmatter_for_cursor "$input" > "$actual_file" 2>/dev/null || exit_code=$?
 
   if [[ $exit_code -ne 0 ]]; then
     echo "[FAIL] $name: function returned non-zero ($exit_code)"
-    rm -f "$actual_file"
     (( failed++ )) || true
     return
   fi
 
   local diff_output
   diff_output="$(diff "$actual_file" "$expected" 2>&1)" || true
-  rm -f "$actual_file"
 
   if [[ -z "$diff_output" ]]; then
     echo "[PASS] $name"
@@ -74,6 +73,33 @@ run_negative_fixture_06() {
 }
 
 run_negative_fixture_06
+
+run_negative_fixture_07() {
+  local name="07_unterminated_frontmatter_negative"
+  local input="$FIXTURE_DIR/${name}.md"
+
+  local stderr_output
+  local exit_code
+  stderr_output="$(rewrite_frontmatter_for_cursor "$input" 2>&1 >/dev/null)" || exit_code=$?
+  exit_code="${exit_code:-0}"
+
+  if [[ $exit_code -eq 0 ]]; then
+    echo "[FAIL] $name: expected non-zero exit but got 0"
+    (( failed++ )) || true
+    return
+  fi
+
+  if [[ "$stderr_output" != *"${name}.md"* ]]; then
+    echo "[FAIL] $name: stderr does not contain '${name}.md': $stderr_output"
+    (( failed++ )) || true
+    return
+  fi
+
+  echo "[PASS] $name"
+  (( passed++ )) || true
+}
+
+run_negative_fixture_07
 
 smoke_python_coding_style() {
   local name="smoke_python_coding_style"
