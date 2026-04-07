@@ -54,6 +54,38 @@ CURSOR_SUBSTITUTIONS=(
   'dispatching a subagent (unavailable in Cursor; perform the work inline within this conversation, applying the same procedure)'
 )
 
+# Performs placeholder substitution on a destination file using global cursor placeholder arrays.
+# Usage: _cursor_substitute_placeholders dst
+#   dst - absolute path to the destination file to transform in-place
+# Returns 0 on success, non-zero on failure.
+# Reads CURSOR_PLACEHOLDERS and CURSOR_SUBSTITUTIONS from global scope.
+# MUST NOT call exit; the caller owns the abort path.
+_cursor_substitute_placeholders() {
+  local dst="$1"
+
+  local placeholders substitutions
+  eval "placeholders=(\"\${CURSOR_PLACEHOLDERS[@]}\")"
+  eval "substitutions=(\"\${CURSOR_SUBSTITUTIONS[@]}\")"
+
+  local count="${#placeholders[@]}"
+  if (( count == 0 )); then
+    return 0
+  fi
+
+  local perl_expr=""
+  local i
+  for (( i=0; i<count; i++ )); do
+    local placeholder="${placeholders[$i]}"
+    local substitution="${substitutions[$i]}"
+    local escaped_substitution
+    escaped_substitution="$(printf '%s\n' "$substitution" | sed 's:[\\&]:\\&:g')"
+    perl_expr="${perl_expr}s|\\{\\{${placeholder}\\}\\}|${escaped_substitution}|g; "
+  done
+
+  perl -i -pe "$perl_expr" "$dst"
+  return 0
+}
+
 # Resolves the destination path for a Cursor rule file.
 # Usage: _cursor_rule_resolve_dst src output_root
 #   src         - absolute path to the source file (.md)
@@ -81,26 +113,41 @@ _cursor_rule_transform() {
     return 1
   fi
 
-  local placeholders substitutions
-  eval "placeholders=(\"\${CURSOR_PLACEHOLDERS[@]}\")"
-  eval "substitutions=(\"\${CURSOR_SUBSTITUTIONS[@]}\")"
+  _cursor_substitute_placeholders "$dst"
+  return 0
+}
 
-  local count="${#placeholders[@]}"
-  if (( count == 0 )); then
-    return 0
+# Resolves the destination path for a Cursor skill file.
+# Usage: _cursor_skill_resolve_dst src output_root
+#   src         - absolute path to the source file
+#   output_root - absolute path to the destination root directory
+# Strips $SKILLS_SOURCE/ prefix from src and prepends output_root/.
+# Preserves all subdirectory structure and file extensions.
+# Reads $SKILLS_SOURCE from the installer's global scope; do not call before
+# SKILLS_SOURCE is set.
+_cursor_skill_resolve_dst() {
+  local src="$1"
+  local output_root="$2"
+  printf '%s/%s\n' "$output_root" "${src#$SKILLS_SOURCE/}"
+}
+
+# Transforms a source skill file for Cursor installation.
+# Usage: _cursor_skill_transform src dst
+#   src - absolute path to the source file
+#   dst - absolute path to the destination file
+# Returns 0 on success, non-zero on failure.
+# Does NOT call rewrite_frontmatter_for_cursor; SKILL.md files already carry
+# name: and description: frontmatter that Cursor expects and must be preserved.
+# MUST NOT call exit; the caller owns the abort path.
+_cursor_skill_transform() {
+  local src="$1"
+  local dst="$2"
+
+  if ! cp "$src" "$dst"; then
+    return 1
   fi
 
-  local perl_expr=""
-  local i
-  for (( i=0; i<count; i++ )); do
-    local placeholder="${placeholders[$i]}"
-    local substitution="${substitutions[$i]}"
-    local escaped_substitution
-    escaped_substitution="$(printf '%s\n' "$substitution" | sed 's:[\\&]:\\&:g')"
-    perl_expr="${perl_expr}s|\\{\\{${placeholder}\\}\\}|${escaped_substitution}|g; "
-  done
-
-  perl -i -pe "$perl_expr" "$dst"
+  _cursor_substitute_placeholders "$dst"
   return 0
 }
 
@@ -223,6 +270,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   cursor_assert_not_under_claude "$base" || exit 1
 
   rules_target="$base/rules"
+  skills_target="$base/skills"
   manifest_entries=()
   mkdir -p "$rules_target"
 
@@ -290,8 +338,32 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "No language packs found in $RULES_SOURCE (common-only install)."
   fi
 
+  if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
+    echo
+    echo "Skills (target: $skills_target):"
+    skills_items=("Install skills")
+    skills_defaults=(1)
+    multiselect skills_selected skills_items skills_defaults
+
+    if (( ${#skills_selected[@]} > 0 )); then
+      echo "Installing skills -> $skills_target/"
+      mkdir -p "$skills_target"
+      skills_files=()
+      while IFS= read -r -d '' _f; do
+        skills_files+=("${_f#"$SKILLS_SOURCE"/}")
+      done < <(find "$SKILLS_SOURCE" -type f -print0)
+      install_files_from_dir "$SKILLS_SOURCE" "$skills_target" "skills" manifest_entries skills_files _cursor_skill_resolve_dst _cursor_skill_transform
+      echo "  installed ${#skills_files[@]} skill file(s)"
+    else
+      echo "Skipped skills install."
+    fi
+  else
+    echo
+    echo "No skills found in $SKILLS_SOURCE (skipping skills install)."
+  fi
+
   echo
-  echo "PENDING: Skills install deferred to Task 3."
+  echo "PENDING: Manifest write, scan, and completion summary deferred to Task 4."
   echo "Install base: $base"
   exit 0
 fi
