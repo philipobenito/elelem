@@ -1,6 +1,6 @@
 # elelem
 
-Rules and skills for Claude Code and opencode, with interactive installers for both harnesses.
+Rules and skills for Claude Code, opencode, and Cursor, with interactive installers for all three harnesses.
 
 ## Quick start
 
@@ -8,7 +8,7 @@ Rules and skills for Claude Code and opencode, with interactive installers for b
 ./install.sh
 ```
 
-Pick your harness at the prompt (Claude Code or opencode); the front controller execs the matching installer. If you previously ran `./install.sh` directly and want to skip the harness prompt for scripted installs, run `./install-claude.sh` instead.
+Pick your harness at the prompt; the front controller execs the matching installer. To skip the prompt for scripted installs, run `./install-claude.sh`, `./install-opencode.sh`, or `./install-cursor.sh` directly.
 
 ## Claude Code
 
@@ -53,6 +53,27 @@ export OPENCODE_DISABLE_CLAUDE_CODE=1
 
 Add that line to `~/.zshrc` or `~/.bashrc` to persist it across shell sessions.
 
+## Cursor
+
+The Cursor installer prompts for scope (user `~/.cursor/` or project `<project>/.cursor/`) and selections for common rules, language packs, and skills. It installs:
+
+- Rules under `~/.cursor/rules/` or `<project>/.cursor/rules/`
+- Skills under `~/.cursor/skills/` or `<project>/.cursor/skills/`
+
+Rule files are renamed from `.md` to `.mdc` on copy and have Cursor-specific frontmatter applied. Common rules become Always Apply rules (`alwaysApply: true`). Language packs become Auto Attached rules with their `globs:` patterns preserved and `alwaysApply: false` added.
+
+Skills install to `<base>/skills/<name>/SKILL.md` and Cursor auto-discovers them via their `description:` field. SKILL.md files keep their original `name:` and `description:` frontmatter; no additional frontmatter is generated.
+
+The installer writes `.elelem-manifest-cursor` and prunes stale entries on re-install, using the same model as the Claude and opencode manifests.
+
+You can also run `./install-cursor.sh` directly to skip the harness prompt.
+
+### Disable third-party config loading
+
+Cursor has a cross-loader that reads rules from `~/.claude/`, `~/.codex/`, and other harness directories. If you have also run the Claude Code installer, Cursor will load the Claude-substituted rules from there, which gives you Claude tool names like `Read` and `Edit` in a Cursor session instead of Cursor's `Read` and `StrReplace`. The rules still parse, but the instructions refer to tools the Cursor assistant does not recognise by those names.
+
+Disable this by navigating to Cursor Settings, then Rules, Skills, Subagents, and toggling off "Include third-party Plugins, Skills, and other configs". Recommended if you use both Claude Code and Cursor on the same machine. This is the Cursor counterpart to the opencode `OPENCODE_DISABLE_CLAUDE_CODE` recommendation above.
+
 ## Layout
 
 ```
@@ -60,7 +81,8 @@ Add that line to `~/.zshrc` or `~/.bashrc` to persist it across shell sessions.
 ├── install.sh            Front controller; prompts which harness to install
 ├── install-claude.sh     Claude Code installer (also runnable directly)
 ├── install-opencode.sh   opencode installer (also runnable directly)
-├── _install-common.sh    Common functions sourced by both installers
+├── install-cursor.sh     Cursor installer (also runnable directly)
+├── _install-common.sh    Common functions sourced by every installer
 ├── rules/
 │   ├── common/           Always-on rules (no frontmatter)
 │   │   ├── language.md
@@ -149,6 +171,21 @@ When adding a new placeholder, audit existing files for hard-coded values that s
 
 After any change to rules or skills:
 
-1. Run `./install.sh` against a test project (or run `./install-claude.sh` or `./install-opencode.sh` directly)
+1. Run `./install.sh` against a test project (or run `./install-claude.sh`, `./install-opencode.sh`, or `./install-cursor.sh` directly)
 2. For Claude Code, open Claude Code in that project and run `/memory` to confirm expected files are listed
 3. For opencode, confirm `opencode.json` exists in the install base and contains an `instructions` array
+4. For Cursor, confirm rules are installed as `.mdc` files under `~/.cursor/rules/` or `<project>/.cursor/rules/` and skills are discoverable
+
+## FAQ
+
+**Why do you recommend disabling third-party config loading in Cursor and opencode?**
+
+Each harness uses different internal tool names. Claude Code uses PascalCase names like `Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob`, `AskUserQuestion`, and `Task`. opencode uses lowercase names like `read`, `write`, `edit`, `bash`, `grep`, `glob`, and `task`. Cursor uses `Read`, `Write`, `StrReplace`, `Shell`, `Grep`, `Glob`, and `AskQuestion` (and has no native subagent or task-tracker primitives). At install time, elelem rewrites `{{TOOL_NAME}}` placeholders to the harness-specific name. If a second harness cross-loads the Claude-substituted rules from `~/.claude/`, the instructions refer to tool names the agent in that harness does not recognise, producing incoherent guidance. Disabling third-party config loading keeps each harness reading only its own rule tree.
+
+**Can I install elelem for more than one harness on the same machine?**
+
+Yes. The three installers maintain separate manifest files (`.elelem-manifest-claude`, `.elelem-manifest-opencode`, `.elelem-manifest-cursor`), install to separate directories (`~/.claude/`, `~/.config/opencode/`, `~/.cursor/`), and prune only their own targets on re-install. The recommendation above (disabling third-party config loading) makes coexistence safe by preventing cross-loading.
+
+**Why does the Cursor installer not generate an `AGENTS.md` like the opencode installer?**
+
+Cursor auto-discovers `.cursor/rules/*.mdc` (loaded directly, either Always Apply or by `globs:` matching) and `.cursor/skills/<name>/SKILL.md` (auto-discovered via the `description:` field). There is no opencode-style configuration manifest layer to reproduce; an `AGENTS.md` would be redundant. Setup advice (the third-party-includes toggle) belongs in this README rather than in a generated file, and harness-specific guidance is already substituted into the rules and skills themselves at install time.
