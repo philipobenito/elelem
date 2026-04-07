@@ -367,6 +367,10 @@ install_files_from_dir() {
   for rel in "${_ifd_files[@]+"${_ifd_files[@]}"}"; do
     src="$source_dir/$rel"
     dst="$("$resolve_dst_fn" "$src" "$output_dir")"
+    if [[ "${dst#$output_dir/}" == "$dst" ]]; then
+      echo "Error: install_files_from_dir: resolve_dst returned '$dst' which is not under output_dir '$output_dir'." >&2
+      exit 1
+    fi
     _ifd_planned_srcs+=("$src")
     _ifd_planned_dsts+=("$dst")
   done
@@ -378,10 +382,6 @@ install_files_from_dir() {
     mkdir -p "$(dirname "${_ifd_planned_dsts[$i]}")"
     "$transform_fn" "${_ifd_planned_srcs[$i]}" "${_ifd_planned_dsts[$i]}" || { echo "Error: install_files_from_dir: transform failed for: ${_ifd_planned_srcs[$i]}" >&2; exit 1; }
     dst_rel="${_ifd_planned_dsts[$i]#$output_dir/}"
-    if [[ "$dst_rel" == "${_ifd_planned_dsts[$i]}" ]]; then
-      echo "Error: install_files_from_dir: resolve_dst returned '${_ifd_planned_dsts[$i]}' which is not under output_dir '$output_dir'." >&2
-      exit 1
-    fi
     entry="${manifest_prefix}/${dst_rel}"
     eval "${manifest_ref}+=(\"\$entry\")"
   done
@@ -396,9 +396,8 @@ scan_no_unsubstituted_placeholders() {
 
   [[ -d "$root_dir" ]] || return 0
 
-  local file found_any=0
+  local file found_any=0 hits
   while IFS= read -r -d '' file; do
-    local hits
     hits="$(grep -n -F -e '{{' -e 'TODO:' "$file" 2>/dev/null)" || true
     if [[ -n "$hits" ]]; then
       echo "Error: scan_no_unsubstituted_placeholders: '$file' contains unsubstituted placeholder or TODO marker:" >&2

@@ -68,6 +68,10 @@ OPENCODE_SUBSTITUTIONS=(
   'bash'
 )
 
+# Resolves a source skill file to its destination by stripping $SKILLS_SOURCE
+# from the path, preserving the subdirectory structure under $out. Reads
+# $SKILLS_SOURCE from the installer's global scope; do not call before
+# SKILLS_SOURCE is set.
 _skill_resolve_dst() {
   local src="$1"
   local out="$2"
