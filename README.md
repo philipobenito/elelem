@@ -64,6 +64,8 @@ Rule files are renamed from `.md` to `.mdc` on copy and have Cursor-specific fro
 
 All rules install flat under `<base>/rules/` with an `elelem-<group>-` filename prefix (e.g. `elelem-common-coding-style.mdc`, `elelem-python-testing.mdc`). Cursor does not load `.mdc` files from nested subdirectories of `~/.cursor/rules/` at user scope, so the flat layout is required for the rules to be detected. The `elelem-` prefix prevents collisions with rules you author yourself in the same directory and makes installed files easy to grep for.
 
+**Settings UI visibility caveat.** Installed rules may not appear in Cursor Settings, Rules. This is a known Cursor bug ([forum thread](https://forum.cursor.com/t/rules-in-subdirectories-of-cursor-rules-not-visible-in-mentions-or-settings-ui/155148)) where the Settings rule list and the `@` autocomplete menu skip files Cursor still loads at runtime. To verify rules are working, open a Cursor chat and ask a question whose answer is gated on a rule (for example, "What does the elelem coding-style rule say about emojis?"). If Cursor cites the rule, it is loaded; the missing entries in Settings are cosmetic.
+
 Skills install to `<base>/skills/<name>/SKILL.md` and Cursor auto-discovers them via their `description:` field. SKILL.md files keep their original `name:` and `description:` frontmatter; no additional frontmatter is generated.
 
 The installer writes `.elelem-manifest-cursor` and prunes stale entries on re-install, using the same model as the Claude and opencode manifests.
