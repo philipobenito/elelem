@@ -54,6 +54,56 @@ CURSOR_SUBSTITUTIONS=(
   'dispatching a subagent (unavailable in Cursor; perform the work inline within this conversation, applying the same procedure)'
 )
 
+# Resolves the destination path for a Cursor rule file.
+# Usage: _cursor_rule_resolve_dst src output_root
+#   src         - absolute path to the source file (.md)
+#   output_root - absolute path to the destination root directory
+# Prints output_root/basename(src with .md stripped and .mdc appended) to stdout.
+_cursor_rule_resolve_dst() {
+  local src="$1"
+  local output_root="$2"
+  local basename
+  basename="$(basename "$src" .md)"
+  printf '%s/%s.mdc\n' "$output_root" "$basename"
+}
+
+# Transforms a source rule file for Cursor installation.
+# Usage: _cursor_rule_transform src dst
+#   src - absolute path to the source file (.md)
+#   dst - absolute path to the destination file (.mdc)
+# Returns 0 on success, non-zero on failure.
+# MUST NOT call exit; the caller owns the abort path.
+_cursor_rule_transform() {
+  local src="$1"
+  local dst="$2"
+
+  if ! rewrite_frontmatter_for_cursor "$src" > "$dst"; then
+    return 1
+  fi
+
+  local placeholders substitutions
+  eval "placeholders=(\"\${CURSOR_PLACEHOLDERS[@]}\")"
+  eval "substitutions=(\"\${CURSOR_SUBSTITUTIONS[@]}\")"
+
+  local count="${#placeholders[@]}"
+  if (( count == 0 )); then
+    return 0
+  fi
+
+  local perl_expr=""
+  local i
+  for (( i=0; i<count; i++ )); do
+    local placeholder="${placeholders[$i]}"
+    local substitution="${substitutions[$i]}"
+    local escaped_substitution
+    escaped_substitution="$(printf '%s\n' "$substitution" | sed 's:[\\&]:\\&:g')"
+    perl_expr="${perl_expr}s|\\{\\{${placeholder}\\}\\}|${escaped_substitution}|g; "
+  done
+
+  perl -i -pe "$perl_expr" "$dst"
+  return 0
+}
+
 # Canonicalises a path, following symlinks and handling non-existent directories.
 # Tries realpath -m (GNU) first, falls back to macOS realpath on existing directories.
 _canonicalise_path() {
@@ -172,8 +222,76 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   resolve_install_base base "$HOME/.cursor" ".cursor"
   cursor_assert_not_under_claude "$base" || exit 1
 
+  rules_target="$base/rules"
+  manifest_entries=()
+  mkdir -p "$rules_target"
+
   echo
-  echo "PENDING: Rules and skills installation to be implemented in later tasks."
+  echo "Common instruction files to install:"
+  common_items=()
+  common_defaults=()
+  for _f in "$RULES_SOURCE/common/"*.md; do
+    [[ -f "$_f" ]] || continue
+    _base="$(basename "$_f" .md)"
+    common_items+=("$_base")
+    common_defaults+=(1)
+  done
+
+  multiselect common_selected common_items common_defaults
+
+  if (( ${#common_selected[@]} == 0 )); then
+    echo "Warning: no common rules selected."
+    confirm_common_items=("Continue with no common rules")
+    confirm_common_defaults=(0)
+    multiselect confirm_common_selected confirm_common_items confirm_common_defaults
+    (( ${#confirm_common_selected[@]} > 0 )) || { echo "Aborted."; exit 0; }
+  else
+    common_files=()
+    for _item in "${common_selected[@]}"; do
+      common_files+=("${_item}.md")
+    done
+    mkdir -p "$rules_target/common"
+    install_files_from_dir "$RULES_SOURCE/common" "$rules_target/common" "rules/common" manifest_entries common_files _cursor_rule_resolve_dst _cursor_rule_transform
+    echo "  installed: ${common_selected[*]}"
+  fi
+
+  lang_dirs=()
+  for dir in "$RULES_SOURCE"/*/; do
+    name="$(basename "$dir")"
+    [[ "$name" == "common" ]] && continue
+    if compgen -G "$dir*.md" > /dev/null; then
+      lang_dirs+=("$name")
+    fi
+  done
+
+  if (( ${#lang_dirs[@]} > 0 )); then
+    lang_defaults=()
+    for _ in "${lang_dirs[@]}"; do
+      lang_defaults+=(0)
+    done
+    echo
+    echo "Language packs to install (none selected by default):"
+    multiselect lang_selected lang_dirs lang_defaults
+
+    if (( ${#lang_selected[@]} > 0 )); then
+      for pick in "${lang_selected[@]}"; do
+        lang_files=()
+        for _f in "$RULES_SOURCE/$pick/"*.md; do
+          [[ -f "$_f" ]] || continue
+          lang_files+=("$(basename "$_f")")
+        done
+        mkdir -p "$rules_target/$pick"
+        install_files_from_dir "$RULES_SOURCE/$pick" "$rules_target/$pick" "rules/$pick" manifest_entries lang_files _cursor_rule_resolve_dst _cursor_rule_transform
+        echo "  installed: $pick"
+      done
+    fi
+  else
+    echo
+    echo "No language packs found in $RULES_SOURCE (common-only install)."
+  fi
+
+  echo
+  echo "PENDING: Skills install deferred to Task 3."
   echo "Install base: $base"
   exit 0
 fi
