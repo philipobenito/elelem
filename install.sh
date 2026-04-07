@@ -2,9 +2,10 @@
 #
 # Front controller for elelem installers.
 #
-# Prompts for which harness to install (Claude Code or opencode) and execs the
-# corresponding installer script. The sub-scripts (install-claude.sh and
-# install-opencode.sh) remain runnable directly if you want to skip this prompt.
+# Prompts for which harness to install (Claude Code, opencode, or Cursor) and
+# execs the corresponding installer script. The sub-scripts (install-claude.sh,
+# install-opencode.sh, install-cursor.sh) remain runnable directly if you want
+# to skip this prompt.
 #
 
 set -euo pipefail
@@ -26,17 +27,17 @@ fi
 echo "elelem installer"
 echo
 echo "Which harness do you want to install?"
-harness_items=("Claude Code" "opencode")
-harness_defaults=(1 0)
+harness_items=("Claude Code" "opencode" "Cursor")
+harness_defaults=(1 0 0)
 multiselect harness_selected harness_items harness_defaults
 
 if (( ${#harness_selected[@]} == 0 )); then
-  echo "Error: no harness selected; please select exactly one (Claude Code or opencode) and re-run." >&2
+  echo "Error: no harness selected; please select exactly one (Claude Code, opencode, or Cursor) and re-run." >&2
   exit 1
 fi
 
 if (( ${#harness_selected[@]} > 1 )); then
-  echo "Error: please select exactly one harness (Claude Code or opencode), not both. Re-run the installer and toggle only one item." >&2
+  echo "Error: please select exactly one harness (Claude Code, opencode, or Cursor), not several. Re-run the installer and toggle only one item." >&2
   exit 1
 fi
 
@@ -46,6 +47,9 @@ case "${harness_selected[0]}" in
     ;;
   "opencode")
     exec "$SCRIPT_DIR/install-opencode.sh"
+    ;;
+  "Cursor")
+    exec "$SCRIPT_DIR/install-cursor.sh"
     ;;
   *)
     echo "Error: unrecognised harness selection: ${harness_selected[0]}" >&2
