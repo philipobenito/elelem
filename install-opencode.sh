@@ -68,6 +68,12 @@ OPENCODE_SUBSTITUTIONS=(
   'bash'
 )
 
+_skill_resolve_dst() {
+  local src="$1"
+  local out="$2"
+  printf '%s/%s\n' "$out" "${src#$SKILLS_SOURCE/}"
+}
+
 resolve_install_base base "$HOME/.config/opencode" ".opencode"
 
 rules_target="$base/rules"
@@ -98,11 +104,12 @@ if (( ${#common_selected[@]} == 0 )); then
   multiselect confirm_common_selected confirm_common_items confirm_common_defaults
   (( ${#confirm_common_selected[@]} > 0 )) || { echo "Aborted."; exit 0; }
 else
-  mkdir -p "$rules_target/common"
+  common_files=()
   for _item in "${common_selected[@]}"; do
-    cp "$RULES_SOURCE/common/${_item}.md" "$rules_target/common/${_item}.md"
-    manifest_entries+=("rules/common/${_item}.md")
+    common_files+=("${_item}.md")
   done
+  mkdir -p "$rules_target/common"
+  install_files_from_dir "$RULES_SOURCE/common" "$rules_target/common" "rules/common" manifest_entries common_files
   substitute_tool_names "$rules_target/common" OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
   instructions_globs+=("rules/common/*.md")
   echo "  installed: ${common_selected[*]}"
@@ -129,12 +136,13 @@ if (( ${#lang_dirs[@]} > 0 )); then
 
   if (( ${#lang_selected[@]} > 0 )); then
     for pick in "${lang_selected[@]}"; do
-      mkdir -p "$rules_target/$pick"
+      lang_files=()
       for _f in "$RULES_SOURCE/$pick/"*.md; do
         [[ -f "$_f" ]] || continue
-        cp "$_f" "$rules_target/$pick/$(basename "$_f")"
-        manifest_entries+=("rules/$pick/$(basename "$_f")")
+        lang_files+=("$(basename "$_f")")
       done
+      mkdir -p "$rules_target/$pick"
+      install_files_from_dir "$RULES_SOURCE/$pick" "$rules_target/$pick" "rules/$pick" manifest_entries lang_files
       substitute_tool_names "$rules_target/$pick" OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
       instructions_globs+=("rules/$pick/*.md")
       echo "  installed: $pick"
@@ -155,12 +163,11 @@ if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
   if (( ${#skills_selected[@]} > 0 )); then
     echo "Installing skills -> $skills_target/"
     mkdir -p "$skills_target"
+    skills_files=()
     while IFS= read -r -d '' _f; do
-      _rel="${_f#"$SKILLS_SOURCE"/}"
-      mkdir -p "$skills_target/$(dirname "$_rel")"
-      cp "$_f" "$skills_target/$_rel"
-      manifest_entries+=("skills/$_rel")
+      skills_files+=("${_f#"$SKILLS_SOURCE"/}")
     done < <(find "$SKILLS_SOURCE" -type f -print0)
+    install_files_from_dir "$SKILLS_SOURCE" "$skills_target" "skills" manifest_entries skills_files _skill_resolve_dst
     substitute_tool_names "$skills_target" OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
 
     installed_skills=()
