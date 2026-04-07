@@ -1,0 +1,7 @@
+---
+globs:
+---
+
+# Heading
+
+Body content.

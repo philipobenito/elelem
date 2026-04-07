@@ -1,0 +1,9 @@
+---
+globs: **/*.py
+description: Python rules
+alwaysApply: false
+---
+
+# Heading
+
+Body content.

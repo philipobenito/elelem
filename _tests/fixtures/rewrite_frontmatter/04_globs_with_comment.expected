@@ -1,0 +1,8 @@
+---
+globs: **/*.py, **/*.pyi
+alwaysApply: false
+---
+
+# Python Coding Style
+
+Body content.

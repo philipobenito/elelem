@@ -207,6 +207,91 @@ substitute_tool_names() {
   find "$dir" -type f -name '*.md' -exec perl -i -pe "$perl_expr" {} +
 }
 
+# Reads a source markdown file and writes a Cursor-compatible frontmatter block
+# plus the original body to stdout.
+# Usage: rewrite_frontmatter_for_cursor source_file
+#   source_file - path to the source .md file to transform
+#
+# Frontmatter rules:
+#   - No frontmatter -> prepend alwaysApply: true block, emit body unchanged
+#   - Frontmatter with no globs: line -> preserve description, add alwaysApply: true
+#   - Frontmatter with non-empty globs: line -> preserve globs + description, add alwaysApply: false
+#   - Frontmatter with empty globs: line -> write error to stderr, return non-zero
+#
+# Writes transformed content to stdout. Returns 0 on success, non-zero on error.
+# MUST NOT call exit; the caller owns the abort path.
+rewrite_frontmatter_for_cursor() {
+  local src="$1"
+
+  if [[ ! -f "$src" ]] || [[ ! -r "$src" ]]; then
+    echo "Error: rewrite_frontmatter_for_cursor: cannot read file: $src" >&2
+    return 1
+  fi
+
+  perl -e '
+    use strict;
+    use warnings;
+
+    my $src = $ARGV[0];
+    open(my $fh, "<", $src) or do {
+      print STDERR "Error: rewrite_frontmatter_for_cursor: cannot open: $src\n";
+      exit 1;
+    };
+
+    my @lines = <$fh>;
+    close($fh);
+
+    if (@lines == 0 || $lines[0] ne "---\n") {
+      print "---\nalwaysApply: true\n---\n";
+      print @lines;
+      exit 0;
+    }
+
+    my $i = 1;
+    my $globs_value     = undef;
+    my $description_value = undef;
+
+    while ($i < scalar @lines && $lines[$i] ne "---\n") {
+      my $line = $lines[$i];
+      $i++;
+
+      next if $line =~ /^\s*#/;
+
+      if ($line =~ /^globs:\s*(.*?)\s*$/) {
+        $globs_value = $1;
+        next;
+      }
+
+      if ($line =~ /^description:\s*(.*?)\s*$/) {
+        $description_value = $1;
+        next;
+      }
+    }
+
+    my @body = @lines[$i+1..$#lines];
+
+    if (defined $globs_value) {
+      if ($globs_value eq "") {
+        print STDERR "Error: rewrite_frontmatter_for_cursor: empty globs in $src\n";
+        exit 1;
+      }
+      print "---\n";
+      print "globs: $globs_value\n";
+      print "description: $description_value\n" if defined $description_value;
+      print "alwaysApply: false\n";
+      print "---\n";
+    } else {
+      print "---\n";
+      print "description: $description_value\n" if defined $description_value;
+      print "alwaysApply: true\n";
+      print "---\n";
+    }
+
+    print @body;
+    exit 0;
+  ' "$src"
+}
+
 # Prunes stale entries from the manifest: files present in the old manifest but
 # absent from the new install set are removed from disk.
 # Usage: prune_stale_manifest_entries manifest_file base new_entries_ref
