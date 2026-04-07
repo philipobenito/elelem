@@ -75,6 +75,64 @@ run_negative_fixture_06() {
 
 run_negative_fixture_06
 
+smoke_python_coding_style() {
+  local name="smoke_python_coding_style"
+  local source="$REPO_ROOT/rules/python/coding-style.md"
+  local actual_file
+  actual_file="$(mktemp)"
+  trap "rm -f '$actual_file'" RETURN
+
+  local exit_code=0
+  rewrite_frontmatter_for_cursor "$source" > "$actual_file" 2>/dev/null || exit_code=$?
+
+  if [[ $exit_code -ne 0 ]]; then
+    echo "[FAIL] $name: function returned non-zero ($exit_code)"
+    (( failed++ )) || true
+    return
+  fi
+
+  local expected_frontmatter
+  expected_frontmatter=$(cat <<'EOF'
+globs: **/*.py, **/*.pyi
+alwaysApply: false
+EOF
+)
+
+  local actual_frontmatter
+  actual_frontmatter="$(awk '/^---$/{c++; next} c==1 {print}' "$actual_file")"
+
+  local frontmatter_diff
+  frontmatter_diff="$(diff <(echo "$expected_frontmatter") <(echo "$actual_frontmatter") 2>&1)" || true
+
+  if [[ -n "$frontmatter_diff" ]]; then
+    echo "[FAIL] $name: frontmatter mismatch"
+    echo "$frontmatter_diff"
+    (( failed++ )) || true
+    return
+  fi
+
+  local source_body
+  source_body="$(awk '/^---$/{c++; next} c==2 {print}' "$source")"
+
+  local actual_body
+  actual_body="$(awk '/^---$/{c++; next} c==2 {print}' "$actual_file")"
+
+  local body_diff
+  body_diff="$(diff <(echo "$source_body") <(echo "$actual_body") 2>&1)" || true
+
+  if [[ -n "$body_diff" ]]; then
+    echo "[FAIL] $name: body mismatch"
+    echo "$body_diff"
+    (( failed++ )) || true
+    return
+  fi
+
+  echo "[PASS] $name"
+  (( passed++ )) || true
+}
+
+smoke_python_coding_style
+
 total=$(( passed + failed ))
 echo ""
 echo "${passed}/${total} tests passed"
