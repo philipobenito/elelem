@@ -365,7 +365,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "No skills found in $SKILLS_SOURCE (skipping skills install)."
   fi
 
-  scan_no_unsubstituted_placeholders "$base" || exit 1
+  scan_no_unsubstituted_placeholders "$rules_target" || exit 1
+  scan_no_unsubstituted_placeholders "$skills_target" || exit 1
 
   prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries
   write_manifest "$manifest_file" "$base" manifest_entries

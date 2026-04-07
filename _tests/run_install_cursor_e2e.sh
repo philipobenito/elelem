@@ -175,10 +175,54 @@ test_install_dot_sh_offers_cursor() {
   fi
 }
 
+test_post_install_scan_ignores_unrelated_files_under_base() {
+  local name="post_install_scan_ignores_unrelated_files_under_base"
+  local tmpbase
+  tmpbase="$(mktemp -d)"
+  trap "rm -rf '$tmpbase'" RETURN
+
+  mkdir -p "$tmpbase/rules/common"
+  mkdir -p "$tmpbase/skills"
+  mkdir -p "$tmpbase/plugins/cache/third-party/skills/foo"
+
+  cat > "$tmpbase/plugins/cache/third-party/skills/foo/SKILL.md" <<'PLUGIN'
+---
+name: foo
+description: third-party
+---
+
+TODO: this is fine, it belongs to a different installer.
+PLUGIN
+
+  local manifest=()
+  local common_files=("coding-style.md")
+  install_files_from_dir "$REPO_ROOT/rules/common" "$tmpbase/rules/common" "rules/common" manifest common_files _cursor_rule_resolve_dst _cursor_rule_transform
+
+  local rules_exit=0
+  local skills_exit=0
+  ( scan_no_unsubstituted_placeholders "$tmpbase/rules" ) || rules_exit=$?
+  ( scan_no_unsubstituted_placeholders "$tmpbase/skills" ) || skills_exit=$?
+
+  if (( rules_exit != 0 )) || (( skills_exit != 0 )); then
+    _fail "$name" "scoped scan tripped on a clean install (rules=$rules_exit skills=$skills_exit)"
+    return
+  fi
+
+  local broad_exit=0
+  ( scan_no_unsubstituted_placeholders "$tmpbase" ) || broad_exit=$?
+  if (( broad_exit == 0 )); then
+    _fail "$name" "broad scan against \$base did not trip on a TODO marker that lives outside elelem's directories; the test setup is wrong"
+    return
+  fi
+
+  _pass "$name"
+}
+
 test_install_cursor_dot_sh_main_flow_syntax
 test_install_dot_sh_offers_cursor
 test_full_install_to_tmp_user_scope
 test_coexistence_three_manifests
+test_post_install_scan_ignores_unrelated_files_under_base
 
 total=$(( passed + failed ))
 echo
