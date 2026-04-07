@@ -101,10 +101,12 @@ multiselect() {
     # Read up to 3 bytes to capture escape sequences.
     IFS= read -rsn1 key </dev/tty
     if [[ "$key" == $'\x1b' ]]; then
-      local seq1 seq2
-      IFS= read -rsn1 -t 0.1 seq1 </dev/tty || true
-      IFS= read -rsn1 -t 0.1 seq2 </dev/tty || true
-      key="${key}${seq1}${seq2}"
+      # Read the 2 trailing bytes of an ANSI escape sequence (e.g. "[A" for up arrow).
+      # No timeout: bash 3.2 (macOS default) does not support fractional -t values,
+      # and arrow-key sequences arrive as a single burst so a blocking read is safe.
+      local rest
+      IFS= read -rsn2 rest </dev/tty || true
+      key="${key}${rest}"
     fi
 
     case "$key" in
