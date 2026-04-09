@@ -16,7 +16,7 @@ This skill **MUST NOT** be invoked until the caller has produced a consolidated 
 ## Procedure
 
 1. **Confirm the summary is consolidated.** If the caller has not produced a single design summary block, stop and tell the caller to consolidate before invoking this skill.
-2. **Dispatch the reviewer.** Use `{{DISPATCH_AGENT_TOOL}}` to dispatch a reviewer subagent following `design-reviewer-prompt.md`. Paste the full design summary into the prompt. Do not pass session history. Default model: `haiku`. Escalate to `sonnet` only if the design is architecturally complex enough that the reviewer needs deeper reasoning, per the model selection rules in `../../rules/common/subagents.md`.
+2. **Dispatch the reviewer.** Use `{{DISPATCH_AGENT_TOOL}}` to dispatch a reviewer subagent following `design-reviewer-prompt.md`. Paste the full design summary into the prompt. Do not pass session history. Pick one concrete default model: `haiku`; if it is unavailable, `gpt-5.1-codex-mini`; if that is unavailable and Google models are exposed, `gemini-2.5-flash-lite`. Escalate only on evidence, to `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`, if the design is architecturally complex enough that the reviewer needs deeper reasoning, per the model selection rules in `../../rules/common/subagents.md`.
 3. **Read the reviewer's status.**
    - **Approved**: return the design summary unchanged to the caller. Done.
    - **Issues Found**: extract each issue, decide whether the fix is a wording change, a missing section, or a substantive design change.

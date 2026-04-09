@@ -5,7 +5,7 @@ description: "Runs a disciplined, evidence-driven investigation to reproduce a b
 
 # Debugging
 
-The iron-law rules (the Hard Gate, Evidence Over Intuition, and the bug-fixes-still-need-tests-and-verification cross-references) live in `../../rules/common/debugging.md` and load on every session. The procedural rules that bind once this skill is running (scope discipline, the refocus rule, the investigation budget, root cause vs symptom, the minimal fix principle, the rationalisation table) live in `RULES.md` alongside this file. The bug-fix TDD rule lives in `../../rules/common/testing.md`. The post-fix verification gate lives in `../../rules/common/verification.md`. This skill is the 7-phase procedure that produces the evidence and the fix those rules require.
+The iron-law rules (the Hard Gate, Evidence Over Intuition, and the bug-fixes-still-need-tests-and-verification cross-references) live in `../../rules/common/debugging.md` and load on every session. The procedural rules that bind once this skill is running (scope discipline, the re-focus rule, the investigation budget, root cause vs symptom, the minimal fix principle, the rationalisation table) live in `RULES.md` alongside this file. The bug-fix TDD rule lives in `../../rules/common/testing.md`. The post-fix verification gate lives in `../../rules/common/verification.md`. This skill is the 7-phase procedure that produces the evidence and the fix those rules require.
 
 Before running the procedure below, you **MUST** read `RULES.md` (sibling file in this skill directory) and `../_shared/subagent-dispatch.md` (the debugging skill dispatches an investigator subagent) using the Read tool if you have not already read them in this session. The procedure below assumes those rules are in your context.
 
@@ -115,7 +115,7 @@ Autonomous mode is the only mode in which investigator subagents run. When dispa
 
 - Use the template at `skills/debugging/investigator-prompt.md` as the base prompt
 - Provide each investigator with: the bug description (expected vs actual), the specific hypothesis it is testing, and the scoped list of files or areas it may examine
-- Per `../../rules/common/subagents.md`, pick the most specific subagent type available (for example `debugger`, `python-pro`, `typescript-pro`) and default to `haiku` unless the investigation requires integration reasoning
+- Per `../../rules/common/subagents.md`, pick the most specific subagent type available (for example `debugger`, `python-pro`, `typescript-pro`) and default to `haiku`; if it is unavailable, `gpt-5.1-codex-mini`; if that is unavailable and Google models are exposed, `gemini-2.5-flash-lite`, unless the investigation requires integration reasoning
 - Reconcile the returned verdicts yourself in the orchestrator context: CONFIRMED verdicts advance you to Phase 6, ELIMINATED verdicts move you to the next hypothesis, INCONCLUSIVE verdicts either need a better-scoped re-dispatch or a refocusing with the user
 
 Investigators never fix anything. They only gather evidence. The orchestrator holds the fix authority.

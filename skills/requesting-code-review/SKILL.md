@@ -29,7 +29,7 @@ Before running the procedure below, you **MUST** read `../_shared/code-review.md
    - `{PLAN_REFERENCE}`: a pointer to the approved design, ticket, or plan the work is delivering against
    - `{BASE_SHA}` and `{HEAD_SHA}`: the commits from step 1
 
-4. **Dispatch.** Send the filled template to the reviewer subagent. Start with the cheapest capable model per `../../rules/common/subagents.md` (default `haiku`; escalate to `sonnet` only when the change involves cross-file integration reasoning or architectural judgement).
+4. **Dispatch.** Send the filled template to the reviewer subagent. Start with the cheapest capable model per `../../rules/common/subagents.md`: pick one concrete default model, `haiku`, then `gpt-5.1-codex-mini`, then `gemini-2.5-flash-lite`. Escalate only on evidence, to `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`, when the change involves cross-file integration reasoning or architectural judgement.
 
 5. **Act on the output.** Process the reviewer's findings through `receiving-code-review` and apply the severity discipline in `../_shared/code-review.md`: fix Critical before anything else, fix Important before the next task or merge, log Minor for later.
 
@@ -42,7 +42,7 @@ BASE_SHA=$(git log --grep="Task 1" --format=%H -n 1)
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-Dispatch a `code-reviewer` subagent on `haiku` with the filled template:
+Dispatch a `code-reviewer` subagent on `haiku`, or if it is unavailable `gpt-5.1-codex-mini`, or if Google models are exposed and both are unavailable `gemini-2.5-flash-lite`, with the filled template:
 
 - `{WHAT_WAS_IMPLEMENTED}`: Verification and repair functions for the conversation index
 - `{DESCRIPTION}`: Added `verifyIndex()` and `repairIndex()` covering four issue types: missing entries, stale entries, hash mismatches, and orphaned files. Repair is idempotent and logs every action.

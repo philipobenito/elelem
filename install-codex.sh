@@ -42,18 +42,18 @@ CODEX_PLACEHOLDERS=(
 )
 
 CODEX_SUBSTITUTIONS=(
-  'ask the user directly'
-  '/plan'
+  'request_user_input'
+  'STOP and ask the user to switch to Plan mode, do not continue until in Plan mode'
   'ask the user to approve the plan and then leave plan mode'
-  'a structured task list in the conversation'
-  'ask Codex to spawn a subagent'
+  'update_plan task list'
+  'spawn_agent'
   '/skills or $skill-name'
   'read the file'
   'write or create the file'
-  'Apply Patch'
-  'search the codebase'
-  'find files by pattern'
-  'Local shell'
+  'apply_patch'
+  'exec_command with rg'
+  'exec_command with rg --files or find'
+  'exec_command'
 )
 
 CODEX_MANAGED_START='<!-- elelem:codex:start -->'

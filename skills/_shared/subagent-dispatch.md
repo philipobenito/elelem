@@ -23,22 +23,32 @@ When decomposing work into tasks, you **MUST** annotate each task with its recom
 
 You **MUST** use the cheapest model capable of the task. This is cost and speed discipline, not a suggestion.
 
-Default every subagent dispatch to `model: "haiku"`. Escalate only when you have specific evidence the task requires more capability.
+Choose exactly one concrete model per dispatch. Use the first available model from the relevant ordered list below. Escalate only when you have specific evidence the task requires more capability.
 
-| Role                                | Default  | Escalate to | Escalation trigger                                                |
-|-------------------------------------|----------|-------------|-------------------------------------------------------------------|
-| Implementer (clear spec, 1-3 files) | `haiku`  | `sonnet`    | Task failed with haiku, or needs multi-file integration reasoning |
-| Implementer (integration, judgment) | `sonnet` | inherited   | Multi-file coordination, pattern matching, debugging              |
-| Reviewer (standard)                 | `haiku`  | `sonnet`    | Architecturally complex code requiring deep reasoning             |
-| Fix subagent                        | `haiku`  | `sonnet`    | Fix requires understanding beyond the immediate issue             |
+Use these ordered model lists:
+
+| Use case            | Ordered models                                                  |
+|---------------------|-----------------------------------------------------------------|
+| Low-cost default    | `haiku`, `gpt-5.1-codex-mini`, `gemini-2.5-flash-lite`          |
+| Standard escalation | `sonnet`, `gpt-5.2`, `gemini-2.5-flash`                         |
+| High-capability     | inherited session model, `opus`, `gpt-5.4`, `gemini-2.5-pro`    |
+
+Google names in these lists are valid only when the current environment actually exposes them. If they are unavailable, skip them and keep the same order.
+
+| Role                                | Default                                                          | Escalate to                                                                 | Escalation trigger                                                            |
+|-------------------------------------|------------------------------------------------------------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| Implementer (clear spec, 1-3 files) | `haiku`, then `gpt-5.1-codex-mini`, then `gemini-2.5-flash-lite` | `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`                           | Task failed on the low-cost choice, or needs multi-file integration reasoning |
+| Implementer (integration, judgment) | `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`                | inherited session model, then `opus`, then `gpt-5.4`, then `gemini-2.5-pro` | Multi-file coordination, pattern matching, debugging                          |
+| Reviewer (standard)                 | `haiku`, then `gpt-5.1-codex-mini`, then `gemini-2.5-flash-lite` | `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`                           | Architecturally complex code requiring deep reasoning                         |
+| Fix subagent                        | `haiku`, then `gpt-5.1-codex-mini`, then `gemini-2.5-flash-lite` | `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`                           | Fix requires understanding beyond the immediate issue                         |
 
 Task complexity signals:
 
-- Touches 1-2 files with a complete spec: `haiku`
-- Touches multiple files with integration concerns: `sonnet`
-- Requires design judgement or broad codebase understanding: inherited
+- Touches 1-2 files with a complete spec: `haiku`, else `gpt-5.1-codex-mini`, else `gemini-2.5-flash-lite`
+- Touches multiple files with integration concerns: `sonnet`, else `gpt-5.2`, else `gemini-2.5-flash`
+- Requires design judgement or broad codebase understanding: inherited session model, else `opus`, else `gpt-5.4`, else `gemini-2.5-pro`
 
-You **MUST NOT** pre-escalate. Start with `haiku`. If it fails or produces poor output, re-dispatch with `sonnet`. One failed inexpensive attempt costs less than always paying for the expensive model.
+You **MUST NOT** pre-escalate. Start with `haiku`; if it is unavailable, use `gpt-5.1-codex-mini`; if that is unavailable and Google models are exposed, use `gemini-2.5-flash-lite`. If that fails or produces poor output, re-dispatch with `sonnet`; if it is unavailable, use `gpt-5.2`; if that is unavailable and Google models are exposed, use `gemini-2.5-flash`. One failed inexpensive attempt costs less than always paying for the expensive model.
 
 ## Answering Subagent Questions
 

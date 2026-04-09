@@ -11,7 +11,7 @@ Before running the procedure below, you **MUST** read `../_shared/subagent-dispa
 
 ## When This Skill Applies
 
-You **MUST** confirm all of the following before dispatching in parallel:
+You **MUST** confirm all the following before dispatching in parallel:
 
 - There are two or more failures, tasks, or investigations to work on
 - Each one can be understood and completed without information from the others
@@ -24,7 +24,7 @@ If any of these is false, a parallel dispatch is not valid. Either investigate s
 
 1. **Identify independent domains.** Group the work by what is broken or what needs building. Each group **MUST** map to exactly one problem domain with no shared files, shared state, or shared causal chain. If you cannot cleanly partition the work, stop. This skill does not apply.
 
-2. **Annotate each task with its subagent type and model.** Per `../../rules/common/subagents.md`, pick the most specific subagent type for each task (for example `typescript-pro` for a TypeScript test file, `python-pro` for a Python module, `debugger` for diagnostic work). Start every dispatch on `haiku` and escalate only on evidence.
+2. **Annotate each task with its subagent type and model.** Per `../../rules/common/subagents.md`, pick the most specific subagent type for each task (for example `typescript-pro` for a TypeScript test file, `python-pro` for a Python module, `debugger` for diagnostic work). Pick one concrete starting model for each task: `haiku`; if it is unavailable, `gpt-5.1-codex-mini`; if that is unavailable and Google models are exposed, `gemini-2.5-flash-lite`. Escalate only on evidence to `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`.
 
 3. **Construct each task prompt.** Per `../../rules/common/subagents.md`, do not let any subagent inherit your session history. For each agent, write a self-contained prompt containing:
 
@@ -40,7 +40,7 @@ If any of these is false, a parallel dispatch is not valid. Either investigate s
    - Read the full summary
    - Check for file-level conflicts: did any two agents touch the same file? If yes, read both diffs and confirm the edits do not overwrite each other
    - Check for systematic errors: agents operating in isolation can reach the same wrong conclusion
-   - Run the full verification suite against the merged state per `../../rules/common/verification.md`. Per-agent local verification is not sufficient; the parallel fixes only pass the gate once they pass together.
+   - Run the full verification suite against the merged state per `../../rules/common/verification.md`. Per-agent local verification is not enough; the parallel fixes only pass the gate once they pass together.
 
 6. **Act on failure modes.** If reconciliation fails (edit conflict, systematic error, merged verification red), follow the escalation ladder in `../../rules/common/subagents.md`: more context and re-dispatch, more capable model, smaller scope, or escalation to the human partner. You **MUST NOT** patch the output manually in the orchestrator context.
 
@@ -61,7 +61,7 @@ These are the mistakes that are unique to parallel dispatch. General subagent-di
 
 Six test failures across three files after a refactor:
 
-- `agent-tool-abort.test.ts`: 3 failures, timing and race conditions
+- `agent-tool-abort.test.ts`: 3 failures, timing, and race conditions
 - `batch-completion-behavior.test.ts`: 2 failures, tools not executing
 - `tool-approval-race-conditions.test.ts`: 1 failure, execution count is zero
 
@@ -69,9 +69,9 @@ Independence check: each file exercises a different subsystem (abort logic, batc
 
 Decomposition, annotated with subagent type and model:
 
-- Agent 1 (`typescript-pro`, `haiku`): fix `agent-tool-abort.test.ts`; scope limited to that file plus the abort implementation it exercises; replace arbitrary timeouts with event-based waiting; do not touch other test files
-- Agent 2 (`typescript-pro`, `haiku`): fix `batch-completion-behavior.test.ts`; scope limited to the batch completion path; do not touch abort or approval code
-- Agent 3 (`typescript-pro`, `haiku`): fix `tool-approval-race-conditions.test.ts`; scope limited to the approval path
+- Agent 1 (`typescript-pro`, `haiku`; fallback `gpt-5.1-codex-mini`, then `gemini-2.5-flash-lite`): fix `agent-tool-abort.test.ts`; scope limited to that file plus the abort implementation it exercises; replace arbitrary timeouts with event-based waiting; do not touch other test files
+- Agent 2 (`typescript-pro`, `haiku`; fallback `gpt-5.1-codex-mini`, then `gemini-2.5-flash-lite`): fix `batch-completion-behavior.test.ts`; scope limited to the batch completion path; do not touch abort or approval code
+- Agent 3 (`typescript-pro`, `haiku`; fallback `gpt-5.1-codex-mini`, then `gemini-2.5-flash-lite`): fix `tool-approval-race-conditions.test.ts`; scope limited to the approval path
 
 Dispatch all three in a single message.
 

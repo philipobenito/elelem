@@ -93,8 +93,18 @@ test_full_install_to_tmp_user_scope() {
     return
   fi
 
-  if ! grep -RIlF 'ask the user directly' "$skills_target" >/dev/null 2>&1; then
+  if ! grep -RIlF 'request_user_input' "$skills_target" >/dev/null 2>&1; then
     _fail "$name" "skills did not receive Codex ASK_USER_QUESTION_TOOL substitution"
+    return
+  fi
+
+  if ! grep -RIlF 'update_plan' "$skills_target" >/dev/null 2>&1; then
+    _fail "$name" "skills did not receive Codex TASK_TRACKER_TOOL substitution"
+    return
+  fi
+
+  if ! grep -RIlF 'spawn_agent' "$skills_target" >/dev/null 2>&1; then
+    _fail "$name" "skills did not receive Codex DISPATCH_AGENT_TOOL substitution"
     return
   fi
 

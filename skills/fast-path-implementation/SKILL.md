@@ -19,11 +19,11 @@ The caller of this skill is responsible for having asked the commit preference q
 
 ### 1. Single Implementation Dispatch
 
-Dispatch one implementer with every change as a single batch. Use `../subagent-driven-development/implementer-prompt.md` with the task description covering the full scope of changes. Select the specialised subagent type for the work per `../../rules/common/subagents.md`. Use `model: "haiku"`: if the work is simple enough for this path, it is simple enough for the cheapest model.
+Dispatch one implementer with every change as a single batch. Use `../subagent-driven-development/implementer-prompt.md` with the task description covering the full scope of changes. Select the specialised subagent type for the work per `../../rules/common/subagents.md`. Pick one concrete model: use `model: "haiku"`; if it is unavailable, use `model: "gpt-5.1-codex-mini"`; if that is unavailable and Google models are exposed, use `model: "gemini-2.5-flash-lite"`. If the work is simple enough for this path, it is simple enough for the cheapest model.
 
 ### 2. Single Combined Review
 
-Dispatch one reviewer that checks spec compliance and code quality in a single pass, using `./fast-path-reviewer-prompt.md`. This is not a weaker review than the full path. It covers the same ground; the combination is possible because the small scope makes separation unnecessary overhead. Use `model: "haiku"`.
+Dispatch one reviewer that checks spec compliance and code quality in a single pass, using `./fast-path-reviewer-prompt.md`. This is not a weaker review than the full path. It covers the same ground; the combination is possible because the small scope makes separation unnecessary overhead. Pick one concrete model: use `model: "haiku"`; if it is unavailable, use `model: "gpt-5.1-codex-mini"`; if that is unavailable and Google models are exposed, use `model: "gemini-2.5-flash-lite"`.
 
 The reviewer returns one of three outcomes:
 
@@ -59,11 +59,11 @@ digraph fast_path {
     rankdir=TB;
 
     "Triage: SIMPLE" [shape=box, style=bold];
-    "Dispatch implementer\n(all changes as single batch, model: haiku)" [shape=box];
+    "Dispatch implementer\n(all changes as single batch, model: haiku -> gpt-5.1-codex-mini -> gemini-2.5-flash-lite)" [shape=box];
     "Implementer asks questions?" [shape=diamond];
     "Answer questions, provide context" [shape=box];
     "Implementer implements, tests, self-reviews" [shape=box];
-    "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku)" [shape=box];
+    "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku -> gpt-5.1-codex-mini -> gemini-2.5-flash-lite)" [shape=box];
     "Reviewer result?" [shape=diamond];
     "Implementer fixes issues" [shape=box];
     "Hand back to subagent-driven-development\n(re-decompose)" [shape=box];
@@ -71,17 +71,17 @@ digraph fast_path {
     "Verification passes?" [shape=diamond];
     "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [shape=box, style=bold];
 
-    "Triage: SIMPLE" -> "Dispatch implementer\n(all changes as single batch, model: haiku)";
-    "Dispatch implementer\n(all changes as single batch, model: haiku)" -> "Implementer asks questions?";
+    "Triage: SIMPLE" -> "Dispatch implementer\n(all changes as single batch, model: haiku -> gpt-5.1-codex-mini -> gemini-2.5-flash-lite)";
+    "Dispatch implementer\n(all changes as single batch, model: haiku -> gpt-5.1-codex-mini -> gemini-2.5-flash-lite)" -> "Implementer asks questions?";
     "Implementer asks questions?" -> "Answer questions, provide context" [label="yes"];
-    "Answer questions, provide context" -> "Dispatch implementer\n(all changes as single batch, model: haiku)";
+    "Answer questions, provide context" -> "Dispatch implementer\n(all changes as single batch, model: haiku -> gpt-5.1-codex-mini -> gemini-2.5-flash-lite)";
     "Implementer asks questions?" -> "Implementer implements, tests, self-reviews" [label="no"];
-    "Implementer implements, tests, self-reviews" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku)";
-    "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku)" -> "Reviewer result?";
+    "Implementer implements, tests, self-reviews" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku -> gpt-5.1-codex-mini -> gemini-2.5-flash-lite)";
+    "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku -> gpt-5.1-codex-mini -> gemini-2.5-flash-lite)" -> "Reviewer result?";
     "Reviewer result?" -> "Verification gate (orchestrator):\ngit diff + re-run verification\n(../../rules/common/verification.md)" [label="PASS"];
     "Reviewer result?" -> "Implementer fixes issues" [label="FAIL"];
     "Reviewer result?" -> "Hand back to subagent-driven-development\n(re-decompose)" [label="TRIAGE_INVALID"];
-    "Implementer fixes issues" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku)" [label="re-review"];
+    "Implementer fixes issues" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: haiku -> gpt-5.1-codex-mini -> gemini-2.5-flash-lite)" [label="re-review"];
     "Verification gate (orchestrator):\ngit diff + re-run verification\n(../../rules/common/verification.md)" -> "Verification passes?";
     "Verification passes?" -> "Implementer fixes issues" [label="no"];
     "Verification passes?" -> "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [label="yes"];
@@ -98,13 +98,13 @@ User chose: Auto-commit after each task
 
 [Run complexity-triage, classification returns SIMPLE with evidence table]
 
-[Dispatch single implementer (model: haiku) with all 8 files as one batch]
+[Dispatch single implementer (model: haiku; fallback gpt-5.1-codex-mini, then gemini-2.5-flash-lite) with all 8 files as one batch]
 
 Implementer:
   - Updated copyright year in all 8 files
   - Self-review: all changes are consistent string replacements
 
-[Dispatch combined reviewer (model: haiku)]
+[Dispatch combined reviewer (model: haiku; fallback gpt-5.1-codex-mini, then gemini-2.5-flash-lite)]
 
 Combined reviewer: [PASS] All 8 files correctly updated. Changes match spec exactly,
 no extra modifications, consistent with surrounding code style.
