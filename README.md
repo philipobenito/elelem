@@ -1,6 +1,6 @@
 # elelem
 
-Rules and skills for Claude Code, OpenCode, and Cursor, with interactive installers for all three harnesses.
+Rules and skills for Claude Code, OpenCode, and Codex, with interactive installers for all three harnesses.
 
 ## Quick start
 
@@ -8,7 +8,7 @@ Rules and skills for Claude Code, OpenCode, and Cursor, with interactive install
 ./install.sh
 ```
 
-Pick your harness at the prompt; the front controller execs the matching installer. To skip the prompt for scripted installs, run `./install-claude.sh`, `./install-opencode.sh`, or `./install-cursor.sh` directly.
+Pick your harness at the prompt; the front controller execs the matching installer. To skip the prompt for scripted installs, run `./install-claude.sh`, `./install-opencode.sh`, or `./install-codex.sh` directly.
 
 ## Claude Code
 
@@ -53,39 +53,41 @@ export OPENCODE_DISABLE_CLAUDE_CODE=1
 
 Add that line to `~/.zshrc` or `~/.bashrc` to persist it across shell sessions.
 
-## Cursor
+## Codex
 
-The Cursor installer prompts for scope (user `~/.cursor/` or project `<project>/.cursor/`) and selections for common rules, language packs, and skills. It installs:
+The Codex installer prompts for scope and selections for common rules, language packs, and skills. It installs:
 
-- Rules under `~/.cursor/rules/` or `<project>/.cursor/rules/`
-- Skills under `~/.cursor/skills/` or `<project>/.cursor/skills/`
+- Rules into a managed elelem block inside `~/.codex/AGENTS.md` or `<project>/AGENTS.md`
+- Skills under `~/.agents/skills/` or `<project>/.agents/skills/`
 
-Rule files are renamed from `.md` to `.mdc` on copy and have Cursor-specific frontmatter applied. Common rules become Always Apply rules (`alwaysApply: true`). Language packs become Auto Attached rules with their `globs:` patterns preserved and `alwaysApply: false` added.
+Codex does not have a Cursor-style rule directory. Instead, the installer assembles the selected rule files into a generated Markdown block inside `AGENTS.md`. Any content outside that block is preserved. Re-running the installer replaces only the elelem-managed block.
 
-All rules install flat under `<base>/rules/` with an `elelem-<group>-` filename prefix (e.g. `elelem-common-coding-style.mdc`, `elelem-python-testing.mdc`). Cursor does not load `.mdc` files from nested subdirectories of `~/.cursor/rules/` at user scope, so the flat layout is required for the rules to be detected. The `elelem-` prefix prevents collisions with rules you author yourself in the same directory and makes installed files easy to grep for.
+Unlike Claude Code, selected language packs are not path-scoped in Codex. If you install a language pack, its instructions apply in every Codex session for that scope because they are merged into `AGENTS.md`.
 
-**Settings UI visibility caveat.** Installed rules may not appear in Cursor Settings, Rules. This is a known Cursor bug ([forum thread](https://forum.cursor.com/t/rules-in-subdirectories-of-cursor-rules-not-visible-in-mentions-or-settings-ui/155148)) where the Settings rule list and the `@` autocomplete menu skip files Cursor still loads at runtime. To verify rules are working, open a Cursor chat and ask a question whose answer is gated on a rule (for example, "What does the elelem coding-style rule say about emojis?"). If Cursor cites the rule, it is loaded; the missing entries in Settings are cosmetic.
+The installer writes `.elelem-manifest-codex` and prunes stale skill files on re-install. `AGENTS.md` is updated in place rather than pruned via the manifest.
 
-Skills install to `<base>/skills/<name>/SKILL.md` and Cursor auto-discovers them via their `description:` field. SKILL.md files keep their original `name:` and `description:` frontmatter; no additional frontmatter is generated.
+You can also run `./install-codex.sh` directly to skip the harness prompt.
 
-The installer writes `.elelem-manifest-cursor` and prunes stale entries on re-install, using the same model as the Claude and OpenCode manifests.
+### Existing AGENTS.md content
 
-You can also run `./install-cursor.sh` directly to skip the harness prompt.
+If you already maintain your own `AGENTS.md`, the Codex installer appends or updates an elelem-managed block delimited by:
 
-### Disable third-party config loading
+```md
+<!-- elelem:codex:start -->
+...
+<!-- elelem:codex:end -->
+```
 
-Cursor has a cross-loader that reads rules from `~/.claude/`, `~/.codex/`, and other harness directories. If you have also run the Claude Code installer, Cursor will load the Claude-substituted rules from there, which gives you Claude tool names like `Read` and `Edit` in a Cursor session instead of Cursor's `Read` and `StrReplace`. The rules still parse, but the instructions refer to tools the Cursor assistant does not recognise by those names.
-
-Disable this by navigating to Cursor Settings, then Rules, Skills, Subagents, and toggling off "Include third-party Plugins, Skills, and other configs". Recommended if you use both Claude Code and Cursor on the same machine. This is the Cursor counterpart to the OpenCode `OPENCODE_DISABLE_CLAUDE_CODE` recommendation above.
+Everything outside that block is left untouched.
 
 ## Layout
 
-```
+```text
 .
 ├── install.sh            Front controller; prompts which harness to install
 ├── install-claude.sh     Claude Code installer (also runnable directly)
 ├── install-opencode.sh   OpenCode installer (also runnable directly)
-├── install-cursor.sh     Cursor installer (also runnable directly)
+├── install-codex.sh      Codex installer (also runnable directly)
 ├── _install-common.sh    Common functions sourced by every installer
 ├── rules/
 │   ├── common/           Always-on rules (no frontmatter)
@@ -106,16 +108,22 @@ Disable this by navigating to Cursor Settings, then Rules, Skills, Subagents, an
     ├── ...
 ```
 
-The source layout deliberately matches the installed layout: `rules/` in this repo installs to `~/.claude/rules/` (Claude) or `~/.config/opencode/rules/` (OpenCode), and `skills/` installs to `~/.claude/skills/` or `~/.config/opencode/skills/`. Cross-references between files use **relative paths from the citing file's location** (e.g. `../../rules/common/debugging.md` from inside `skills/debugging/SKILL.md`) so that they resolve correctly both in the source repo and on disk after install.
+The source layout deliberately mirrors the installer inputs: `rules/` is copied directly for Claude Code and OpenCode, while Codex assembles selected rule files into `AGENTS.md`. `skills/` installs to the harness-specific skills location:
 
-- `rules/common/` rules have **no frontmatter** and load unconditionally.
-- Language packs (`rules/python/`, future `rules/typescript/`, etc.) use `globs:` frontmatter and load only when Claude reads a matching file (or in every OpenCode session if selected).
-- Each skill folder has a `SKILL.md` that defines the procedure. Skill folders may also contain a `RULES.md` (procedural rules read at the start of the skill), prompt-template files (paste-filled into subagent dispatches), or other supporting files.
-- `skills/_shared/` holds files referenced by more than one skill (for example, `subagent-dispatch.md` is read by every skill that dispatches a subagent).
+- Claude Code: `~/.claude/skills/` or `<project>/.claude/skills/`
+- OpenCode: `~/.config/opencode/skills/` or `<project>/.opencode/skills/`
+- Codex: `~/.agents/skills/` or `<project>/.agents/skills/`
+
+Cross-references between files use relative paths from the citing file's location (for example, `../../rules/common/debugging.md` from inside `skills/debugging/SKILL.md`) so that they resolve correctly in the source repo and in the directory-based installs.
+
+- `rules/common/` rules have no frontmatter and load unconditionally.
+- Language packs (`rules/python/`, future `rules/typescript/`, etc.) use `globs:` frontmatter. Claude Code keeps that path-scoped behaviour; OpenCode and Codex treat selected language packs as always-on for the chosen scope.
+- Each skill folder has a `SKILL.md` that defines the procedure. Skill folders may also contain a `RULES.md`, prompt-template files, or other supporting files.
+- `skills/_shared/` holds files referenced by more than one skill.
 
 ## Writing a new language pack
 
-Create `rules/<language>/<topic>.md` and start the file with the **only** frontmatter format that is known to work reliably:
+Create `rules/<language>/<topic>.md` and start the file with the only frontmatter format that is known to work reliably:
 
 ```yaml
 ---
@@ -123,14 +131,14 @@ globs: pattern1, pattern2, pattern3
 ---
 ```
 
-**Critical rules** (per [claude-code#17204](https://github.com/anthropics/claude-code/issues/17204)):
+Critical rules (per [claude-code#17204](https://github.com/anthropics/claude-code/issues/17204)):
 
-- Field name **MUST** be `globs`, not `paths`
-- Value **MUST** be a single unquoted string of comma-separated glob patterns
-- Do **NOT** use a YAML list (`- "**/*.ts"`), quoted strings, or JSON array syntax. They silently fail to match
+- Field name MUST be `globs`, not `paths`
+- Value MUST be a single unquoted string of comma-separated glob patterns
+- Do NOT use a YAML list (`- "**/*.ts"`), quoted strings, or JSON array syntax; they silently fail to match
 - A single-pattern value is fine: `globs: **/*.php`
 
-**Working:**
+Working:
 
 ```yaml
 ---
@@ -138,7 +146,7 @@ globs: **/*.ts, **/*.tsx, **/*.js
 ---
 ```
 
-**Broken** (parses but never matches):
+Broken:
 
 ```yaml
 ---
@@ -154,20 +162,24 @@ paths:
 - No emojis, no em/en-dashes in prose
 - `MUST` / `MUST NOT` / `SHOULD` / `MAY` used in the RFC 2119 sense
 - Keep rules concise. If a rule needs a long explanation, it is probably two rules
-- Cross-references use relative paths from the citing file (e.g. `../../rules/common/X.md` from a skill, `./Y.md` or just `Y.md` between siblings in the same directory)
+- Cross-references use relative paths from the citing file
 
 ## Tool-name placeholders
 
-Placeholders of the form `{{TOOL_NAME}}` are substituted in every `.md` file under `rules/` and `skills/` at install time. Each installer declares its own placeholder map: the Claude map lives in `install-claude.sh` (near the top of the file, `CLAUDE_PLACEHOLDERS` and `CLAUDE_SUBSTITUTIONS` arrays); the OpenCode map lives in `install-opencode.sh` (`OPENCODE_PLACEHOLDERS` and `OPENCODE_SUBSTITUTIONS` arrays).
+Placeholders of the form `{{TOOL_NAME}}` are substituted in every `.md` file under `rules/` and `skills/` at install time. Each installer declares its own placeholder map:
 
-Claude Code uses PascalCase tool names (`Read`, `Write`, `Agent`), while OpenCode uses lowercase short names (`read`, `write`, `task`).
+- Claude Code: `install-claude.sh`
+- OpenCode: `install-opencode.sh`
+- Codex: `install-codex.sh`
+
+Claude Code uses PascalCase tool names such as `Read`, `Write`, and `Agent`. OpenCode uses lowercase short names such as `read`, `write`, and `task`. Codex is less one-to-one: where Codex exposes a documented command such as `/plan`, `/skills`, or `Apply Patch`, the installer uses that literal form; otherwise it substitutes a Codex-safe capability phrase rather than inventing a fake native tool name.
 
 ### Adding support for another LLM tool
 
-If support is added for a second LLM agent harness, two things need attention:
+If support is added for another harness, two things need attention:
 
-1. **Tool-name map**: create a new `install-<harness>.sh` installer script with its own `<HARNESS>_PLACEHOLDERS` and `<HARNESS>_SUBSTITUTIONS` arrays. Any rule or skill file that hard-codes a tool name (e.g. `EnterPlanMode`) should be migrated to a `{{...}}` placeholder so the target-aware substitution can rewrite it.
-2. **Harness selection**: add the new harness to the `harness_items` array in `install.sh` so the front controller can prompt for it.
+1. Create `install-<harness>.sh` with its own `<HARNESS>_PLACEHOLDERS` and `<HARNESS>_SUBSTITUTIONS` arrays.
+2. Add the harness to the `harness_items` array in `install.sh`.
 
 When adding a new placeholder, audit existing files for hard-coded values that should now go through it.
 
@@ -175,30 +187,30 @@ When adding a new placeholder, audit existing files for hard-coded values that s
 
 After any change to rules or skills:
 
-1. Run `./install.sh` against a test project (or run `./install-claude.sh`, `./install-opencode.sh`, or `./install-cursor.sh` directly)
-2. For Claude Code, open Claude Code in that project and run `/memory` to confirm expected files are listed
-3. For OpenCode, confirm `opencode.json` exists in the install base and contains an `instructions` array
-4. For Cursor, confirm rules are installed as `.mdc` files under `~/.cursor/rules/` or `<project>/.cursor/rules/` and skills are discoverable
+1. Run `./install.sh` against a test project, or run `./install-claude.sh`, `./install-opencode.sh`, or `./install-codex.sh` directly.
+2. For Claude Code, open Claude Code in that project and run `/memory` to confirm expected files are listed.
+3. For OpenCode, confirm `opencode.json` exists in the install base and contains an `instructions` array.
+4. For Codex, confirm the target `AGENTS.md` contains the elelem managed block and skills are installed under `.agents/skills/`.
 
 ## FAQ
 
 <details>
-<summary><strong>Why do you recommend disabling third-party config loading in Cursor and OpenCode?</strong></summary>
-
-Each harness uses different internal tool names. Claude Code uses PascalCase names like `Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob`, `AskUserQuestion`, and `Task`. OpenCode uses lowercase names like `read`, `write`, `edit`, `bash`, `grep`, `glob`, and `task`. Cursor uses `Read`, `Write`, `StrReplace`, `Shell`, `Grep`, `Glob`, and `AskQuestion` (and has no native subagent or task-tracker primitives). At install time, elelem rewrites `{{TOOL_NAME}}` placeholders to the harness-specific name. If a second harness cross-loads the Claude-substituted rules from `~/.claude/`, the instructions refer to tool names the agent in that harness does not recognise, producing incoherent guidance. Disabling third-party config loading keeps each harness reading only its own rule tree.
-
-</details>
-
-<details>
 <summary><strong>Can I install elelem for more than one harness on the same machine?</strong></summary>
 
-Yes. The three installers maintain separate manifest files (`.elelem-manifest-claude`, `.elelem-manifest-opencode`, `.elelem-manifest-cursor`), install to separate directories (`~/.claude/`, `~/.config/opencode/`, `~/.cursor/`), and prune only their own targets on re-install. The recommendation above (disabling third-party config loading) makes coexistence safe by preventing cross-loading.
+Yes. The installers maintain separate manifest files (`.elelem-manifest-claude`, `.elelem-manifest-opencode`, `.elelem-manifest-codex`) and separate target trees (`~/.claude/`, `~/.config/opencode/`, `~/.codex/AGENTS.md` plus `~/.agents/skills/`). Re-installing one harness prunes only that harness's managed files.
 
 </details>
 
 <details>
-<summary><strong>Why does the Cursor installer not generate an <code>AGENTS.md</code> like the OpenCode installer?</strong></summary>
+<summary><strong>Why does the Codex installer write a managed block into <code>AGENTS.md</code> instead of copying rules into a separate directory?</strong></summary>
 
-Cursor auto-discovers `.cursor/rules/*.mdc` (loaded directly, either Always Apply or by `globs:` matching) and `.cursor/skills/<name>/SKILL.md` (auto-discovered via the `description:` field). There is no OpenCode-style configuration manifest layer to reproduce; an `AGENTS.md` would be redundant. Setup advice (the third-party-includes toggle) belongs in this README rather than in a generated file, and harness-specific guidance is already substituted into the rules and skills themselves at install time.
+Codex consumes persistent repository instructions from `AGENTS.md`, not from a dedicated rule directory. The managed block lets elelem install and update its rules without overwriting unrelated instructions you may already keep in the same file.
+
+</details>
+
+<details>
+<summary><strong>Why do Codex language packs apply globally instead of by file path?</strong></summary>
+
+The source rule format is path-scoped via `globs:` so that Claude Code can auto-attach the language pack when matching files are read. Codex's installed instruction surface is `AGENTS.md`, which is scope-based rather than path-based, so selected language-pack content is merged into the active instructions for that entire scope.
 
 </details>

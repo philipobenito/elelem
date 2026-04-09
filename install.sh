@@ -2,9 +2,9 @@
 #
 # Front controller for elelem installers.
 #
-# Prompts for which harness to install (Claude Code, OpenCode, or Cursor) and
+# Prompts for which harness to install (Claude Code, OpenCode, or Codex) and
 # execs the corresponding installer script. The sub-scripts (install-claude.sh,
-# install-opencode.sh, install-cursor.sh) remain runnable directly if you want
+# install-opencode.sh, install-codex.sh) remain runnable directly if you want
 # to skip this prompt.
 #
 
@@ -27,7 +27,7 @@ fi
 say_step "elelem installer"
 echo
 echo "Which harness do you want to install?"
-harness_items=("Claude Code" "OpenCode" "Cursor")
+harness_items=("Claude Code" "OpenCode" "Codex")
 singleselect harness_choice harness_items 0
 
 case "$harness_choice" in
@@ -37,8 +37,8 @@ case "$harness_choice" in
   "OpenCode")
     exec "$SCRIPT_DIR/install-opencode.sh"
     ;;
-  "Cursor")
-    exec "$SCRIPT_DIR/install-cursor.sh"
+  "Codex")
+    exec "$SCRIPT_DIR/install-codex.sh"
     ;;
   *)
     say_err "unrecognised harness selection: $harness_choice"
