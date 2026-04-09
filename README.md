@@ -8,7 +8,7 @@ Rules and skills for Claude Code, OpenCode, and Codex, with interactive installe
 ./install.sh
 ```
 
-Pick your harness at the prompt; the front controller execs the matching installer. To skip the prompt for scripted installs, run `./install-claude.sh`, `./install-opencode.sh`, or `./install-codex.sh` directly.
+Pick your harness at the prompt; the front controller execs the matching installer. To skip the prompt for scripted installations, run `./install-claude.sh`, `./install-opencode.sh`, or `./install-codex.sh` directly.
 
 ## Claude Code
 
@@ -60,11 +60,11 @@ The Codex installer prompts for scope and selections for common rules, language 
 - Rules into a managed elelem block inside `~/.codex/AGENTS.md` or `<project>/AGENTS.md`
 - Skills under `~/.agents/skills/` or `<project>/.agents/skills/`
 
-Codex does not have a Cursor-style rule directory. Instead, the installer assembles the selected rule files into a generated Markdown block inside `AGENTS.md`. Any content outside that block is preserved. Re-running the installer replaces only the elelem-managed block.
+Codex does not use a separate rule directory. Instead, the installer assembles the selected rule files into a generated Markdown block inside `AGENTS.md`. Any content outside that block is preserved. Re-running the installer replaces only the elelem-managed block.
 
 Unlike Claude Code, selected language packs are not path-scoped in Codex. If you install a language pack, its instructions apply in every Codex session for that scope because they are merged into `AGENTS.md`.
 
-The installer writes `.elelem-manifest-codex` and prunes stale skill files on re-install. `AGENTS.md` is updated in place rather than pruned via the manifest.
+The installer writes `.elelem-manifest-codex` and prunes stale skill files on re-installation. `AGENTS.md` is updated in place rather than pruned via the manifest.
 
 You can also run `./install-codex.sh` directly to skip the harness prompt.
 
@@ -114,7 +114,7 @@ The source layout deliberately mirrors the installer inputs: `rules/` is copied 
 - OpenCode: `~/.config/opencode/skills/` or `<project>/.opencode/skills/`
 - Codex: `~/.agents/skills/` or `<project>/.agents/skills/`
 
-Cross-references between files use relative paths from the citing file's location (for example, `../../rules/common/debugging.md` from inside `skills/debugging/SKILL.md`) so that they resolve correctly in the source repo and in the directory-based installs.
+Cross-references between files use relative paths from the citing file's location (for example, `../../rules/common/debugging.md` from inside `skills/debugging/SKILL.md`) so that they resolve correctly in the source repo and in the directory-based installations.
 
 - `rules/common/` rules have no frontmatter and load unconditionally.
 - Language packs (`rules/python/`, future `rules/typescript/`, etc.) use `globs:` frontmatter. Claude Code keeps that path-scoped behaviour; OpenCode and Codex treat selected language packs as always-on for the chosen scope.
@@ -141,6 +141,7 @@ Critical rules (per [claude-code#17204](https://github.com/anthropics/claude-cod
 Working:
 
 ```yaml
+#file: noinspection YAMLUnresolvedAlias
 ---
 globs: **/*.ts, **/*.tsx, **/*.js
 ---
@@ -189,7 +190,7 @@ After any change to rules or skills:
 
 1. Run `./install.sh` against a test project, or run `./install-claude.sh`, `./install-opencode.sh`, or `./install-codex.sh` directly.
 2. For Claude Code, open Claude Code in that project and run `/memory` to confirm expected files are listed.
-3. For OpenCode, confirm `opencode.json` exists in the install base and contains an `instructions` array.
+3. For OpenCode, confirm `opencode.json` exists in the installation base and contains an `instructions` array.
 4. For Codex, confirm the target `AGENTS.md` contains the elelem managed block and skills are installed under `.agents/skills/`.
 
 ## FAQ
