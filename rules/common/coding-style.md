@@ -27,7 +27,7 @@ You **MUST NOT** add comments unless ALL of these conditions are met:
 
 **Absolute ban in test files.** Tests are documentation. Test names and assertions must be self-explanatory. Zero comments except ticket references for regression tests.
 
-When you think a comment is needed, refactor first: rename variables or functions, extract to a well-named method, simplify the logic. Only add a comment after refactoring has failed and you have a ticket reference for a workaround.
+When you think a comment is needed, refactor first: rename variables or functions, extract to a well-named method, simplify the logic. Only add a comment after refactoring has failed, and you have a ticket reference for a workaround.
 
 ## Docblocks
 
@@ -67,7 +67,7 @@ You **MUST NOT** add features, refactor code, or make "improvements" beyond what
 - Adding configurability, options, or flags the task did not ask for
 - Adding error handling for cases the task does not cover
 - Refactoring surrounding code that is not part of the task
-- "While I am here" cleanups, even small ones
+- "While I am here" clean-ups, even small ones
 - Designing for hypothetical future requirements
 - Creating helpers, utilities, or abstractions for one-time operations
 - Adding backwards-compatibility shims when you can change the code

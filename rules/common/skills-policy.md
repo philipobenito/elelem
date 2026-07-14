@@ -6,7 +6,7 @@ You **MUST** use skills when they are available and relevant to the task at hand
 
 ## The 1% Rule
 
-If you believe there is even a one-percent chance a skill might apply to the current task, you **MUST** invoke it. The cost of invoking a skill that turns out not to fit is zero: read the skill, decide it does not apply, and continue. The cost of failing to invoke a skill that does apply is a broken workflow.
+If you believe there is even a 1% chance a skill might apply to the current task, you **MUST** invoke it. The cost of invoking a skill that turns out not to fit is zero: read the skill, decide it does not apply, and continue. The cost of failing to invoke a skill that does apply is a broken workflow.
 
 You **MUST NOT** rationalise your way out of this. "Probably does not apply", "close enough without it", "I remember what it says" are all failures of the 1% rule.
 
