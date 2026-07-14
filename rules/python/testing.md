@@ -20,7 +20,7 @@ Use `pytest`. Do not use `unittest` in new code.
 - One assertion concept per test. Multiple `assert` lines are fine if they verify one behaviour
 - No setup/teardown via classes; use fixtures
 - Parameterise with `@pytest.mark.parametrize` rather than copy-pasting tests
-- Use `tmp_path` and `monkeypatch` fixtures over manual temp files or `unittest.mock.patch`
+- Use `tmp_path` and `monkeypatch` fixtures over manual temporary files or `unittest.mock.patch`
 
 ## Assertions
 
@@ -32,4 +32,4 @@ Use `pytest`. Do not use `unittest` in new code.
 
 - Do not mock the code under test
 - Do not mock pure functions or data classes
-- Mock only at boundaries: network, filesystem (when `tmp_path` is not enough), clocks, randomness
+- Mock only at boundaries: network, file system (when `tmp_path` is not enough), clocks, randomness

@@ -34,7 +34,7 @@ You **MUST** use type hints on all function signatures (parameters and return ty
 
 ## Idioms
 
-- Use `pathlib.Path` over `os.path` for filesystem operations
+- Use `pathlib.Path` over `os.path` for file system operations
 - Use context managers (`with`) for any resource with `close()` or `__exit__`
 - Prefer comprehensions over `map`/`filter` with lambdas, but only when they remain readable on one line
 - Use `enumerate()` and `zip()` instead of index arithmetic
