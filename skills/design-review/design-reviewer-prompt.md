@@ -6,7 +6,7 @@ Use this template when dispatching a design reviewer subagent.
 
 **Dispatch after:** Design summary has been consolidated from the brainstorming conversation.
 
-**Subagent type selection:** Replace `[REVIEWER_SUBAGENT_TYPE]` with `architect-reviewer` if available (it is built for evaluating system design decisions and patterns). Fall back to `general-purpose` only when `architect-reviewer` is not available. Per `../../rules/common/subagents.md`, do not pre-escalate the model: pick one concrete default model, `haiku`, `gpt-5.1-codex-mini`, or `gemini-2.5-flash-lite`; escalate only on evidence to `sonnet`, `gpt-5.2`, or `gemini-2.5-flash`.
+**Subagent type selection:** Replace `[REVIEWER_SUBAGENT_TYPE]` with `architect-reviewer` if available (it is built for evaluating system design decisions and patterns). Fall back to `general-purpose` only when `architect-reviewer` is not available. Per `../../rules/common/subagents.md`, do not pre-escalate the model: pick one concrete default model, `claude-haiku-4.5`, `gemini-3.5-flash`, or `gpt-5.4-mini`; escalate only on evidence to `claude-sonnet-4.5`, `gemini-3.1-pro-preview`, or `gpt-5.6-luna`.
 
 ```
 {{DISPATCH_AGENT_TOOL}} ([REVIEWER_SUBAGENT_TYPE]):

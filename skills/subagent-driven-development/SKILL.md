@@ -74,7 +74,7 @@ Produce a `{{TASK_TRACKER_TOOL}}` with every task. Each entry includes:
 
 - Task name and description
 - Recommended subagent type (selected per `../../rules/common/subagents.md`)
-- Recommended model (pick one concrete model: `haiku`, else `gpt-5.1-codex-mini`, else `gemini-2.5-flash-lite`; escalate only with justification)
+- Recommended model (pick one concrete model: `claude-haiku-4.5`, else `gemini-3.5-flash`, else `gpt-5.4-mini`; escalate only with justification)
 - Files to create or modify (exact paths)
 - Acceptance criteria
 - Dependencies on other tasks
@@ -88,7 +88,7 @@ Execute tasks sequentially. Each task follows the same pipeline.
 digraph per_task_pipeline {
     rankdir=TB;
 
-    "Select specialised subagent type\nand model (default: haiku -> gpt-5.1-codex-mini -> gemini-2.5-flash-lite)" [shape=box, style=bold];
+    "Select specialised subagent type\nand model (default: claude-haiku-4.5 -> gemini-3.5-flash -> gpt-5.4-mini)" [shape=box, style=bold];
     "Dispatch implementer subagent\n(./implementer-prompt.md)" [shape=box];
     "Implementer subagent asks questions?" [shape=diamond];
     "Answer questions, provide context" [shape=box];
@@ -101,7 +101,7 @@ digraph per_task_pipeline {
     "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [shape=box, style=bold];
     "Mark task complete in {{TASK_TRACKER_TOOL}}" [style=bold];
 
-    "Select specialised subagent type\nand model (default: haiku -> gpt-5.1-codex-mini -> gemini-2.5-flash-lite)" -> "Dispatch implementer subagent\n(./implementer-prompt.md)";
+    "Select specialised subagent type\nand model (default: claude-haiku-4.5 -> gemini-3.5-flash -> gpt-5.4-mini)" -> "Dispatch implementer subagent\n(./implementer-prompt.md)";
     "Dispatch implementer subagent\n(./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent\n(./implementer-prompt.md)";
@@ -197,9 +197,9 @@ Classification: COMPLEX
 [Evidence table shown]
 
 [Decompose design: map file structure, define 5 tasks with acceptance criteria, order by dependencies]
-[Create {{TASK_TRACKER_TOOL}} with all tasks, each annotated with one concrete model: haiku, else gpt-5.1-codex-mini, else gemini-2.5-flash-lite]
+[Create {{TASK_TRACKER_TOOL}} with all tasks, each annotated with one concrete model: claude-haiku-4.5, else gemini-3.5-flash, else gpt-5.4-mini]
 
-Task 1 (model: haiku; fallback gpt-5.1-codex-mini, then gemini-2.5-flash-lite):
+Task 1 (model: claude-haiku-4.5; fallback gemini-3.5-flash, then gpt-5.4-mini):
 
 [Dispatch implementer]
 
@@ -239,7 +239,7 @@ User: Commit
 
 [Commit, mark Task 1 complete]
 
-Task 2 (model: haiku; fallback gpt-5.1-codex-mini, then gemini-2.5-flash-lite):
+Task 2 (model: claude-haiku-4.5; fallback gemini-3.5-flash, then gpt-5.4-mini):
 
 [Dispatch implementer]
 
@@ -254,7 +254,7 @@ Reviewer: [FAIL] Issues:
   - Extra: added --json flag (not requested)
   - Magic number (100) should be a named constant
 
-[Re-dispatch implementer with fix instructions (model: haiku; fallback gpt-5.1-codex-mini, then gemini-2.5-flash-lite)]
+[Re-dispatch implementer with fix instructions (model: claude-haiku-4.5; fallback gemini-3.5-flash, then gpt-5.4-mini)]
 Implementer: Removed --json flag, added progress reporting with PROGRESS_INTERVAL constant
 
 [Reviewer reviews again]

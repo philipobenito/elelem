@@ -115,7 +115,7 @@ Autonomous mode is the only mode in which investigator subagents run. When dispa
 
 - Use the template at `skills/debugging/investigator-prompt.md` as the base prompt
 - Provide each investigator with: the bug description (expected vs actual), the specific hypothesis it is testing, and the scoped list of files or areas it may examine
-- Per `../../rules/common/subagents.md`, pick the most specific subagent type available (for example `debugger`, `python-pro`, `typescript-pro`) and default to `haiku`; if it is unavailable, `gpt-5.1-codex-mini`; if that is unavailable and Google models are exposed, `gemini-2.5-flash-lite`, unless the investigation requires integration reasoning
+- Per `../../rules/common/subagents.md`, pick the most specific subagent type available (for example `debugger`, `python-pro`, `typescript-pro`) and default to `claude-haiku-4.5`; if it is unavailable, `gemini-3.5-flash`; if that is unavailable, `gpt-5.4-mini`, unless the investigation requires integration reasoning
 - Reconcile the returned verdicts yourself in the orchestrator context: CONFIRMED verdicts advance you to Phase 6, ELIMINATED verdicts move you to the next hypothesis, INCONCLUSIVE verdicts either need a better-scoped re-dispatch or a refocusing with the user
 
 Investigators never fix anything. They only gather evidence. The orchestrator holds the fix authority.

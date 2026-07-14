@@ -27,28 +27,28 @@ Choose exactly one concrete model per dispatch. Use the first available model fr
 
 Use these ordered model lists:
 
-| Use case            | Ordered models                                                  |
-|---------------------|-----------------------------------------------------------------|
-| Low-cost default    | `haiku`, `gpt-5.1-codex-mini`, `gemini-2.5-flash-lite`          |
-| Standard escalation | `sonnet`, `gpt-5.2`, `gemini-2.5-flash`                         |
-| High-capability     | inherited session model, `opus`, `gpt-5.4`, `gemini-2.5-pro`    |
+| Use case            | Ordered models                                                                        |
+|---------------------|---------------------------------------------------------------------------------------|
+| Low-cost default    | `claude-haiku-4.5`, `gemini-3.5-flash`, `gpt-5.4-mini`                                |
+| Standard escalation | `claude-sonnet-4.5`, `gemini-3.1-pro-preview`, `gpt-5.6-luna`                         |
+| High-capability     | inherited session model, `claude-sonnet-5`, `gpt-5.6-terra`, `gemini-3.1-pro-preview` |
 
 Google names in these lists are valid only when the current environment actually exposes them. If they are unavailable, skip them and keep the same order.
 
-| Role                                | Default                                                          | Escalate to                                                                 | Escalation trigger                                                            |
-|-------------------------------------|------------------------------------------------------------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------------|
-| Implementer (clear spec, 1-3 files) | `haiku`, then `gpt-5.1-codex-mini`, then `gemini-2.5-flash-lite` | `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`                           | Task failed on the low-cost choice, or needs multi-file integration reasoning |
-| Implementer (integration, judgment) | `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`                | inherited session model, then `opus`, then `gpt-5.4`, then `gemini-2.5-pro` | Multi-file coordination, pattern matching, debugging                          |
-| Reviewer (standard)                 | `haiku`, then `gpt-5.1-codex-mini`, then `gemini-2.5-flash-lite` | `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`                           | Architecturally complex code requiring deep reasoning                         |
-| Fix subagent                        | `haiku`, then `gpt-5.1-codex-mini`, then `gemini-2.5-flash-lite` | `sonnet`, then `gpt-5.2`, then `gemini-2.5-flash`                           | Fix requires understanding beyond the immediate issue                         |
+| Role                                | Default                                                                 | Escalate to                                                                                          | Escalation trigger                                                            |
+|-------------------------------------|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| Implementer (clear spec, 1-3 files) | `claude-haiku-4.5`, then `gemini-3.5-flash`, then `gpt-5.4-mini`        | `claude-sonnet-4.5`, then `gemini-3.1-pro-preview`, then `gpt-5.6-luna`                              | Task failed on the low-cost choice, or needs multi-file integration reasoning |
+| Implementer (integration, judgment) | `claude-sonnet-4.5`, then `gemini-3.1-pro-preview`, then `gpt-5.6-luna` | inherited session model, then `claude-sonnet-5`, then `gpt-5.6-terra`, then `gemini-3.1-pro-preview` | Multi-file coordination, pattern matching, debugging                          |
+| Reviewer (standard)                 | `claude-haiku-4.5`, then `gemini-3.5-flash`, then `gpt-5.4-mini`        | `claude-sonnet-4.5`, then `gemini-3.1-pro-preview`, then `gpt-5.6-luna`                              | Architecturally complex code requiring deep reasoning                         |
+| Fix subagent                        | `claude-haiku-4.5`, then `gemini-3.5-flash`, then `gpt-5.4-mini`        | `claude-sonnet-4.5`, then `gemini-3.1-pro-preview`, then `gpt-5.6-luna`                              | Fix requires understanding beyond the immediate issue                         |
 
 Task complexity signals:
 
-- Touches 1-2 files with a complete spec: `haiku`, else `gpt-5.1-codex-mini`, else `gemini-2.5-flash-lite`
-- Touches multiple files with integration concerns: `sonnet`, else `gpt-5.2`, else `gemini-2.5-flash`
-- Requires design judgement or broad codebase understanding: inherited session model, else `opus`, else `gpt-5.4`, else `gemini-2.5-pro`
+- Touches 1-2 files with a complete spec: `claude-haiku-4.5`, else `gemini-3.5-flash`, else `gpt-5.4-mini`
+- Touches multiple files with integration concerns: `claude-sonnet-4.5`, else `gemini-3.1-pro-preview`, else `gpt-5.6-luna`
+- Requires design judgement or broad codebase understanding: inherited session model, else `claude-sonnet-5`, else `gpt-5.6-terra`, else `gemini-3.1-pro-preview`
 
-You **MUST NOT** pre-escalate. Start with `haiku`; if it is unavailable, use `gpt-5.1-codex-mini`; if that is unavailable and Google models are exposed, use `gemini-2.5-flash-lite`. If that fails or produces poor output, re-dispatch with `sonnet`; if it is unavailable, use `gpt-5.2`; if that is unavailable and Google models are exposed, use `gemini-2.5-flash`. One failed inexpensive attempt costs less than always paying for the expensive model.
+You **MUST NOT** pre-escalate. Start with `claude-haiku-4.5`; if it is unavailable, use `gemini-3.5-flash`; if that is unavailable, use `gpt-5.4-mini`. If that fails or produces poor output, re-dispatch with `claude-sonnet-4.5`; if it is unavailable, use `gemini-3.1-pro-preview`; if that is unavailable, use `gpt-5.6-luna`. One failed inexpensive attempt costs less than always paying for the expensive model.
 
 ## Answering Subagent Questions
 
