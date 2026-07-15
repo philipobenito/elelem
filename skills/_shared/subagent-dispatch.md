@@ -21,34 +21,42 @@ When decomposing work into tasks, you **MUST** annotate each task with its recom
 
 ## Model Selection
 
-You **MUST** use the cheapest model capable of the task. This is cost and speed discipline, not a suggestion.
+You **MUST** use the cheapest model capable of the task. This is cost and speed discipline, not a suggestion. Choose exactly one concrete model per dispatch.
 
-Choose exactly one concrete model per dispatch. Use the first available model from the relevant ordered list below. Escalate only when you have specific evidence the task requires more capability.
+### Tier Table
 
-Use these ordered model lists:
+| Tier                | Task signal                                    | Anthropic family                                                     | OpenAI family |
+|---------------------|------------------------------------------------|----------------------------------------------------------------------|---------------|
+| Low-cost default    | Clear spec, 1-3 files                          | Haiku                                                                | Luna          |
+| Standard escalation | Multi-file integration, judgement              | Sonnet                                                               | Terra         |
+| High-capability     | Design judgement, broad codebase understanding | Opus (the inherited session model is also an acceptable choice here) | Sol           |
 
-| Use case            | Ordered models                                                                        |
-|---------------------|---------------------------------------------------------------------------------------|
-| Low-cost default    | `claude-haiku-4.5`, `gemini-3.5-flash`, `gpt-5.4-mini`                                |
-| Standard escalation | `claude-sonnet-4.5`, `gemini-3.1-pro-preview`, `gpt-5.6-luna`                         |
-| High-capability     | inherited session model, `claude-sonnet-5`, `gpt-5.6-terra`, `gemini-3.1-pro-preview` |
+The Anthropic and OpenAI columns are worked examples, not an allowlist. Some harnesses are provider-agnostic: they may expose providers from any vendor in any combination, so no table that enumerates vendors can ever be authoritative on its own. Treat the table as a guide to tiers and use the resolution procedure below to pick a concrete model for any provider the environment exposes, listed here or not.
 
-Google names in these lists are valid only when the current environment actually exposes them. If they are unavailable, skip them and keep the same order.
+### Resolution Procedure
 
-| Role                                | Default                                                                 | Escalate to                                                                                          | Escalation trigger                                                            |
-|-------------------------------------|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
-| Implementer (clear spec, 1-3 files) | `claude-haiku-4.5`, then `gemini-3.5-flash`, then `gpt-5.4-mini`        | `claude-sonnet-4.5`, then `gemini-3.1-pro-preview`, then `gpt-5.6-luna`                              | Task failed on the low-cost choice, or needs multi-file integration reasoning |
-| Implementer (integration, judgment) | `claude-sonnet-4.5`, then `gemini-3.1-pro-preview`, then `gpt-5.6-luna` | inherited session model, then `claude-sonnet-5`, then `gpt-5.6-terra`, then `gemini-3.1-pro-preview` | Multi-file coordination, pattern matching, debugging                          |
-| Reviewer (standard)                 | `claude-haiku-4.5`, then `gemini-3.5-flash`, then `gpt-5.4-mini`        | `claude-sonnet-4.5`, then `gemini-3.1-pro-preview`, then `gpt-5.6-luna`                              | Architecturally complex code requiring deep reasoning                         |
-| Fix subagent                        | `claude-haiku-4.5`, then `gemini-3.5-flash`, then `gpt-5.4-mini`        | `claude-sonnet-4.5`, then `gemini-3.1-pro-preview`, then `gpt-5.6-luna`                              | Fix requires understanding beyond the immediate issue                         |
+Naming a tier is not the same as producing a value the harness will accept. Before every dispatch:
 
-Task complexity signals:
+1. Enumerate the models the current environment actually exposes, using whatever mechanism the harness provides.
+2. Map the chosen tier to a concrete value from that enumeration.
+3. Never construct an identifier from a pattern. Recognising the shape of an identifier is not the same as confirming it exists.
+4. If no family listed in the tier table is exposed, order the available models from cheapest to most capable and take the cheapest one that is still capable of the task.
+5. If enumeration is impossible, use the inherited session model and state in your response to the user that you did so. Never fall back silently.
 
-- Touches 1-2 files with a complete spec: `claude-haiku-4.5`, else `gemini-3.5-flash`, else `gpt-5.4-mini`
-- Touches multiple files with integration concerns: `claude-sonnet-4.5`, else `gemini-3.1-pro-preview`, else `gpt-5.6-luna`
-- Requires design judgement or broad codebase understanding: inherited session model, else `claude-sonnet-5`, else `gpt-5.6-terra`, else `gemini-3.1-pro-preview`
+### Escalation Triggers
 
-You **MUST NOT** pre-escalate. Start with `claude-haiku-4.5`; if it is unavailable, use `gemini-3.5-flash`; if that is unavailable, use `gpt-5.4-mini`. If that fails or produces poor output, re-dispatch with `claude-sonnet-4.5`; if it is unavailable, use `gemini-3.1-pro-preview`; if that is unavailable, use `gpt-5.6-luna`. One failed inexpensive attempt costs less than always paying for the expensive model.
+Start at the Low-cost default tier. Escalate exactly one tier at a time, and only on evidence: a failed attempt at the current tier, or a stated complexity signal from the task (multi-file integration, design judgement, broad codebase understanding). You **MUST NOT** pre-escalate on the assumption that a task might be hard. One failed inexpensive attempt costs less than always paying for the expensive model.
+
+### Rationalisation Prevention
+
+Every thought below means **stop and re-run the resolution procedure**:
+
+| You might think...                                      | Reality                                                                                                                                                           |
+|---------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| "I know the naming pattern, I can write the identifier" | Recognising the shape of an identifier is not confirming it exists. Constructing an identifier from a pattern is inventing it; enumerate the environment instead. |
+| "This was valid last month"                             | Catalogues change. Re-verify against the current environment before every dispatch, not from memory.                                                              |
+| "The table lists it, so it exists"                      | The tier table is a worked example, not an availability guarantee. Confirm the value against the enumerated list.                                                 |
+| "I will use the session model to be safe"               | That is pre-escalation. Sort by cost first and start at the cheapest tier.                                                                                        |
 
 ## Answering Subagent Questions
 
