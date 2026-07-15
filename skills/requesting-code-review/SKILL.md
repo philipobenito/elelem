@@ -29,7 +29,7 @@ Before running the procedure below, you **MUST** read `../_shared/code-review.md
    - `{PLAN_REFERENCE}`: a pointer to the approved design, ticket, or plan the work is delivering against
    - `{BASE_SHA}` and `{HEAD_SHA}`: the commits from step 1
 
-4. **Dispatch.** Send the filled template to the reviewer subagent. Start with the cheapest capable model per `../../rules/common/subagents.md`: start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`, when the change involves cross-file integration reasoning or architectural judgement.
+4. **Dispatch.** Send the filled template to the reviewer subagent. Use the cheapest capable model per `../../rules/common/subagents.md`: start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`, when the change involves cross-file integration reasoning or architectural judgement.
 
 5. **Act on the output.** Process the reviewer's findings through `receiving-code-review` and apply the severity discipline in `../_shared/code-review.md`: fix Critical before anything else, fix Important before the next task or merge, log Minor for later.
 
