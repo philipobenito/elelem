@@ -24,7 +24,7 @@ If any of these is false, a parallel dispatch is not valid. Either investigate s
 
 1. **Identify independent domains.** Group the work by what is broken or what needs building. Each group **MUST** map to exactly one problem domain with no shared files, shared state, or shared causal chain. If you cannot cleanly partition the work, stop. This skill does not apply.
 
-2. **Annotate each task with its subagent type and model.** Per `../../rules/common/subagents.md`, pick the most specific subagent type for each task (for example `typescript-pro` for a TypeScript test file, `python-pro` for a Python module, `debugger` for diagnostic work). Pick one concrete starting model for each task: `claude-haiku-4.5`; if it is unavailable, `gemini-3.5-flash`; if that is unavailable, `gpt-5.4-mini`. Escalate only on evidence to `claude-sonnet-4.5`, then `gemini-3.1-pro-preview`, then `gpt-5.6-luna`.
+2. **Annotate each task with its subagent type and model.** Per `../../rules/common/subagents.md`, pick the most specific subagent type for each task (for example `typescript-pro` for a TypeScript test file, `python-pro` for a Python module, `debugger` for diagnostic work). Start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`.
 
 3. **Construct each task prompt.** Per `../../rules/common/subagents.md`, do not let any subagent inherit your session history. For each agent, write a self-contained prompt containing:
 
@@ -69,9 +69,9 @@ Independence check: each file exercises a different subsystem (abort logic, batc
 
 Decomposition, annotated with subagent type and model:
 
-- Agent 1 (`typescript-pro`, `claude-haiku-4.5`; fallback `gemini-3.5-flash`, then `gpt-5.4-mini`): fix `agent-tool-abort.test.ts`; scope limited to that file plus the abort implementation it exercises; replace arbitrary timeouts with event-based waiting; do not touch other test files
-- Agent 2 (`typescript-pro`, `claude-haiku-4.5`; fallback `gemini-3.5-flash`, then `gpt-5.4-mini`): fix `batch-completion-behavior.test.ts`; scope limited to the batch completion path; do not touch abort or approval code
-- Agent 3 (`typescript-pro`, `claude-haiku-4.5`; fallback `gemini-3.5-flash`, then `gpt-5.4-mini`): fix `tool-approval-race-conditions.test.ts`; scope limited to the approval path
+- Agent 1 (`typescript-pro`, Low-cost default tier): fix `agent-tool-abort.test.ts`; scope limited to that file plus the abort implementation it exercises; replace arbitrary timeouts with event-based waiting; do not touch other test files
+- Agent 2 (`typescript-pro`, Low-cost default tier): fix `batch-completion-behavior.test.ts`; scope limited to the batch completion path; do not touch abort or approval code
+- Agent 3 (`typescript-pro`, Low-cost default tier): fix `tool-approval-race-conditions.test.ts`; scope limited to the approval path
 
 Dispatch all three in a single message.
 

@@ -19,11 +19,11 @@ The caller of this skill is responsible for having asked the commit preference q
 
 ### 1. Single Implementation Dispatch
 
-Dispatch one implementer with every change as a single batch. Use `../subagent-driven-development/implementer-prompt.md` with the task description covering the full scope of changes. Select the specialised subagent type for the work per `../../rules/common/subagents.md`. Pick one concrete model: use `model: "claude-haiku-4.5"`; if it is unavailable, use `model: "gemini-3.5-flash"`; if that is unavailable, use `model: "gpt-5.4-mini"`. If the work is simple enough for this path, it is simple enough for the cheapest model.
+Dispatch one implementer with every change as a single batch. Use `../subagent-driven-development/implementer-prompt.md` with the task description covering the full scope of changes. Select the specialised subagent type for the work per `../../rules/common/subagents.md`. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`. If the work is simple enough for this path, it is simple enough for the cheapest model.
 
 ### 2. Single Combined Review
 
-Dispatch one reviewer that checks spec compliance and code quality in a single pass, using `./fast-path-reviewer-prompt.md`. This is not a weaker review than the full path. It covers the same ground; the combination is possible because the small scope makes separation unnecessary overhead. Pick one concrete model: use `model: "claude-haiku-4.5"`; if it is unavailable, use `model: "gemini-3.5-flash"`; if that is unavailable, use `model: "gpt-5.4-mini"`.
+Dispatch one reviewer that checks spec compliance and code quality in a single pass, using `./fast-path-reviewer-prompt.md`. This is not a weaker review than the full path. It covers the same ground; the combination is possible because the small scope makes separation unnecessary overhead. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`.
 
 The reviewer returns one of three outcomes:
 
@@ -59,11 +59,11 @@ digraph fast_path {
     rankdir=TB;
 
     "Triage: SIMPLE" [shape=box, style=bold];
-    "Dispatch implementer\n(all changes as single batch, model: claude-haiku-4.5 -> gemini-3.5-flash -> gpt-5.4-mini)" [shape=box];
+    "Dispatch implementer\n(all changes as single batch,\nLow-cost default tier)" [shape=box];
     "Implementer asks questions?" [shape=diamond];
     "Answer questions, provide context" [shape=box];
     "Implementer implements, tests, self-reviews" [shape=box];
-    "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: claude-haiku-4.5 -> gemini-3.5-flash -> gpt-5.4-mini)" [shape=box];
+    "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md,\nLow-cost default tier)" [shape=box];
     "Reviewer result?" [shape=diamond];
     "Implementer fixes issues" [shape=box];
     "Hand back to subagent-driven-development\n(re-decompose)" [shape=box];
@@ -71,17 +71,17 @@ digraph fast_path {
     "Verification passes?" [shape=diamond];
     "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [shape=box, style=bold];
 
-    "Triage: SIMPLE" -> "Dispatch implementer\n(all changes as single batch, model: claude-haiku-4.5 -> gemini-3.5-flash -> gpt-5.4-mini)";
-    "Dispatch implementer\n(all changes as single batch, model: claude-haiku-4.5 -> gemini-3.5-flash -> gpt-5.4-mini)" -> "Implementer asks questions?";
+    "Triage: SIMPLE" -> "Dispatch implementer\n(all changes as single batch,\nLow-cost default tier)";
+    "Dispatch implementer\n(all changes as single batch,\nLow-cost default tier)" -> "Implementer asks questions?";
     "Implementer asks questions?" -> "Answer questions, provide context" [label="yes"];
-    "Answer questions, provide context" -> "Dispatch implementer\n(all changes as single batch, model: claude-haiku-4.5 -> gemini-3.5-flash -> gpt-5.4-mini)";
+    "Answer questions, provide context" -> "Dispatch implementer\n(all changes as single batch,\nLow-cost default tier)";
     "Implementer asks questions?" -> "Implementer implements, tests, self-reviews" [label="no"];
-    "Implementer implements, tests, self-reviews" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: claude-haiku-4.5 -> gemini-3.5-flash -> gpt-5.4-mini)";
-    "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: claude-haiku-4.5 -> gemini-3.5-flash -> gpt-5.4-mini)" -> "Reviewer result?";
+    "Implementer implements, tests, self-reviews" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md,\nLow-cost default tier)";
+    "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md,\nLow-cost default tier)" -> "Reviewer result?";
     "Reviewer result?" -> "Verification gate (orchestrator):\ngit diff + re-run verification\n(../../rules/common/verification.md)" [label="PASS"];
     "Reviewer result?" -> "Implementer fixes issues" [label="FAIL"];
     "Reviewer result?" -> "Hand back to subagent-driven-development\n(re-decompose)" [label="TRIAGE_INVALID"];
-    "Implementer fixes issues" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md, model: claude-haiku-4.5 -> gemini-3.5-flash -> gpt-5.4-mini)" [label="re-review"];
+    "Implementer fixes issues" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md,\nLow-cost default tier)" [label="re-review"];
     "Verification gate (orchestrator):\ngit diff + re-run verification\n(../../rules/common/verification.md)" -> "Verification passes?";
     "Verification passes?" -> "Implementer fixes issues" [label="no"];
     "Verification passes?" -> "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [label="yes"];
@@ -98,13 +98,13 @@ User chose: Auto-commit after each task
 
 [Run complexity-triage, classification returns SIMPLE with evidence table]
 
-[Dispatch single implementer (model: claude-haiku-4.5; fallback gemini-3.5-flash, then gpt-5.4-mini) with all 8 files as one batch]
+[Dispatch single implementer (Low-cost default tier) with all 8 files as one batch]
 
 Implementer:
   - Updated copyright year in all 8 files
   - Self-review: all changes are consistent string replacements
 
-[Dispatch combined reviewer (model: claude-haiku-4.5; fallback gemini-3.5-flash, then gpt-5.4-mini)]
+[Dispatch combined reviewer (Low-cost default tier)]
 
 Combined reviewer: [PASS] All 8 files correctly updated. Changes match spec exactly,
 no extra modifications, consistent with surrounding code style.

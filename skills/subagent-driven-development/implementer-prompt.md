@@ -4,7 +4,7 @@ Use this template when dispatching an implementer subagent.
 
 **Subagent type selection:** Replace `[SPECIALISED_SUBAGENT_TYPE]` with the most specific implementer type available for the task per `../../rules/common/subagents.md`. Examples: `typescript-pro` for a TypeScript task, `python-pro` for Python, `react-specialist` for React components, `golang-pro` for Go, `rust-engineer` for Rust. Use `general-purpose` only when no specialised type fits. The recommended type for each task should already be in the task entry the orchestrator created during decomposition.
 
-**Model selection:** Pick one concrete model. Default to `claude-haiku-4.5`; if it is unavailable, use `gemini-3.5-flash`; if that is unavailable, use `gpt-5.4-mini`. Escalate only on evidence, to `claude-sonnet-4.5`, `gemini-3.1-pro-preview`, or `gpt-5.6-luna`, per `../../rules/common/subagents.md`.
+**Model selection:** Pick one concrete model. Start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`.
 
 ```
 {{DISPATCH_AGENT_TOOL}} ([SPECIALISED_SUBAGENT_TYPE]):
