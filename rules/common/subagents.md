@@ -20,6 +20,10 @@ You **MUST NOT** use `isolation: "worktree"` on any subagent dispatched from a u
 
 Subagents **MUST NOT** use `sudo` or any elevated-privilege command. If a task requires elevation, the orchestrator surfaces it to the human partner.
 
+## Model Identifiers
+
+You **MUST NOT** write a model identifier you have not confirmed the current environment exposes. Recognising the shape of an identifier is not the same as confirming it exists; constructing an identifier from a pattern is inventing it.
+
 ## Procedural Rules
 
-The procedural rules that bind once a skill is dispatching a subagent, subagent type selection, model selection (table and escalation triggers), answering subagent questions, process discipline, and escalation handling, live in `skills/_shared/subagent-dispatch.md` and load when any dispatching skill is invoked.
+The procedural rules that bind once a skill is dispatching a subagent, subagent type selection, model selection with identifier resolution and verification (tier table, resolution procedure, and escalation triggers), answering subagent questions, process discipline, and escalation handling, live in `skills/_shared/subagent-dispatch.md` and load when any dispatching skill is invoked.
