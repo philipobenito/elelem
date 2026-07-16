@@ -50,6 +50,7 @@ CLAUDE_PLACEHOLDERS=(
   'GREP_TOOL'
   'GLOB_TOOL'
   'SHELL_EXEC_TOOL'
+  'MODEL_ENUMERATION'
 )
 
 CLAUDE_SUBSTITUTIONS=(
@@ -65,6 +66,7 @@ CLAUDE_SUBSTITUTIONS=(
   'Grep'
   'Glob'
   'Bash'
+  'reading the `model` enum on the Agent tool schema, which is the set of values the harness will accept'
 )
 
 # Resolves a source skill file to its destination by stripping $SKILLS_SOURCE

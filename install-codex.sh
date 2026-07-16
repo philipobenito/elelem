@@ -39,6 +39,7 @@ CODEX_PLACEHOLDERS=(
   'GREP_TOOL'
   'GLOB_TOOL'
   'SHELL_EXEC_TOOL'
+  'MODEL_ENUMERATION'
 )
 
 CODEX_SUBSTITUTIONS=(
@@ -54,6 +55,7 @@ CODEX_SUBSTITUTIONS=(
   'exec_command with rg'
   'exec_command with rg --files or find'
   'exec_command'
+  'running `codex debug models` with exec_command, which prints the raw model catalogue'
 )
 
 CODEX_MANAGED_START='<!-- elelem:codex:start -->'

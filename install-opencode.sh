@@ -51,6 +51,7 @@ OPENCODE_PLACEHOLDERS=(
   'GREP_TOOL'
   'GLOB_TOOL'
   'SHELL_EXEC_TOOL'
+  'MODEL_ENUMERATION'
 )
 
 OPENCODE_SUBSTITUTIONS=(
@@ -66,6 +67,7 @@ OPENCODE_SUBSTITUTIONS=(
   'grep'
   'glob'
   'bash'
+  'running `opencode models` with the bash tool, which lists every available model, one per line'
 )
 
 # Resolves a source skill file to its destination by stripping $SKILLS_SOURCE

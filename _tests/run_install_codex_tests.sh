@@ -179,6 +179,26 @@ EOF
   _pass "$name"
 }
 
+test_codex_model_enumeration_placeholder_substitution() {
+  local name="codex_model_enumeration_placeholder_substitution"
+  local tmpfile
+  tmpfile="$(mktemp)"
+  trap "rm -f '$tmpfile'" RETURN
+
+  cat > "$tmpfile" <<'EOF'
+Enumerate the models the current environment actually exposes by {{MODEL_ENUMERATION}}.
+EOF
+
+  _codex_substitute_placeholders "$tmpfile"
+
+  if ! grep -Fq 'running `codex debug models` with exec_command' "$tmpfile"; then
+    _fail "$name" "expected MODEL_ENUMERATION substitution not found"
+    return
+  fi
+
+  _pass "$name"
+}
+
 test_install_codex_exists
 test_install_codex_executable
 test_codex_resolve_targets_user_scope_populates_caller_variables
@@ -186,6 +206,7 @@ test_codex_skill_resolve_dst_preserves_subdirectory_structure
 test_codex_skill_resolve_dst_preserves_nested_files
 test_codex_render_agents_payload_strips_frontmatter_and_substitutes_placeholders
 test_codex_upsert_managed_block_preserves_user_content_and_replaces_existing_block
+test_codex_model_enumeration_placeholder_substitution
 
 total=$(( passed + failed ))
 echo
