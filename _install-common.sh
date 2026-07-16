@@ -545,3 +545,31 @@ validate_globs_resolve() {
     fi
   done
 }
+
+# Sets the "instructions" array in opencode.json to the given globs, preserving
+# every other key in an existing file. Writes through the target path so that a
+# symlinked config keeps its symlink. Creates a minimal document when the target
+# does not yet exist. Requires jq.
+# Usage: write_opencode_instructions target [glob ...]
+write_opencode_instructions() {
+  local target="$1"
+  shift
+  local globs=("$@")
+  local schema="https://opencode.ai/config.json"
+
+  local tmp
+  tmp="$(mktemp)"
+  trap 'rm -f "$tmp"' RETURN
+  if [[ -f "$target" ]]; then
+    if ! jq --args '.instructions = $ARGS.positional' \
+      < "$target" -- "${globs[@]+"${globs[@]}"}" > "$tmp"; then
+      say_err "could not parse '$target' as JSON; leaving it unchanged."
+      return 1
+    fi
+  else
+    jq -n --arg schema "$schema" --args \
+      '{"$schema": $schema, "instructions": $ARGS.positional}' \
+      -- "${globs[@]+"${globs[@]}"}" > "$tmp"
+  fi
+  cat "$tmp" > "$target"
+}

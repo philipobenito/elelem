@@ -38,6 +38,11 @@ if [[ ! -d "$RULES_SOURCE/common" ]]; then
   exit 1
 fi
 
+if ! command -v jq > /dev/null 2>&1; then
+  say_err "jq is required to update opencode.json without discarding existing settings. Install jq and re-run."
+  exit 1
+fi
+
 OPENCODE_PLACEHOLDERS=(
   'ASK_USER_QUESTION_TOOL'
   'ENTER_PLAN_TOOL'
@@ -190,32 +195,12 @@ else
   say_info "No skills found in $SKILLS_SOURCE (skipping skills install)."
 fi
 
-write_opencode_json() {
-  local target="$1"
-  shift
-  local globs=("$@")
-
-  local json_entries=""
-  local i
-  for (( i=0; i<${#globs[@]}; i++ )); do
-    local comma=""
-    (( i < ${#globs[@]} - 1 )) && comma=","
-    json_entries="${json_entries}    \"${globs[$i]}\"${comma}
-"
-  done
-
-  printf '{\n  "$schema": "https://opencode.ai/config.json",\n  "instructions": [\n%s  ]\n}\n' \
-    "$json_entries" > "$target"
-}
+write_opencode_instructions "$base/opencode.json" "${instructions_globs[@]+"${instructions_globs[@]}"}"
 
 if (( ${#instructions_globs[@]} > 0 )); then
-  write_opencode_json "$base/opencode.json" "${instructions_globs[@]}"
-
   pushd "$base" > /dev/null
   validate_globs_resolve "${instructions_globs[@]}"
   popd > /dev/null
-else
-  printf '{\n  "$schema": "https://opencode.ai/config.json",\n  "instructions": []\n}\n' > "$base/opencode.json"
 fi
 
 manifest_entries+=("opencode.json")
