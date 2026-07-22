@@ -1,6 +1,6 @@
 ---
 name: brainstorming-skip
-description: "Lightweight design capture for cases where structured brainstorming would be overkill. Asks the user for a brief design statement, presents it for explicit approval, and hands off to create-tickets or subagent-driven-development. Only invoked from the brainstorming router when the user picks the skip option."
+description: "Lightweight design capture for cases where structured brainstorming would be overkill. Reuses a design already discussed in context when present, otherwise asks the user for a brief design statement; presents it for explicit approval and hands off to create-tickets or subagent-driven-development. Only invoked from the brainstorming router when the user picks the skip option."
 ---
 
 # Brainstorming (Skip)
@@ -17,11 +17,13 @@ For the rule that no implementation may begin until the user has approved a desi
 
 ## Procedure
 
-1. **Ask for a brief design statement.** Use plain text (not `{{ASK_USER_QUESTION_TOOL}}`, because the answer is free-form). Ask the user to describe what they want to build in 1-3 sentences. Example: "What would you like to build? A 1-3 sentence description is enough, I will capture it as the approved design and proceed."
+1. **Check for a design already in context first.** Before asking the user anything, look back over the current conversation (including any prior discussion, harness-supplied context, or attached resources) for a design the user has already described, in their own words or otherwise. If one is present, that **is** the design statement, use it as-is rather than making the user repeat themselves. Do not ask "what would you like to build" when the answer is already sitting in the conversation.
 
-2. **Capture additional context if needed.** If the user's statement is so terse that you genuinely cannot derive acceptance criteria from it, ask one targeted follow-up question. **MUST NOT** stack multiple questions. **MUST NOT** turn this into a brainstorming dialogue, if you find yourself needing more than one follow-up, stop and tell the user that skip mode is the wrong choice for this work; they should re-invoke `brainstorming` and pick standard or guided mode instead.
+2. **Ask for a brief design statement only if none exists in context.** Use plain text (not `{{ASK_USER_QUESTION_TOOL}}`, because the answer is free-form). Ask the user to describe what they want to build in 1-3 sentences. Example: "What would you like to build? A 1-3 sentence description is enough, I will capture it as the approved design and proceed."
 
-3. **Present the captured design via plan mode.** Use `{{EXIT_PLAN_TOOL}}` to present the design statement as the plan content. Format:
+3. **Capture additional context only if genuinely ambiguous.** Whether the design came from prior context or a fresh answer, only ask a targeted follow-up question if you genuinely cannot derive acceptance criteria from it, e.g. it is contradictory, missing a decision point you cannot infer, or too vague to act on. **MUST NOT** ask a follow-up merely to double-check something already stated clearly in context. **MUST NOT** stack multiple questions. **MUST NOT** turn this into a brainstorming dialogue, if you find yourself needing more than one follow-up, stop and tell the user that skip mode is the wrong choice for this work; they should re-invoke `brainstorming` and pick standard or guided mode instead.
+
+4. **Present the captured design via plan mode.** Use `{{EXIT_PLAN_TOOL}}` to present the design statement as the plan content. Format:
 
    ```
    ## Approved Design (skip mode)
@@ -35,7 +37,7 @@ For the rule that no implementation may begin until the user has approved a desi
 
    The `{{EXIT_PLAN_TOOL}}` call IS the explicit approval step. The user accepts or rejects the design by approving or rejecting the plan.
 
-4. **Decide the next step.** After plan mode is exited and the design is approved, use `{{ASK_USER_QUESTION_TOOL}}` to ask whether to create tickets or start implementation:
+5. **Decide the next step.** After plan mode is exited and the design is approved, use `{{ASK_USER_QUESTION_TOOL}}` to ask whether to create tickets or start implementation:
 
    ```
    {{ASK_USER_QUESTION_TOOL}}:
@@ -49,7 +51,7 @@ For the rule that no implementation may begin until the user has approved a desi
      multiSelect: false
    ```
 
-5. **Hand off via `{{INVOKE_SKILL_TOOL}}`.** Invoke `subagent-driven-development` or `create-tickets` per the user's choice. **MUST NOT** invoke any other skill from here.
+6. **Hand off via `{{INVOKE_SKILL_TOOL}}`.** Invoke `subagent-driven-development` or `create-tickets` per the user's choice. **MUST NOT** invoke any other skill from here.
 
 ## What Skip Mode Does Not Do
 
@@ -60,7 +62,29 @@ For the rule that no implementation may begin until the user has approved a desi
 
 If the user's request turns out to be ambiguous or larger than they thought, stop and tell them to re-invoke `brainstorming` and pick a different mode. Skip is not the right tool for everything.
 
-## Worked Example
+## Worked Example (design already in context)
+
+The user and the agent already discussed a design earlier in the conversation ("let's add a `--dry-run` flag to the deploy script that prints what it would do"). The user later invokes the router and picks "Skip brainstorming".
+
+```
+[No re-prompt for a design statement, it is already in context.]
+
+[Use {{EXIT_PLAN_TOOL}} with:]
+## Approved Design (skip mode)
+
+**What to build:** Add a `--dry-run` flag to the deploy script that prints the actions it would take without executing them.
+
+**Acceptance criteria:**
+- The deploy script accepts a `--dry-run` flag
+- When the flag is set, the script prints each action it would take
+- When the flag is set, no actual deploy actions are executed
+
+**Out of scope:** Nothing flagged.
+
+[User approves via {{EXIT_PLAN_TOOL}}]
+```
+
+## Worked Example (no design yet in context)
 
 User invokes the router, picks "Skip brainstorming".
 
@@ -110,3 +134,5 @@ If any one of these is false, the gate has not been crossed, and you **MUST NOT*
 | Running `design-review`                                          | The user explicitly chose a lightweight path. Running design-review defeats the purpose. The reviewer is the user.                             |
 | Inventing requirements not in the user's statement               | YAGNI per `../../rules/common/coding-style.md`. The design covers what the user asked for, not what you would also build.                     |
 | Routing to skip yourself instead of letting the user pick        | The router asks; the user picks. You **MUST NOT** invoke this skill except as a hand-off from the router after the user explicitly picks skip. |
+| Asking "what would you like to build" when a design was already discussed in the conversation | Re-check context first. Making the user repeat an already-stated design defeats the point of skip mode and ignores the spirit of prior discussion. |
+| Asking a follow-up question to confirm something already unambiguous in context | Only ask when something is genuinely ambiguous or missing, not as a reflexive double-check. |
