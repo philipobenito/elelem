@@ -57,7 +57,7 @@ CLAUDE_SUBSTITUTIONS=(
   'AskUserQuestion'
   'EnterPlanMode'
   'ExitPlanMode'
-  'TaskCreate'
+  'TodoWrite'
   'Agent'
   'Skill'
   'Read'
