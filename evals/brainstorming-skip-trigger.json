@@ -1,0 +1,78 @@
+[
+  {
+    "query": "use skip mode for this one, i know exactly what i want: add a retry with exponential backoff around the s3 upload in workers/upload.py",
+    "should_trigger": true
+  },
+  {
+    "query": "skip brainstorming, just capture it and go. /v2/orders should return 410 gone instead of 404 for archived orders",
+    "should_trigger": true
+  },
+  {
+    "query": "no need for the whole design dance, pick the skip option. change the session TTL from 30 days to 7 in config/auth.yml",
+    "should_trigger": true
+  },
+  {
+    "query": "brainstorming-skip please. i want the CSV export to stream rather than buffering the whole result set in memory",
+    "should_trigger": true
+  },
+  {
+    "query": "lets do the lightweight one, skip. the nav bar needs to collapse to a hamburger under 768px",
+    "should_trigger": true
+  },
+  {
+    "query": "i picked skip on the mode question but you never actually captured anything. can you write up the design statement and get my sign off before you touch code",
+    "should_trigger": true
+  },
+  {
+    "query": "just capture the design as a one liner and move on, skip mode. adding a --verbose flag to the seed command",
+    "should_trigger": true
+  },
+  {
+    "query": "use the skip path from the brainstorming router. we've got the root cause already, the fix is moving the null check above the dereference in parseHeaders()",
+    "should_trigger": true
+  },
+  {
+    "query": "skip mode. swapping the pino logger for plain console in the cli entrypoint, nothing else changes",
+    "should_trigger": true
+  },
+  {
+    "query": "i already know exactly what i want here so lets not faff about: add rate limiting to the login endpoint, 5 attempts per minute per IP",
+    "should_trigger": false
+  },
+  {
+    "query": "just add a healthcheck at /healthz that returns 200, no need to overthink this one",
+    "should_trigger": false
+  },
+  {
+    "query": "skip the brainstorm, i've already written the whole design into DEV-4412. just implement it as written",
+    "should_trigger": false
+  },
+  {
+    "query": "can we skip the tests on this one? it's a throwaway prototype for a demo on thursday and i just need it working",
+    "should_trigger": false
+  },
+  {
+    "query": "the design got approved in last week's session and it's still in the epic body. go straight to cutting the tickets",
+    "should_trigger": false
+  },
+  {
+    "query": "lets do the quick version of the design conversation, i know this codebase well enough that you don't need to walk me through anything",
+    "should_trigger": false
+  },
+  {
+    "query": "skip straight past the design review step this time, the reviewer agent keeps nitpicking wording and we've got a deadline",
+    "should_trigger": false
+  },
+  {
+    "query": "checkout throws a 500 on orders with more than 50 line items. i know what i want you to do, cap the batch size at 25",
+    "should_trigger": false
+  },
+  {
+    "query": "which brainstorming mode should i be picking for a big auth refactor across three services? standard or committee?",
+    "should_trigger": false
+  },
+  {
+    "query": "i want to skip ahead to implementation, the epic body already has the full design under the ## Design heading",
+    "should_trigger": false
+  }
+]

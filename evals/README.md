@@ -37,6 +37,9 @@ It splits the set 60/40 into train and held-out test, runs each query three time
 
 ## Current sets
 
-| File                          | Skill           | Discriminates against                                              |
-|-------------------------------|-----------------|--------------------------------------------------------------------|
-| `brainstorming-trigger.json`  | `brainstorming` | `debugging`, `work-on-ticket`, `receiving-code-review`, read-only questions |
+| File                              | Skill                | Discriminates against                                                                         |
+|-----------------------------------|----------------------|-----------------------------------------------------------------------------------------------|
+| `brainstorming-trigger.json`      | `brainstorming`      | `debugging`, `work-on-ticket`, `receiving-code-review`, read-only questions                   |
+| `brainstorming-skip-trigger.json` | `brainstorming-skip` | `brainstorming` itself, `work-on-ticket`, `create-tickets`, unrelated uses of the word "skip" |
+
+`brainstorming-skip` is a hand-off target rather than a self-triggering skill, so its set inverts the usual polarity: the positives are queries where the user has *named* the skip mode themselves, and the negatives include every phrasing that merely implies certainty ("I already know what I want", "just add X"). Those must reach the router, because picking skip on the user's behalf is exactly what `rules/common/workflow.md` forbids.

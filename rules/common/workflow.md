@@ -20,6 +20,7 @@ You **MUST NOT** bypass the router by:
 ### What Counts as an Approved Design
 
 - A design produced by the `brainstorming` router (any of its modes: standard, guided, committee, or skip) that the user has explicitly approved
+- A root cause and fix approach produced by `debugging` Phase 6 that the user has explicitly approved (see "Bug Fixes" below)
 - An epic or ticket containing a design that the user has written or previously approved
 - A specification committed to the repository that the user has pointed to as the source of truth for the current change
 
@@ -33,7 +34,11 @@ You **MUST NOT** bypass the router by:
 
 ### Bug Fixes
 
-Bug fixes also require an approved design, even if the design is a single sentence. At minimum, present the failing-test reproduction approach and which function or module will change, and get explicit approval before writing the fix. The router (with skip mode if appropriate) is the way to do this. The rules in `testing.md` still apply: the failing test comes before the fix.
+Bug fixes also require an approved design, even if the design is a single sentence. At minimum, present the failing-test reproduction approach and which function or module will change, and get explicit approval before writing the fix.
+
+That approval comes from `debugging` Phase 6, not from the router. New work needs the router because the design has to be created and the user has to choose how; a bug's design is a consequence of evidence that Phase 6 has already gathered and presented, so the only mode that could apply is skip, and asking a four-option question with one viable answer is the usability tax the skip option exists to prevent. The two skills also terminate differently: skip mode's completion gate requires a hand-off to `create-tickets` or an orchestrator, while `debugging` Phase 7 applies the minimal fix inline via `test-driven-development`. Routing a bug through skip cannot satisfy both.
+
+Return to the router only when the root cause turns out to need work large enough that the minimal fix principle in `debugging.md` no longer applies, and the fix needs decomposing rather than applying. The rules in `testing.md` still apply throughout: the failing test comes before the fix.
 
 ## Sequencing Work
 

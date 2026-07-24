@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "You MUST use this before any code edit: creating features, building components, adding functionality, refactoring, or modifying behaviour. Enters plan mode, then routes the design step to one of four modes (standard, guided, committee, or skip) on a single user choice and hands off to the chosen mode skill. For a bug, run `debugging` first; it comes back here once it has a reproduction and a root cause."
+description: "You MUST use this before any code edit: creating features, building components, adding functionality, refactoring, or modifying behaviour. Enters plan mode, then routes the design step to one of four modes (standard, guided, committee, or skip) on a single user choice and hands off to the chosen mode skill. For a bug, run `debugging` instead: it takes its own approval for the fix approach and returns here only if the fix turns out to be too large to apply minimally."
 ---
 
 # Brainstorming (Router)
@@ -20,7 +20,7 @@ Invoke this skill before any code edit, no matter how small. The four modes give
 
 ## When Not to Run
 
-**For a bug, `debugging` runs first.** Reproduction and root cause come before design, because until you know what is actually broken there is nothing to design. `debugging` returns here, usually via skip mode, once it has evidence and needs approval for a fix approach. Routing first produces a design for a bug nobody has reproduced.
+**For a bug, `debugging` runs instead.** Reproduction and root cause come before design, because until you know what is actually broken there is nothing to design, and routing first produces a design for a bug nobody has reproduced. `debugging` Phase 6 then takes its own approval for the fix approach, and per `../../rules/common/workflow.md` that approval is the design: the bug does not come back here. Expect a return only when the root cause turns out to need work too large for the minimal fix principle, at which point it is new work and the mode question is worth asking again.
 
 **Run once per design, not once per edit.** Once a mode skill has produced an approved design and handed off, every edit that follows is covered by that approval. Do not re-enter the router for each file an implementation touches, and never re-enter it from inside an orchestration loop: that re-enters plan mode and stalls the orchestrator mid-task. Come back only when the user brings genuinely new work, or when the approved design turns out to be wrong (see the stopping conditions in `../../rules/common/workflow.md`).
 
@@ -70,13 +70,12 @@ If you find yourself doing any of it inside this skill, you have skipped the han
 
 ## Worked Example
 
-User: "the export job times out on large accounts, can you sort it"
+User: "we need to let people export their data as JSON as well as CSV"
 
-1. Recognise this as a bug, not a feature. `debugging` runs first and establishes the root cause: an unbounded query inside the batch loop.
-2. `debugging` has a fix approach that needs approval, so it comes back here.
-3. Enter plan mode, loading `EnterPlanMode` via `ToolSearch` first because it is not in the base tool list this session.
-4. Ask the mode question. The user picks "Other" and types "just the quick one, I know what the fix is".
-5. Map that to skip mode, confirm in one line, invoke `brainstorming-skip`, and stop.
+1. Recognise this as new work rather than a bug, so the router runs rather than `debugging`.
+2. Enter plan mode, loading `EnterPlanMode` via `ToolSearch` first because it is not in the base tool list this session.
+3. Ask the mode question. The user picks "Other" and types "just the quick one, I know how the CSV exporter is wired".
+4. Map that to skip mode, confirm in one line, invoke `brainstorming-skip`, and stop.
 
 ## Common Mistakes
 
