@@ -70,7 +70,9 @@ Tasks execute sequentially in this order. If two tasks have no dependency betwee
 
 ### Task Tracker Output
 
-Create a task per work item with `TaskCreate`, building a shared task list covering every task. Each entry includes:
+Create a task per work item with `TaskCreate`, building a shared task list covering every task. The mapping from this decomposition onto the board's fields (`subject`, `description`, `owner`, `status`, `blockedBy`/`blocks`, `metadata`) is defined once in `../_shared/task-board.md`; read it before creating the first task. In this sequential path, `owner` is always the `"lead"` sentinel, there is no teammate to assign tasks to.
+
+Each entry includes:
 
 - Task name and description
 - Recommended subagent type (selected per `../../rules/common/subagents.md`)
@@ -79,6 +81,8 @@ Create a task per work item with `TaskCreate`, building a shared task list cover
 - Acceptance criteria
 - Dependencies on other tasks
 - Scene-setting context describing where this task fits in the overall design
+
+Files, acceptance criteria, and dependencies belong in `description` as prose (per `../_shared/task-board.md`); the recommended subagent type and model may be recorded alongside them or in `metadata`, at the orchestrator's discretion.
 
 ## Per-Task Pipeline
 
@@ -147,14 +151,18 @@ If the user chose "ask me each time":
 
 5. Use `AskUserQuestion` to ask whether to commit (options: "Commit", "Adjust first", "Skip commit")
 6. Only commit when the user confirms
-7. Proceed to the next task
+7. Mark the task complete with `TaskUpdate`
+8. Proceed to the next task
 
 If the user chose auto-commit:
 
 5. Commit immediately after presenting the summary
-6. Proceed to the next task
+6. Mark the task complete with `TaskUpdate`
+7. Proceed to the next task
 
 The checkpoint summary exists regardless of commit preference. The commit question is the part conditional on the upfront choice. The verification evidence is non-optional, without it, you have not satisfied `../../rules/common/verification.md`.
+
+Marking a task complete is a lead-only act: it follows the lead's own verification gate, never a subagent's self-report. Set the lead-only `metadata` keys (`verified`, `commit_sha`, and `base_sha` for the next task) per `../_shared/task-board.md` when you update status.
 
 ## Handling Implementer Status
 
