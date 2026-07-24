@@ -1,0 +1,78 @@
+[
+  {
+    "query": "ok the summary's consolidated, run design-review on it before we go anywhere near the tickets",
+    "should_trigger": true
+  },
+  {
+    "query": "we've approved all five sections now. next step is the design-review skill against the consolidated block, then come back to me for final sign off",
+    "should_trigger": true
+  },
+  {
+    "query": "you skipped step 6. go back and put the ingest pipeline summary through design-review before handing off to subagent-driven-development",
+    "should_trigger": true
+  },
+  {
+    "query": "the committee reached consensus and you've written the summary up. put it through the design review step now, i don't want three agents agreeing with each other to be the only check",
+    "should_trigger": true
+  },
+  {
+    "query": "run the reviewer pass over that design summary. use the architect agent if there's one available rather than a general purpose one",
+    "should_trigger": true
+  },
+  {
+    "query": "design-review came back with issues found last time and you fixed them but never re-dispatched. run it again against the updated text",
+    "should_trigger": true
+  },
+  {
+    "query": "i've changed my mind about the retention window and edited the summary, it's now 30 days not 7. that's new text so send it back through design-review",
+    "should_trigger": true
+  },
+  {
+    "query": "before final approval, get a fresh pair of eyes on the consolidated summary via the design review skill. i want the completeness and yagni checks specifically",
+    "should_trigger": true
+  },
+  {
+    "query": "we're at the end of the guided brainstorm. consolidated summary is in the last message, kick off design-review and walk me through anything it changes",
+    "should_trigger": true
+  },
+  {
+    "query": "can you review the PR i just opened, #482, it's the one adding the webhook retry logic to billing/hooks.ts",
+    "should_trigger": false
+  },
+  {
+    "query": "i wrote up an ADR for moving off redis to postgres advisory locks, it's in docs/adr/0014-advisory-locks.md. can you poke holes in it",
+    "should_trigger": false
+  },
+  {
+    "query": "give the checkout flow a design review, the spacing is inconsistent between the address and payment steps and the button hierarchy feels off",
+    "should_trigger": false
+  },
+  {
+    "query": "does the architecture in src/ingest actually make sense? feels like the worker and the scheduler are doing overlapping jobs and i can't tell if that's deliberate",
+    "should_trigger": false
+  },
+  {
+    "query": "i want to design a new permissions model for the api, roles plus per resource overrides. where do we start",
+    "should_trigger": false
+  },
+  {
+    "query": "skip the design review step this time please, the reviewer keeps flagging terminology and we ship friday",
+    "should_trigger": false
+  },
+  {
+    "query": "the task's done and committed. get a code reviewer on the diff between a7981ec and HEAD before we move to task 3",
+    "should_trigger": false
+  },
+  {
+    "query": "run a security review over the changes on this branch, specifically the new file upload handler",
+    "should_trigger": false
+  },
+  {
+    "query": "what does design-review actually do differently from the argue-against-your-own-proposal step? feels like we're checking the same thing twice",
+    "should_trigger": false
+  },
+  {
+    "query": "design-review returned issues outstanding after three goes. run it once more, i reckon it'll pass this time now that the naming's consistent",
+    "should_trigger": false
+  }
+]

@@ -2,7 +2,7 @@
 
 These rules apply to every subagent dispatch made from inside a skill. They are the procedural detail behind the iron laws in `../../rules/common/subagents.md`. The iron laws (context isolation, the git ban, the worktree ban, the privilege ban) live in the always-on rule file and bind whether or not a skill is running. The rules below govern *how* a dispatch is constructed and managed once a skill has decided to dispatch.
 
-Skills that dispatch subagents (`subagent-driven-development`, `team-driven-development`, `dispatching-parallel-agents`, `fast-path-implementation`, `brainstorming-committee`, `debugging`) **MUST** read this file before performing a dispatch.
+Skills that dispatch subagents (`subagent-driven-development`, `team-driven-development`, `dispatching-parallel-agents`, `fast-path-implementation`, `brainstorming-committee`, `debugging`, `design-review`, `requesting-code-review`) **MUST** read this file before performing a dispatch.
 
 ## Subagent Type Selection
 

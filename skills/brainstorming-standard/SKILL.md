@@ -40,7 +40,7 @@ For the rule that no implementation may begin until the user has approved a desi
 
 5. **Consolidate the design summary.** Once every section has been approved, write a single structured summary covering goal, architecture, components, interfaces, data flow, error handling, and testing strategy. It has to stand alone: `design-review` receives this text and nothing else, so anything that only makes sense against the conversation is missing from the summary.
 
-6. **Invoke `design-review`** via `Skill` against the consolidated summary and follow the Return Contract set out in that skill. Approved may carry substantive reviewer edits the user has not seen; outstanding issues means the review budget is spent, so the decision goes to the user rather than to another dispatch.
+6. **Invoke `design-review`** via `Skill` against the consolidated summary and follow the Return Contract set out in that skill. Approved may carry substantive reviewer edits the user has not seen. A decision required return means the review found a question the design never answered, so put it to the user here rather than answering it yourself and carry their answer back through step 6 as new text. Outstanding issues means the review budget is spent, so the decision goes to the user rather than to another dispatch.
 
    Step 3 and this step are both adversarial, and neither substitutes for the other. Step 3 attacks the *approach* while the user is in the room and can supply constraints that exist nowhere in the code. `design-review` attacks the *artefact* afterwards, for completeness and consistency, and its reviewer cannot ask anyone anything.
 
