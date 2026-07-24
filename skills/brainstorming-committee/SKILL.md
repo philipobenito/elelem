@@ -66,6 +66,8 @@ Map the project's primary language or framework (identified during step 2) to th
 | Ruby / Rails           | `rails-expert`       |
 | Multi-language / other | `general-purpose`    |
 
+These subagents are examples; if a more specific subagent type exists for the stack, use it. If none exists, fall back to `general-purpose`.
+
 ## Synthesising Consensus
 
 | Outcome             | Action                                                                            |
