@@ -47,7 +47,7 @@ When more than one skill could apply, you **MUST** invoke them in this order:
 Examples:
 
 - "Let's build X" -> `brainstorming` first (the router asks the user which mode); the user picks a mode; the mode skill produces a design; an implementation skill takes over.
-- "Fix this bug" -> `debugging` first (reproduce, find root cause, get user approval on the fix approach); then `test-driven-development` for the regression test; then the fix; then `verification-before-completion`.
+- "Fix this bug" -> `debugging` first (reproduce, find root cause, get user approval on the fix approach); then `test-driven-development` for the regression test; then the fix; then `requesting-code-review`; then `verification-before-completion`.
 - "Work on #42" -> `work-on-ticket` first; it recovers the design from the parent epic and hands off to `subagent-driven-development`.
 - "Is this done?" -> `verification-before-completion` first, nothing else until the gate has been run.
 

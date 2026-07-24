@@ -36,6 +36,8 @@ Expand scope only after forming a hypothesis and only in the direction the hypot
 
 If you have read five files without forming a clear hypothesis, you **MUST** stop gathering evidence. Present what you know, what you have ruled out, and what remains uncertain. Ask the human partner which direction to pursue.
 
+Delegating the reading does not exempt you from the rule. Where the evidence gathering is delegated to subagents, the equivalent trigger is the round: if one parallel sweep returns without yielding a clear hypothesis, you **MUST** stop and refocus rather than dispatch a second sweep. Counting the subagents' file reads one for one would make any parallel sweep illegal on arrival, which is not the intent. What the rule limits is reading without direction, and a second sweep launched after a directionless first one is exactly that.
+
 Unfocused investigation wastes time and context. The instinct to "just read one more file" is how investigation spirals begin; the rule exists to cut the spiral early.
 
 ## The Investigation Budget
@@ -47,6 +49,8 @@ You get three hypothesis cycles before you **MUST** stop and refocus:
 - **Cycle 3**: test the third hypothesis or revisit with fresh framing
 
 After three cycles without a confirmed root cause, you **MUST** present everything you have investigated, everything you have ruled out, and everything that remains uncertain, and ask the human partner to help refocus. You **MUST NOT** continue investigating in circles past the budget.
+
+A cycle is a round of testing followed by a reassessment, however many hypotheses that round tested in parallel. Testing three hypotheses concurrently and then re-ranking is one cycle, not three: the budget limits how many times you re-frame the problem before asking for help, not how many hypotheses you can hold at once.
 
 The budget exists because debugging without a budget becomes an ever-widening search that burns context without converging. Three focused cycles are enough to either find the root cause or establish that you need help.
 
@@ -67,20 +71,26 @@ The fix **MUST** change only what is necessary to address the root cause. You **
 
 If the fix touches more than two or three locations, stop and verify that you are fixing one root cause, not patching the same symptom in several places. One bug is one fix.
 
+If it genuinely is one root cause but the fix it needs cannot be contained (several separate changes, a redesign, or a new interface), the work has stopped being a bug fix and this skill stops with it. Per `../../rules/common/workflow.md`, hand back to the `brainstorming` router with the root cause, the reproduction approach, and the affected modules. The alternative failure modes are both worse than escalating: shrinking the fix to fit leaves the root cause in place, and applying it anyway ships a redesign under a bug-fix approval the user never gave.
+
 Any unrelated issues you notice during debugging **MUST** be logged separately (as tickets or notes), not fixed inside the debugging change.
 
 ## Rationalisation Prevention
 
 Every thought below means **stop and return to the procedure**:
 
-| You might think...                                               | Reality                                                                                                       |
-|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| "The error message tells me exactly what's wrong"                | Error messages describe symptoms. Reproduce and find the root cause.                                          |
-| "This is obviously a simple typo or missing null check"          | If it is obvious, reproduction and root cause identification will be fast. Skip nothing.                      |
-| "Let me just try this quick fix and see if it works"             | That is shotgun debugging. It wastes time when it fails and masks root causes when it works.                  |
-| "I've been investigating for a while, let me just try something" | That is the investigation budget telling you to refocus, not to start guessing.                               |
-| "I need to read more code to understand the system"              | You need scoped evidence, not system understanding. Read what the bug touches, not everything.                |
-| "Let me check a few more files to be thorough"                   | Thoroughness without direction is waste. Form a hypothesis first, then read files to test it.                 |
-| "The fix is so small it doesn't need a regression test"          | Small fixes for subtle bugs are exactly what regression tests exist for. See `../../rules/common/testing.md`. |
-| "I can see other issues while I'm here, let me fix those too"    | One bug, one fix. Log other issues separately.                                                                |
-| "I don't need to reproduce this, the error is clear"             | Reproduction is verification infrastructure. Without it, you cannot confirm your fix works.                   |
+| You might think...                                                | Reality                                                                                                                                                |
+|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| "The error message tells me exactly what's wrong"                 | Error messages describe symptoms. Reproduce and find the root cause.                                                                                   |
+| "This is obviously a simple typo or missing null check"           | If it is obvious, reproduction and root cause identification will be fast. Skip nothing.                                                               |
+| "Let me just try this quick fix and see if it works"              | That is shotgun debugging. It wastes time when it fails and masks root causes when it works.                                                           |
+| "I've been investigating for a while, let me just try something"  | That is the investigation budget telling you to refocus, not to start guessing.                                                                        |
+| "I need to read more code to understand the system"               | You need scoped evidence, not system understanding. Read what the bug touches, not everything.                                                         |
+| "Let me check a few more files to be thorough"                    | Thoroughness without direction is waste. Form a hypothesis first, then read files to test it.                                                          |
+| "The fix is so small it doesn't need a regression test"           | Small fixes for subtle bugs are exactly what regression tests exist for. See `../../rules/common/testing.md`.                                          |
+| "I can see other issues while I'm here, let me fix those too"     | One bug, one fix. Log other issues separately.                                                                                                         |
+| "I don't need to reproduce this, the error is clear"              | Reproduction is verification infrastructure. Without it, you cannot confirm your fix works.                                                            |
+| "I can't reproduce it, but the fix is obvious anyway"             | A non-reproducible bug cannot have a verified fix. Phase 2 is where that investigation stops, not a hurdle to route around.                            |
+| "A subagent read those files, not me, so the count is clear"      | The Refocus Rule binds the investigation, not your personal file list. Delegated, its trigger is the round: one sweep without a hypothesis means stop. |
+| "The fix is bigger than expected, but I already have the context" | A fix that outgrows the minimal fix principle is new work. Escalate to `brainstorming` rather than spending saved context on an unapproved redesign.   |
+| "It's a one-line fix, a code review would be ceremony"            | `../../rules/common/code-review.md` grants no exemption for small, simple, or obvious. Subtle bugs get small fixes; that is where review pays.         |

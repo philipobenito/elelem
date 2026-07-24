@@ -24,7 +24,7 @@ If any of these is false, a parallel dispatch is not valid. Either investigate s
 
 1. **Identify independent domains.** Group the work by what is broken or what needs building. Each group **MUST** map to exactly one problem domain with no shared files, shared state, or shared causal chain. If you cannot cleanly partition the work, stop. This skill does not apply.
 
-2. **Annotate each task with its subagent type and model.** Per `../../rules/common/subagents.md`, pick the most specific subagent type for each task (for example `typescript-pro` for a TypeScript test file, `python-pro` for a Python module, `debugger` for diagnostic work). Start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`.
+2. **Annotate each task with its subagent type and model.** Per `../../rules/common/subagents.md`, pick the most specific subagent type for each task by searching the `subagent_type` values this environment actually exposes for a capability match: a TypeScript specialist for a TypeScript test file, a Python specialist for a Python module, a debugging or diagnostic type for diagnostic work. Many types are plugin-supplied and namespaced (`voltagent-lang:typescript-pro`), so resolve each name against that enumeration at dispatch time rather than writing a bare name from memory, and fall back to `general-purpose` where nothing matches. Start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`.
 
 3. **Construct each task prompt.** Per `../../rules/common/subagents.md`, do not let any subagent inherit your session history. For each agent, write a self-contained prompt containing:
 
