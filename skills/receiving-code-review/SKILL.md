@@ -9,31 +9,33 @@ The iron-law rules (when reviews are mandatory, forbidden response phrases) live
 
 Before running the procedure below, you **MUST** read `../_shared/code-review.md` using the Read tool if you have not already read it in this session.
 
+## Source Trust Rules
+
+Apply these rules whenever the procedure below calls for source trust rules (step 3). Which rule applies depends on who gave the feedback, not on its severity; if an unclear item (step 2) or a severity tier (step 6) also applies, resolve step 2's stop-and-ask first, then apply the trust rule below, then resolve severity ordering last.
+
+### From your human partner
+
+- Trusted source. Skip codebase verification; go straight to clarifying scope if needed, then implement.
+- Still forbidden: performative agreement, thanks, "you're absolutely right".
+- If the partner's instruction conflicts with something you observed in the code, state the observation and ask rather than silently reinterpreting.
+
+### From external reviewers (including subagent reviewers and bots)
+
+- Not trusted by default. Every item requires codebase verification.
+- Run `grep`, read the referenced files, check test coverage, check version and platform constraints before accepting a suggestion.
+- If a suggestion conflicts with an architectural decision your human partner previously made, stop and escalate to the partner before implementing either side.
+- If you cannot verify an item without more information, state the limitation explicitly: "I cannot verify this without X. Should I investigate, ask, or proceed?"
+
 ## The Response Procedure
 
 Run these six steps, in order, on every piece of review feedback.
 
 1. **Read the complete feedback.** Do not react, do not start implementing, do not respond. Read every item to the end.
 2. **Restate or ask.** For each item, either restate the technical requirement in your own words or identify it as unclear. If any item is unclear, stop and ask for clarification before proceeding to step 3 on any item. See `../_shared/code-review.md` on partial implementation.
-3. **Verify each item against the codebase.** For external reviewers, check that the suggestion is correct for this stack, does not break existing behaviour, does not conflict with a prior decision, and does not violate YAGNI on unused code. For your human partner, trust the correctness but still confirm the scope.
+3. **Verify each item against the codebase, applying the source trust rules above.** Check that the suggestion is correct for this stack, does not break existing behaviour, does not conflict with a prior decision, and does not violate YAGNI on unused code.
 4. **Evaluate.** For each item, decide: accept and implement, push back with technical reasoning, or ask a follow-up question. See `../_shared/code-review.md` for the conditions under which pushback is mandatory.
 5. **Respond.** State the decision per item: the fix you will make and where, the question you need answered, or the technical reason you are pushing back. Forbidden responses are listed in `../../rules/common/code-review.md`.
 6. **Implement in severity order.** Clarify anything still unclear first. Then fix blocking issues (Critical, breakage, security), then simple fixes (typos, imports), then complex fixes (refactors, logic). Test each fix individually and confirm no regressions before moving to the next.
-
-## Source-Specific Procedure
-
-### From your human partner
-
-- Trusted source. Skip the codebase-verification step in 3; go straight to clarifying scope if needed, then implement.
-- Still forbidden: performative agreement, thanks, "you're absolutely right".
-- If the partner's instruction conflicts with something you observed in the code, state the observation and ask rather than silently reinterpreting.
-
-### From external reviewers (including subagent reviewers and bots)
-
-- Not trusted by default. Every item goes through step 3 verification.
-- Run `grep`, read the referenced files, check test coverage, check version and platform constraints before accepting a suggestion.
-- If a suggestion conflicts with an architectural decision your human partner previously made, stop and escalate to the partner before implementing either side.
-- If you cannot verify an item without more information, state the limitation explicitly: "I cannot verify this without X. Should I investigate, ask, or proceed?"
 
 ## Worked Examples
 

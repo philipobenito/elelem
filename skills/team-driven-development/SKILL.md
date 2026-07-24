@@ -109,7 +109,7 @@ Every failure reduces to the shape in `../_shared/teammate-protocol.md`'s Failur
 
 Two points are specific to this skill:
 
-- A partial or runtime spawn failure degrades the whole run to `../subagent-driven-development/SKILL.md`, dispatching the remaining tasks from the same decomposition as one-shot subagents. It never continues as a mixed team of teammates and ad hoc subagents; that would reintroduce the concurrent-writer and ownership risks the pre-flight exists to prevent.
+- A partial spawn failure means any spawn attempt that fails after at least one teammate is already live. A partial or runtime spawn failure degrades the whole run to `../subagent-driven-development/SKILL.md`: shut down all live teammates, treat any unverified tasks as re-queued, and hand all remaining unverified tasks to SDD as one-shot subagents from the same decomposition. Already-verified and committed tasks are retained. It never continues as a mixed team of teammates and ad hoc subagents; that would reintroduce the concurrent-writer and ownership risks the pre-flight exists to prevent.
 - A lead crash is unrecoverable: the lead holds the only authoritative verification and commit state, and teammates cannot resume a session on their own, per the dead-teammate law in `../../rules/common/teammates.md`. Only work verified and committed before the crash is durable.
 
 ## Final Feature-Level Review
