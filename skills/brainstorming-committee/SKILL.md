@@ -35,7 +35,7 @@ Before running the procedure below, you **MUST** read both files using the Read 
 7. **Present the design to the user.** Include the full summary, a brief note on any decisions where the committee was split (with the reasoning for the chosen direction), and any risks the committee flagged. **MUST NOT** dump the deliberation transcripts. The user wants the result, not the process.
 8. **Invoke `design-review`** via `Skill` against the consolidated summary. If the review surfaces issues that require new decisions (not just wording fixes), feed the affected decisions back into a targeted committee round, update the summary, and re-invoke `design-review`. If `design-review` escalates after three iterations, stop and ask the user how to proceed.
 9. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval.
-10. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table (`subagent-driven-development` by default; `team-driven-development` when the design qualifies for parallel execution, or `dispatching-parallel-agents` for a stateless one-shot fan-out). Invoke the chosen skill via `Skill`.
+10. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table: default to `subagent-driven-development`; use `team-driven-development` when the design qualifies for parallel execution (at least three independent components that can be built simultaneously with no shared state); use `dispatching-parallel-agents` for a stateless one-shot fan-out (all tasks are fully specified, idempotent, and require no inter-agent coordination). Invoke the chosen skill via `Skill`.
 
 ## The Three Perspectives
 
@@ -66,7 +66,7 @@ Map the project's primary language or framework (identified during step 2) to th
 | Ruby / Rails           | `rails-expert`       |
 | Multi-language / other | `general-purpose`    |
 
-These subagents are examples; if a more specific subagent type exists for the stack, use it. If none exists, fall back to `general-purpose`.
+These subagents are examples; if a more specific subagent type exists for the stack, use it. If none exists, fall back to `general-purpose`. When the Pragmatist falls back to `general-purpose`, explicitly instruct it in the committee prompt to focus on the specific languages present in the codebase and to prioritise reuse of existing patterns identified during step 2, compensating for the lack of stack-specific expertise.
 
 ## Synthesising Consensus
 
