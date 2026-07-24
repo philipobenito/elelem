@@ -7,7 +7,7 @@ description: Picks up a ticket from the project's ticketing system, fetches its 
 
 ## Load the Ticketing Rules First
 
-This skill depends on the rules in `skills/_shared/tickets.md`. Those rules are **not** always in context; they live next to the ticket skills and are loaded only when a ticket skill is invoked. Before running the procedure below, you **MUST** read `skills/_shared/tickets.md` using the {{READ_FILE_TOOL}} tool if you have not already read it in this session.
+This skill depends on the rules in `skills/_shared/tickets.md`. Those rules are **not** always in context; they live next to the ticket skills and are loaded only when a ticket skill is invoked. Before running the procedure below, you **MUST** read `skills/_shared/tickets.md` using the Read tool if you have not already read it in this session.
 
 The detection of which ticketing system is in use lives in the `detect-ticketing-system` skill. The downstream implementation workflow lives in the `subagent-driven-development` skill. This skill bridges the gap across session boundaries between a ticket that was created in a prior session and the implementation workflow that delivers it.
 
@@ -49,10 +49,10 @@ You **MUST** complete these steps in order. Do not skip a step and do not reorde
      - What is explicitly out of scope (from sibling tickets, things that belong to other tickets)
    - **Current codebase state**: relevant observations from step 5
 
-7. **Get explicit user confirmation.** Use `{{ASK_USER_QUESTION_TOOL}}` to confirm scope. Plain-text confirmation is not sufficient.
+7. **Get explicit user confirmation.** Use `AskUserQuestion` to confirm scope. Plain-text confirmation is not sufficient.
 
    ```
-   {{ASK_USER_QUESTION_TOOL}}:
+   AskUserQuestion:
      question: "Does this scope look right for implementation?"
      header: "Scope"
      options:
@@ -65,12 +65,12 @@ You **MUST** complete these steps in order. Do not skip a step and do not reorde
      multiSelect: false
    ```
 
-   If the user selects "Adjust scope" or "Need more context", address the feedback and re-present with `{{ASK_USER_QUESTION_TOOL}}` again. Only proceed to step 8 after "Looks good, proceed".
+   If the user selects "Adjust scope" or "Need more context", address the feedback and re-present with `AskUserQuestion` again. Only proceed to step 8 after "Looks good, proceed".
 
-8. **Hand off to subagent-driven-development.** Use `{{INVOKE_SKILL_TOOL}}` to invoke the `subagent-driven-development` skill. This **MUST** be an actual skill invocation, not a conceptual handoff; if you skip the invocation, the downstream skill's full instructions will not be loaded and implementation quality will suffer.
+8. **Hand off to subagent-driven-development.** Use `Skill` to invoke the `subagent-driven-development` skill. This **MUST** be an actual skill invocation, not a conceptual handoff; if you skip the invocation, the downstream skill's full instructions will not be loaded and implementation quality will suffer.
 
    ```
-   {{INVOKE_SKILL_TOOL}}:
+   Skill:
      skill: "subagent-driven-development"
    ```
 
@@ -125,7 +125,7 @@ With Linear MCP tools. Response includes the `parent` field. The tier marker is 
 - **GitLab**: epic associations (where group Epics are available) or `Part of #N` references in the body (where they are not).
 - **Markdown fallback**: heading nesting in the single epic file. A Task's parent is the nearest preceding `### Story:` heading, or the file itself (the Epic) when there is no enclosing Story.
 
-If `resolve_epic_context` cannot resolve a parent reference (the ticket is missing, deleted, or permission is denied), this is an **error**. Surface the unresolved reference to the user via `{{ASK_USER_QUESTION_TOOL}}` and stop. The legacy fallback documented in `skills/_shared/tickets.md` applies only when a node has no parent reference at all, not when a parent reference exists but cannot be fetched.
+If `resolve_epic_context` cannot resolve a parent reference (the ticket is missing, deleted, or permission is denied), this is an **error**. Surface the unresolved reference to the user via `AskUserQuestion` and stop. The legacy fallback documented in `skills/_shared/tickets.md` applies only when a node has no parent reference at all, not when a parent reference exists but cannot be fetched.
 
 ## Handling Multiple Tickets
 

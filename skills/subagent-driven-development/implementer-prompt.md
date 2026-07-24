@@ -7,7 +7,7 @@ Use this template when dispatching an implementer subagent.
 **Model selection:** Pick one concrete model. Start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`.
 
 ```
-{{DISPATCH_AGENT_TOOL}} ([SPECIALISED_SUBAGENT_TYPE]):
+Agent ([SPECIALISED_SUBAGENT_TYPE]):
   description: "Implement Task N: [task name]"
   prompt: |
     You are implementing Task N: [task name]

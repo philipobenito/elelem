@@ -11,19 +11,19 @@ For the rule that no implementation may begin until the user has approved a desi
 
 ## Preconditions
 
-- You **MUST** be in plan mode before invoking this skill. If you are not, enter plan mode now using `{{ENTER_PLAN_TOOL}}`. Plan mode's read-only safety enforces the design-before-implementation rule from `../../rules/common/workflow.md`.
+- You **MUST** be in plan mode before invoking this skill. If you are not, enter plan mode now using `EnterPlanMode`. Plan mode's read-only safety enforces the design-before-implementation rule from `../../rules/common/workflow.md`.
 - This skill is invoked either directly by the orchestrator or by the `brainstorming` router after the user selects standard mode. If the user has not chosen a mode yet, invoke `brainstorming` instead so they can pick.
 
 ## Procedure
 
 1. **Explore project context.** Read files, docs, and recent commits in the area the request touches. Stay focused: do not exhaustively map the codebase. If after the initial pass the request appears to span more than ~3 subsystems, stop and tell the user; help them decompose into subprojects before continuing.
-2. **Ask clarifying questions.** One question per message. Prefer multiple choice via `{{ASK_USER_QUESTION_TOOL}}` over open-ended prose. Focus on purpose, constraints, and success criteria. **MUST NOT** stack multiple questions in one turn.
+2. **Ask clarifying questions.** One question per message. Prefer multiple choice via `AskUserQuestion` over open-ended prose. Focus on purpose, constraints, and success criteria. **MUST NOT** stack multiple questions in one turn.
 3. **Propose 2-3 approaches.** Present trade-offs explicitly. Lead with the recommended option and explain why it is recommended.
 4. **Present the design in sections.** Cover architecture, components, data flow, error handling, and testing. Scale each section to its complexity: a few sentences for straightforward sections, up to ~300 words for nuanced ones. Get user approval on each section before moving to the next.
 5. **Consolidate the design summary.** Once every section has been approved individually, write a single structured summary covering goal, architecture, components, interfaces, data flow, error handling, and testing strategy. This block of text is the input to the next step.
-6. **Invoke `design-review`.** Use `{{INVOKE_SKILL_TOOL}}` to invoke the `design-review` skill against the consolidated summary. If `design-review` returns substantive change notes, surface them to the user before continuing. If `design-review` escalates after three iterations, stop and ask the user how to proceed.
+6. **Invoke `design-review`.** Use `Skill` to invoke the `design-review` skill against the consolidated summary. If `design-review` returns substantive change notes, surface them to the user before continuing. If `design-review` escalates after three iterations, stop and ask the user how to proceed.
 7. **Get explicit final approval.** Present the reviewed summary to the user and obtain explicit approval. Implicit signals ("looks fine", "sure") do not count; ask directly.
-8. **Decide the next step.** Use `{{ASK_USER_QUESTION_TOOL}}` to ask whether to create tickets or start implementation. The only permitted downstream skills are `create-tickets` and `subagent-driven-development`; invoke whichever the user picks via `{{INVOKE_SKILL_TOOL}}`. **MUST NOT** invoke any other skill from here.
+8. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The only permitted downstream skills are `create-tickets` and `subagent-driven-development`; invoke whichever the user picks via `Skill`. **MUST NOT** invoke any other skill from here.
 
 ## Working in Existing Codebases
 

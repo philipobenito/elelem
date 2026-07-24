@@ -7,7 +7,7 @@ Use this template when dispatching a reviewer subagent on the full path.
 **Subagent type selection:** Replace `[REVIEWER_SUBAGENT_TYPE]` with the most specific reviewer type available for the task per `../../rules/common/subagents.md`. Default to `code-reviewer`. For language- or framework-specific changes, prefer a specialised reviewer if one exists. Use `general-purpose` only when no specialised reviewer fits.
 
 ```
-{{DISPATCH_AGENT_TOOL}} ([REVIEWER_SUBAGENT_TYPE]):
+Agent ([REVIEWER_SUBAGENT_TYPE]):
   description: "Review Task N: [task name]"
   prompt: |
     You are reviewing an implementation for both spec compliance and code quality.

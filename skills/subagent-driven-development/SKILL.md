@@ -25,7 +25,7 @@ You need an approved design (from the `brainstorming` router via any of its mode
 
 ## Commit Preference
 
-Before any further work, ask the user how commits should be handled using `{{ASK_USER_QUESTION_TOOL}}`:
+Before any further work, ask the user how commits should be handled using `AskUserQuestion`:
 
 - **Auto-commit after each task**: the orchestrator commits automatically after each task passes review. The user sees a summary of the changes but is not asked whether to commit.
 - **Ask me each time**: the orchestrator pauses after each task and asks whether to commit.
@@ -70,7 +70,7 @@ Tasks execute sequentially in this order. If two tasks have no dependency betwee
 
 ### Task Tracker Output
 
-Produce a `{{TASK_TRACKER_TOOL}}` with every task. Each entry includes:
+Create a task per work item with `TaskCreate`, building a shared task list covering every task. Each entry includes:
 
 - Task name and description
 - Recommended subagent type (selected per `../../rules/common/subagents.md`)
@@ -99,7 +99,7 @@ digraph per_task_pipeline {
     "Verification gate (orchestrator):\ngit diff + re-run task verification\n(../../rules/common/verification.md)" [shape=box, style=bold];
     "Verification passes?" [shape=diamond];
     "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [shape=box, style=bold];
-    "Mark task complete in {{TASK_TRACKER_TOOL}}" [style=bold];
+    "Mark task complete with TaskUpdate" [style=bold];
 
     "Select specialised subagent type\nand model (Low-cost default tier)" -> "Dispatch implementer subagent\n(./implementer-prompt.md)";
     "Dispatch implementer subagent\n(./implementer-prompt.md)" -> "Implementer subagent asks questions?";
@@ -114,7 +114,7 @@ digraph per_task_pipeline {
     "Verification gate (orchestrator):\ngit diff + re-run task verification\n(../../rules/common/verification.md)" -> "Verification passes?";
     "Verification passes?" -> "Implementer subagent fixes issues" [label="no"];
     "Verification passes?" -> "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [label="yes"];
-    "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" -> "Mark task complete in {{TASK_TRACKER_TOOL}}";
+    "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" -> "Mark task complete with TaskUpdate";
 }
 ```
 
@@ -145,7 +145,7 @@ After the verification gate passes, present the work to the user:
 
 If the user chose "ask me each time":
 
-5. Use `{{ASK_USER_QUESTION_TOOL}}` to ask whether to commit (options: "Commit", "Adjust first", "Skip commit")
+5. Use `AskUserQuestion` to ask whether to commit (options: "Commit", "Adjust first", "Skip commit")
 6. Only commit when the user confirms
 7. Proceed to the next task
 
@@ -197,7 +197,7 @@ Classification: COMPLEX
 [Evidence table shown]
 
 [Decompose design: map file structure, define 5 tasks with acceptance criteria, order by dependencies]
-[Create {{TASK_TRACKER_TOOL}} with all tasks, each annotated with one concrete model at the Low-cost default tier]
+[Create a task per work item with TaskCreate, each annotated with one concrete model at the Low-cost default tier]
 
 Task 1 (Low-cost default tier):
 

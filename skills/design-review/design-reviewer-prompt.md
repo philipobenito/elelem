@@ -9,7 +9,7 @@ Use this template when dispatching a design reviewer subagent.
 **Subagent type selection:** Replace `[REVIEWER_SUBAGENT_TYPE]` with `architect-reviewer` if available (it is built for evaluating system design decisions and patterns). Fall back to `general-purpose` only when `architect-reviewer` is not available. Per `../../rules/common/subagents.md`, do not pre-escalate the model: start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`.
 
 ```
-{{DISPATCH_AGENT_TOOL}} ([REVIEWER_SUBAGENT_TYPE]):
+Agent ([REVIEWER_SUBAGENT_TYPE]):
   description: "Review design summary"
   prompt: |
     You are a design reviewer. Verify this design is complete and ready for implementation planning.

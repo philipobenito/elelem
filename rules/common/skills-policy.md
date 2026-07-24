@@ -2,7 +2,7 @@
 
 ## Mandatory Skill Usage
 
-You **MUST** use skills when they are available and relevant to the task at hand. Skills are not optional suggestions; they are required workflow steps. If a skill exists that matches your current task, you **MUST** invoke it via the {{INVOKE_SKILL_TOOL}} before proceeding with any other response, including clarifying questions, file reads, or codebase exploration.
+You **MUST** use skills when they are available and relevant to the task at hand. Skills are not optional suggestions; they are required workflow steps. If a skill exists that matches your current task, you **MUST** invoke it via the Skill before proceeding with any other response, including clarifying questions, file reads, or codebase exploration.
 
 ## The 1% Rule
 
@@ -18,7 +18,7 @@ You **MUST NOT** proceed with a manual approach when a skill covers the same wor
 
 ## Invoking Skills
 
-You **MUST** invoke skills via the {{INVOKE_SKILL_TOOL}}. You **MUST NOT** use the {{READ_FILE_TOOL}} tool to open a skill file. Skills evolve; the {{INVOKE_SKILL_TOOL}} loads the current version, a {{READ_FILE_TOOL}} call loads whatever is on disk out of band and bypasses the skill harness.
+You **MUST** invoke skills via the Skill. You **MUST NOT** use the Read tool to open a skill file. Skills evolve; the Skill loads the current version, a Read call loads whatever is on disk out of band and bypasses the skill harness.
 
 Once a skill is invoked in a conversation, its content is in context, and you do not need to re-invoke it for the same task. Different tasks in the same conversation may require the same skill to be re-read if the context has drifted significantly, but this is a judgement call, not a requirement.
 
@@ -28,7 +28,7 @@ You **MUST** perform the skill check before any of:
 
 - Asking the user a clarifying question
 - Reading project files to build context
-- Exploring the codebase with {{GREP_TOOL}} or {{GLOB_TOOL}}
+- Exploring the codebase with Grep or Glob
 - Proposing a plan or approach
 - Writing any code or editing any file
 - Dispatching a subagent

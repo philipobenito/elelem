@@ -37,7 +37,7 @@ The Anthropic and OpenAI columns are worked examples, not an allowlist. Some har
 
 Naming a tier is not the same as producing a value the harness will accept. Before every dispatch:
 
-1. Always enumerate the models the current environment actually exposes by {{MODEL_ENUMERATION}}.
+1. Always enumerate the models the current environment actually exposes by reading the `model` enum on the Agent tool schema, which is the set of values the harness will accept.
 2. Map the chosen tier to a concrete value from that enumeration.
 3. Never construct an identifier from a pattern. Recognising the shape of an identifier is not the same as confirming it exists.
 4. If no family listed in the tier table is exposed, order the available models from cheapest to most capable and take the cheapest one that is still capable of the task.

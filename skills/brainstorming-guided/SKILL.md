@@ -11,7 +11,7 @@ For the rule that no implementation may begin until the user has approved a desi
 
 ## Preconditions
 
-- You **MUST** be in plan mode before invoking this skill. Use `{{ENTER_PLAN_TOOL}}` if you are not.
+- You **MUST** be in plan mode before invoking this skill. Use `EnterPlanMode` if you are not.
 - This skill is invoked either directly or by the `brainstorming` router after the user selects guided mode.
 
 ## Communication Principles
@@ -25,14 +25,14 @@ These principles apply at every step of the procedure. They are what makes this 
 
 ## Procedure
 
-1. **Guided codebase walkthrough.** Read the area of the codebase relevant to the brief and present what you found in a structured way. Cover: how the project is organised (directory structure, key entry points), patterns in use and why, the relevant subsystems (which parts relate to what is being built and how they interact), and conventions in those areas (naming, testing, error handling). After each section ask, "Does this make sense, or would you like me to dig deeper into anything here?" via `{{ASK_USER_QUESTION_TOOL}}`. Stay scoped to the brief; do not exhaustively map the codebase.
-2. **Contextualised clarifying questions.** One question per message, anchored to what you found. For example, "The codebase uses the repository pattern for data access. Should this feature follow that or sit outside it?" rather than "How should we handle data access?" Prefer multiple choice via `{{ASK_USER_QUESTION_TOOL}}`.
+1. **Guided codebase walkthrough.** Read the area of the codebase relevant to the brief and present what you found in a structured way. Cover: how the project is organised (directory structure, key entry points), patterns in use and why, the relevant subsystems (which parts relate to what is being built and how they interact), and conventions in those areas (naming, testing, error handling). After each section ask, "Does this make sense, or would you like me to dig deeper into anything here?" via `AskUserQuestion`. Stay scoped to the brief; do not exhaustively map the codebase.
+2. **Contextualised clarifying questions.** One question per message, anchored to what you found. For example, "The codebase uses the repository pattern for data access. Should this feature follow that or sit outside it?" rather than "How should we handle data access?" Prefer multiple choice via `AskUserQuestion`.
 3. **Contextualised approaches.** Propose 2-3 approaches, each anchored to existing code. For example, "Option A follows the existing pattern in `src/services/`, the lowest friction. Option B introduces a new pattern, the trade-off is inconsistency until migration." Lead with the recommendation and explain why.
 4. **Present the design in sections.** Cover architecture, components, data flow, error handling, and testing. For each section, reference the existing code that informed the choice. Get user approval on each section before moving to the next.
 5. **Consolidate the design summary.** Once every section has been approved, write a single structured summary covering goal, architecture, components, interfaces, data flow, error handling, and testing strategy. The summary stands alone: it does not require the walkthrough to be understood.
-6. **Invoke `design-review`.** Use `{{INVOKE_SKILL_TOOL}}` against the consolidated summary. Surface substantive change notes to the user before continuing. If `design-review` escalates, stop and ask the user how to proceed.
+6. **Invoke `design-review`.** Use `Skill` against the consolidated summary. Surface substantive change notes to the user before continuing. If `design-review` escalates, stop and ask the user how to proceed.
 7. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval.
-8. **Decide the next step.** Use `{{ASK_USER_QUESTION_TOOL}}` to ask whether to create tickets or start implementation. The only permitted downstream skills are `create-tickets` and `subagent-driven-development`; invoke whichever the user picks via `{{INVOKE_SKILL_TOOL}}`.
+8. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The only permitted downstream skills are `create-tickets` and `subagent-driven-development`; invoke whichever the user picks via `Skill`.
 
 ## What Guided Mode Does Not Change
 

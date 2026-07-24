@@ -54,7 +54,7 @@ In **Guided mode**, explain why reproduction matters: without it, you cannot ver
 
 Apply the scope discipline in `../../rules/common/debugging.md`. The initial-scope allowlist and the explicit prohibitions on wider reading are the rules; this phase is where they bite.
 
-In **Autonomous mode**, dispatch two or three investigator subagents in parallel via `{{DISPATCH_AGENT_TOOL}}` using the template at `investigator-prompt.md` in this skill directory:
+In **Autonomous mode**, dispatch two or three investigator subagents in parallel via `Agent` using the template at `investigator-prompt.md` in this skill directory:
 
 - One reads the error site and its immediate context
 - One checks recent git history for affected files

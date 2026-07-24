@@ -7,7 +7,7 @@ description: Turns an approved design into tickets in the project's ticketing sy
 
 ## Load the Ticketing Rules First
 
-This skill depends on the rules in `skills/_shared/tickets.md`. Those rules are **not** always in context; they live next to the ticket skills and are loaded only when a ticket skill is invoked. Before running the procedure below, you **MUST** read `skills/_shared/tickets.md` using the {{READ_FILE_TOOL}} tool if you have not already read it in this session.
+This skill depends on the rules in `skills/_shared/tickets.md`. Those rules are **not** always in context; they live next to the ticket skills and are loaded only when a ticket skill is invoked. Before running the procedure below, you **MUST** read `skills/_shared/tickets.md` using the Read tool if you have not already read it in this session.
 
 The detection of which ticketing system is in use lives in the `detect-ticketing-system` skill. This skill is the procedure that decomposes an approved design into tickets and creates them.
 
@@ -35,7 +35,7 @@ The detection of which ticketing system is in use lives in the `detect-ticketing
    2. **At least 2 of those themes** decompose into **2 or more Tasks** each, AND
    3. The total Task count is **at least 4**.
 
-   Single-theme epics **always** stay flat regardless of Task count, even if the count exceeds 6. Single-Story epics (one Story wrapping every Task) are forbidden because a single Story adds a grouping layer with no sibling. If a single theme grows large (more than 6 Tasks), the skill **SHOULD** escalate to the user via {{ASK_USER_QUESTION_TOOL}} and ask whether the epic should be split into multiple epics rather than introducing a vestigial Story.
+   Single-theme epics **always** stay flat regardless of Task count, even if the count exceeds 6. Single-Story epics (one Story wrapping every Task) are forbidden because a single Story adds a grouping layer with no sibling. If a single theme grows large (more than 6 Tasks), the skill **SHOULD** escalate to the user via AskUserQuestion and ask whether the epic should be split into multiple epics rather than introducing a vestigial Story.
 
    When the rule is satisfied, group children under named Stories and record a **one-sentence rationale per Story** for inclusion in the epic body's `## Design` section under a `### Story: <name>` sub-heading.
 
@@ -117,7 +117,7 @@ The detection of which ticketing system is in use lives in the `detect-ticketing
    - Dependencies between tickets
    - Any system-specific degradations applied (e.g. Linear two-tier flattening, GitLab no-Epic mode, GitHub fallback to labelled flat)
 
-   Then use {{ASK_USER_QUESTION_TOOL}} to ask whether they want to adjust anything (reorder, split, merge, relabel) before closing out.
+   Then use AskUserQuestion to ask whether they want to adjust anything (reorder, split, merge, relabel) before closing out.
 
 ## Per-System Creation
 
@@ -145,7 +145,7 @@ The `gh` CLI cannot create native sub-issue links, so parent references **MUST**
 
 With Atlassian MCP tools:
 
-1. `getVisibleJiraProjects` to find the target project. If more than one is visible, use {{ASK_USER_QUESTION_TOOL}} to ask the user which.
+1. `getVisibleJiraProjects` to find the target project. If more than one is visible, use AskUserQuestion to ask the user which.
 2. `getJiraProjectIssueTypesMetadata` to confirm available issue types (Epic, Story, Task, Sub-task).
 3. `createJiraIssue` for the Epic first, then each Story (if any), then each Task. The native issue type **is** the tier marker per `skills/_shared/tickets.md` (no separate label needed).
 4. Use the native `epic` and `parent` fields to attach Stories to the Epic and Tasks to their parent Story or Epic.
@@ -165,7 +165,7 @@ If group Epics are **not** available, the top tier becomes a labelled Issue (`ti
 
 ### Linear
 
-With Linear MCP tools. Use {{ASK_USER_QUESTION_TOOL}} to ask the user for team and project context before creating issues; Linear requires these upfront.
+With Linear MCP tools. Use AskUserQuestion to ask the user for team and project context before creating issues; Linear requires these upfront.
 
 Use Issue + sub-issue + sub-issue with `tier:epic` / `tier:story` / `tier:task` labels. **Do not** map Epic to Linear Project: Project is a different lifecycle concept and conflating it would break recovery.
 

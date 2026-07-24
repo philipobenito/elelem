@@ -50,7 +50,7 @@ Present the changes to the user:
 1. Summarise what was implemented and what the reviewer found
 2. Cite the verification evidence: commands run, exit codes, pass/fail counts
 3. Show a `git diff` of the uncommitted changes
-4. If the user chose "ask me each time" at the commit-preference question, ask whether to commit via `{{ASK_USER_QUESTION_TOOL}}` (options: "Commit", "Adjust first", "Skip commit"). If the user chose auto-commit, commit immediately after presenting the summary.
+4. If the user chose "ask me each time" at the commit-preference question, ask whether to commit via `AskUserQuestion` (options: "Commit", "Adjust first", "Skip commit"). If the user chose auto-commit, commit immediately after presenting the summary.
 
 ## Process Flow
 

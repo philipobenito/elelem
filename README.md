@@ -165,27 +165,6 @@ paths:
 - Keep rules concise. If a rule needs a long explanation, it is probably two rules
 - Cross-references use relative paths from the citing file
 
-## Tool-name placeholders
-
-Placeholders of the form `{{TOOL_NAME}}` are substituted in every `.md` file under `rules/` and `skills/` at install time. Each installer declares its own placeholder map:
-
-- Claude Code: `install-claude.sh`
-- OpenCode: `install-opencode.sh`
-- Codex: `install-codex.sh`
-
-Claude Code uses PascalCase tool names such as `Read`, `Write`, and `Agent`. OpenCode uses lowercase short names such as `read`, `write`, and `task`. Codex is less one-to-one: where Codex exposes a documented command such as `/plan`, `/skills`, or `Apply Patch`, the installer uses that literal form; otherwise it substitutes a Codex-safe capability phrase rather than inventing a fake native tool name.
-
-Not every placeholder is a tool name. `MODEL_ENUMERATION` is a notable exception: it is a gerund phrase describing how the current harness enumerates available models. The mechanism differs per harness (Claude Code inspects the `model` enum on the Agent tool schema; OpenCode and Codex run shell commands to list models). Any new harness must supply its own `MODEL_ENUMERATION` value as a gerund phrase that flows after the word 'by' in context (for example, 'by running `opencode models`' or 'by reading the model enum').
-
-### Adding support for another LLM tool
-
-If support is added for another harness, two things need attention:
-
-1. Create `install-<harness>.sh` with its own `<HARNESS>_PLACEHOLDERS` and `<HARNESS>_SUBSTITUTIONS` arrays.
-2. Add the harness to the `harness_items` array in `install.sh`.
-
-When adding a new placeholder, audit existing files for hard-coded values that should now go through it. When authoring substitution values for Claude Code and OpenCode, forward-slash (`/`) breaks the install with a perl syntax error, and dollar-sign (`$`) causes silent text corruption. (Codex is unaffected.)
-
 ## Verification
 
 After any change to rules or skills:

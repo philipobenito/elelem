@@ -38,7 +38,7 @@ If any specialised type is unavailable at dispatch time, fall back to `general-p
 ### Pragmatist
 
 ```
-{{DISPATCH_AGENT_TOOL}} ([PRAGMATIST_SUBAGENT_TYPE]):
+Agent ([PRAGMATIST_SUBAGENT_TYPE]):
   description: "Committee: Pragmatist perspective"
   prompt: |
     You are a committee member reviewing a design decision. Your perspective is THE PRAGMATIST.
@@ -97,7 +97,7 @@ If any specialised type is unavailable at dispatch time, fall back to `general-p
 ### Architect
 
 ```
-{{DISPATCH_AGENT_TOOL}} (architect-reviewer):
+Agent (architect-reviewer):
   description: "Committee: Architect perspective"
   prompt: |
     You are a committee member reviewing a design decision. Your perspective is THE ARCHITECT.
@@ -156,7 +156,7 @@ If any specialised type is unavailable at dispatch time, fall back to `general-p
 ### Advocate
 
 ```
-{{DISPATCH_AGENT_TOOL}} (qa-expert):
+Agent (qa-expert):
   description: "Committee: Advocate perspective"
   prompt: |
     You are a committee member reviewing a design decision. Your perspective is THE ADVOCATE.
@@ -217,7 +217,7 @@ If any specialised type is unavailable at dispatch time, fall back to `general-p
 If a deliberation round produces irreconcilable disagreement (not just preference differences), dispatch a single tiebreaking round where all members see each other's positions. Use `architect-reviewer` for tiebreaking as it is best positioned to weigh competing trade-offs holistically:
 
 ```
-{{DISPATCH_AGENT_TOOL}} (architect-reviewer):
+Agent (architect-reviewer):
   description: "Committee: Tiebreaking round"
   prompt: |
     Three committee members have given conflicting recommendations on a design decision. Your job is to synthesise a final recommendation.

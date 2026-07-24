@@ -20,14 +20,14 @@ Invoke this skill before any code edit, no matter how small. The four modes give
 
 ## Procedure
 
-1. **Enter plan mode.** Use `{{ENTER_PLAN_TOOL}}`. Plan mode's read-only safety enforces the design-before-implementation rule from `../../rules/common/workflow.md` for the duration of the session, regardless of which mode is chosen.
-2. **Ask the user which mode.** Use `{{ASK_USER_QUESTION_TOOL}}` exactly as specified below. **MUST NOT** ask as plain text, and **MUST NOT** assume a default mode without asking.
-3. **Hand off via `{{INVOKE_SKILL_TOOL}}`.** Invoke the chosen mode skill and stop. Do not run any of the steps yourself; the mode skill owns the entire procedure from this point. **MUST NOT** invoke more than one mode skill, and **MUST NOT** invoke `create-tickets` or `subagent-driven-development` directly: those are downstream of the mode skill, not of the router.
+1. **Enter plan mode.** Use `EnterPlanMode`. Plan mode's read-only safety enforces the design-before-implementation rule from `../../rules/common/workflow.md` for the duration of the session, regardless of which mode is chosen.
+2. **Ask the user which mode.** Use `AskUserQuestion` exactly as specified below. **MUST NOT** ask as plain text, and **MUST NOT** assume a default mode without asking.
+3. **Hand off via `Skill`.** Invoke the chosen mode skill and stop. Do not run any of the steps yourself; the mode skill owns the entire procedure from this point. **MUST NOT** invoke more than one mode skill, and **MUST NOT** invoke `create-tickets` or `subagent-driven-development` directly: those are downstream of the mode skill, not of the router.
 
 ## The Mode Question
 
 ```
-{{ASK_USER_QUESTION_TOOL}}:
+AskUserQuestion:
   question: "How would you like to approach the design step?"
   header: "Mode"
   options:
@@ -66,6 +66,6 @@ If you find yourself doing any of the above inside this skill, stop. You have sk
 | Picking a mode for the user                                | The user picks. The router asks.                                                                   |
 | Picking `brainstorming-skip` because the work "looks easy" | The user picks the mode. The router never picks skip on the user's behalf.                         |
 | Skipping the router because the user said "just add X"     | "Just add X" does not waive the router. Invoke the router; the user can pick skip if they want to. |
-| Running the chosen mode's procedure inline                 | The router only routes. Hand off via `{{INVOKE_SKILL_TOOL}}`.                                      |
+| Running the chosen mode's procedure inline                 | The router only routes. Hand off via `Skill`.                                      |
 | Skipping plan mode because the session "feels safe"        | Plan mode is the gate. Enter it before asking the question.                                        |
-| Asking the mode question as plain text                     | Use `{{ASK_USER_QUESTION_TOOL}}`. Plain text invites freeform answers that defeat the routing.     |
+| Asking the mode question as plain text                     | Use `AskUserQuestion`. Plain text invites freeform answers that defeat the routing.     |

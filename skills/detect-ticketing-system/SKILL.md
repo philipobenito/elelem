@@ -59,7 +59,7 @@ A CLI binary alone is weaker evidence than MCP tools or a matching git remote; a
 After the three checks, resolve the result:
 
 - **Exactly one system found**: return that system and the strongest mechanism that detected it (MCP > git remote > CLI). The caller will confirm with the user before taking destructive action.
-- **More than one system found**: return the list. The caller **MUST** ask the user which to use via `{{ASK_USER_QUESTION_TOOL}}` before proceeding.
+- **More than one system found**: return the list. The caller **MUST** ask the user which to use via `AskUserQuestion` before proceeding.
 - **No system found**: return "none". The caller decides its own fallback (for example, `create-tickets` writes a structured Markdown file; `work-on-ticket` asks the user to paste the ticket content directly).
 
 ## Worked Example

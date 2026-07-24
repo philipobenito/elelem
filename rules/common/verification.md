@@ -17,7 +17,7 @@ This rule applies to every statement that asserts or implies success, including 
 - Direct claims: "tests pass", "build succeeds", "it works", "fixed", "done", "complete", "ready"
 - Satisfaction language: "Great!", "Perfect!", "All good", "Looks good"
 - Hedged claims: "should pass", "should work now", "probably fine", "seems to work"
-- Implicit claims: moving to the next task, committing, opening a PR, handing back to the user, marking a todo complete
+- Implicit claims: moving to the next task, committing, opening a PR, handing back to the user, marking a task complete
 - Paraphrases and synonyms belonging to any of the above
 
 You **MUST NOT** evade this rule by choosing different wording. Spirit over letter. If the reader could take your message to mean the work is done, the rule applies.
@@ -27,7 +27,7 @@ You **MUST NOT** evade this rule by choosing different wording. Spirit over lett
 You **MUST** run fresh verification before any of:
 
 - Committing, pushing, opening, or updating a pull request
-- Claiming a task, subtask, or todo is complete
+- Claiming a task or subtask is complete
 - Moving on to the next task in a sequence
 - Handing control back to the human partner with any implication of success
 - Accepting a subagent's report that it succeeded (see `subagents.md`: trust nothing, verify the diff)

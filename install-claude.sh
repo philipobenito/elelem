@@ -14,10 +14,6 @@
 # old manifest but absent from the new one are removed. Files not in the
 # manifest (user-created) are left untouched.
 #
-# Tool-name placeholders of the form {{TOOL_NAME}} in both rules and skills are
-# substituted with Claude Code tool names during install, so source files stay
-# portable across harnesses.
-#
 
 set -euo pipefail
 
@@ -36,38 +32,6 @@ if [[ ! -d "$RULES_SOURCE/common" ]]; then
   say_err "$RULES_SOURCE/common does not exist"
   exit 1
 fi
-
-CLAUDE_PLACEHOLDERS=(
-  'ASK_USER_QUESTION_TOOL'
-  'ENTER_PLAN_TOOL'
-  'EXIT_PLAN_TOOL'
-  'TASK_TRACKER_TOOL'
-  'DISPATCH_AGENT_TOOL'
-  'INVOKE_SKILL_TOOL'
-  'READ_FILE_TOOL'
-  'WRITE_FILE_TOOL'
-  'EDIT_FILE_TOOL'
-  'GREP_TOOL'
-  'GLOB_TOOL'
-  'SHELL_EXEC_TOOL'
-  'MODEL_ENUMERATION'
-)
-
-CLAUDE_SUBSTITUTIONS=(
-  'AskUserQuestion'
-  'EnterPlanMode'
-  'ExitPlanMode'
-  'TodoWrite'
-  'Agent'
-  'Skill'
-  'Read'
-  'Write'
-  'Edit'
-  'Grep'
-  'Glob'
-  'Bash'
-  'reading the `model` enum on the Agent tool schema, which is the set of values the harness will accept'
-)
 
 # Resolves a source skill file to its destination by stripping $SKILLS_SOURCE
 # from the path, preserving the subdirectory structure under $out. Reads
@@ -114,7 +78,6 @@ else
   done
   mkdir -p "$rules_target/common"
   install_files_from_dir "$RULES_SOURCE/common" "$rules_target/common" "rules/common" manifest_entries common_files
-  substitute_tool_names "$rules_target/common" CLAUDE_PLACEHOLDERS CLAUDE_SUBSTITUTIONS
   say_ok "installed: ${common_selected[*]}"
 fi
 
@@ -145,7 +108,6 @@ if (( ${#lang_dirs[@]} > 0 )); then
       done
       mkdir -p "$rules_target/$pick"
       install_files_from_dir "$RULES_SOURCE/$pick" "$rules_target/$pick" "rules/$pick" manifest_entries lang_files
-      substitute_tool_names "$rules_target/$pick" CLAUDE_PLACEHOLDERS CLAUDE_SUBSTITUTIONS
       say_ok "installed: $pick"
     done
   fi
@@ -169,7 +131,6 @@ if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
       skills_files+=("${_f#"$SKILLS_SOURCE"/}")
     done < <(find "$SKILLS_SOURCE" -type f -print0)
     install_files_from_dir "$SKILLS_SOURCE" "$skills_target" "skills" manifest_entries skills_files _skill_resolve_dst
-    substitute_tool_names "$skills_target" CLAUDE_PLACEHOLDERS CLAUDE_SUBSTITUTIONS
 
     installed_skills=()
     for skill_dir in "$skills_target"/*/; do

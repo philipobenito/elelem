@@ -16,26 +16,26 @@ This skill depends on two sibling/shared files that are **not** always in contex
 - `committee-member-prompt.md` (sibling) - prompt templates paste-filled in step 4
 - `../_shared/subagent-dispatch.md` - procedural rules for dispatching the committee members
 
-Before running the procedure below, you **MUST** read both files using the {{READ_FILE_TOOL}} tool if you have not already read them in this session.
+Before running the procedure below, you **MUST** read both files using the Read tool if you have not already read them in this session.
 
 ## Preconditions
 
-- You **MUST** be in plan mode before invoking this skill. Use `{{ENTER_PLAN_TOOL}}` if you are not.
+- You **MUST** be in plan mode before invoking this skill. Use `EnterPlanMode` if you are not.
 - This skill is invoked either directly or by the `brainstorming` router after the user selects committee mode.
 - Use this skill only when there are at least two meaningful design decisions to make. For trivial requests (a single config change, a one-line fix), `brainstorming-standard` is the right tool.
 
 ## Procedure
 
-1. **Confirm the brief.** This is the only point where you ask the user a question during deliberation. Restate what you understand they want to build, the scope as you see it, and any assumptions, then confirm via `{{ASK_USER_QUESTION_TOOL}}`. Once confirmed, the user is hands-off until step 7.
-2. **Explore project context.** Read the area of the codebase relevant to the brief. Stay narrow: every file you read here gets passed to every committee member in every round, so unnecessary context dilutes focus and wastes capacity. Identify the project's primary language and framework now because the Pragmatist subagent type depends on it (see Pragmatist Type Mapping below). If the feature touches more than ~3 subsystems, or you cannot determine which code is relevant, surface what you have found and ask the user for guidance via `{{ASK_USER_QUESTION_TOOL}}`. This is the only other point where you may ask the user a question.
+1. **Confirm the brief.** This is the only point where you ask the user a question during deliberation. Restate what you understand they want to build, the scope as you see it, and any assumptions, then confirm via `AskUserQuestion`. Once confirmed, the user is hands-off until step 7.
+2. **Explore project context.** Read the area of the codebase relevant to the brief. Stay narrow: every file you read here gets passed to every committee member in every round, so unnecessary context dilutes focus and wastes capacity. Identify the project's primary language and framework now because the Pragmatist subagent type depends on it (see Pragmatist Type Mapping below). If the feature touches more than ~3 subsystems, or you cannot determine which code is relevant, surface what you have found and ask the user for guidance via `AskUserQuestion`. This is the only other point where you may ask the user a question.
 3. **Identify design decisions.** List the key decisions: architecture, approach, data flow, error handling, testing strategy, integration. Group-related decisions so each committee round addresses a coherent set, not individual micro-choices.
-4. **Run committee deliberation rounds.** For each decision group, dispatch three committee members in parallel (single message, three tool calls) using `{{DISPATCH_AGENT_TOOL}}` and the templates in `committee-member-prompt.md`. Each member receives identical context: the brief, the relevant codebase context, the specific decisions, and any decisions already made. Each returns a recommendation, reasoning, and concerns.
+4. **Run committee deliberation rounds.** For each decision group, dispatch three committee members in parallel (single message, three tool calls) using `Agent` and the templates in `committee-member-prompt.md`. Each member receives identical context: the brief, the relevant codebase context, the specific decisions, and any decisions already made. Each returns a recommendation, reasoning, and concerns.
 5. **Synthesise consensus** after each round using the table below. Record the consensus before moving to the next round.
 6. **Assemble the design summary.** Combine all consensus decisions into a single coherent summary covering goal, architecture, components, interfaces, data flow, error handling, testing strategy, and integration points. Scale each section to its complexity. Follow existing patterns; do not propose unrelated refactoring.
 7. **Present the design to the user.** Include the full summary, a brief note on any decisions where the committee was split (with the reasoning for the chosen direction), and any risks the committee flagged. **MUST NOT** dump the deliberation transcripts. The user wants the result, not the process.
-8. **Invoke `design-review`** via `{{INVOKE_SKILL_TOOL}}` against the consolidated summary. If the review surfaces issues that require new decisions (not just wording fixes), feed the affected decisions back into a targeted committee round, update the summary, and re-invoke `design-review`. If `design-review` escalates after three iterations, stop and ask the user how to proceed.
+8. **Invoke `design-review`** via `Skill` against the consolidated summary. If the review surfaces issues that require new decisions (not just wording fixes), feed the affected decisions back into a targeted committee round, update the summary, and re-invoke `design-review`. If `design-review` escalates after three iterations, stop and ask the user how to proceed.
 9. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval.
-10. **Decide the next step.** Use `{{ASK_USER_QUESTION_TOOL}}` to ask whether to create tickets or start implementation. The only permitted downstream skills are `create-tickets` and `subagent-driven-development`; invoke whichever the user picks via `{{INVOKE_SKILL_TOOL}}`.
+10. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The only permitted downstream skills are `create-tickets` and `subagent-driven-development`; invoke whichever the user picks via `Skill`.
 
 ## The Three Perspectives
 

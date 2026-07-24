@@ -33,7 +33,7 @@ If any of these is false, a parallel dispatch is not valid. Either investigate s
    - The constraint boundary: what the agent may touch and what it **MUST NOT** touch
    - The required output format: a summary of what was found, what was changed, and the verification the agent ran before reporting done
 
-4. **Dispatch in a single message.** Parallelism happens because the dispatches are issued in one message, not because you intend it to. Issue every `{{DISPATCH_AGENT_TOOL}}` call in the same turn. A dispatch issued in the next turn runs after the previous one has returned, which is sequential, not parallel.
+4. **Dispatch in a single message.** Parallelism happens because the dispatches are issued in one message, not because you intend it to. Issue every `Agent` call in the same turn. A dispatch issued in the next turn runs after the previous one has returned, which is sequential, not parallel.
 
 5. **Reconcile on return.** For each returned agent:
 

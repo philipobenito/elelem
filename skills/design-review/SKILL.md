@@ -16,7 +16,7 @@ This skill **MUST NOT** be invoked until the caller has produced a consolidated 
 ## Procedure
 
 1. **Confirm the summary is consolidated.** If the caller has not produced a single design summary block, stop and tell the caller to consolidate before invoking this skill.
-2. **Dispatch the reviewer.** Use `{{DISPATCH_AGENT_TOOL}}` to dispatch a reviewer subagent following `design-reviewer-prompt.md`. Paste the full design summary into the prompt. Do not pass session history. Start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`, if the design is architecturally complex enough that the reviewer needs deeper reasoning.
+2. **Dispatch the reviewer.** Use `Agent` to dispatch a reviewer subagent following `design-reviewer-prompt.md`. Paste the full design summary into the prompt. Do not pass session history. Start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`, if the design is architecturally complex enough that the reviewer needs deeper reasoning.
 3. **Read the reviewer's status.**
    - **Approved**: return the design summary unchanged to the caller. Done.
    - **Issues Found**: extract each issue, decide whether the fix is a wording change, a missing section, or a substantive design change.
