@@ -1,0 +1,23 @@
+[
+  {"query": "right so we need a way for admins to bulk-invite users by uploading a csv. there's already a single-invite endpoint in src/api/invites.ts, i'm thinking we reuse most of it but i'm not sure how to handle partial failures", "should_trigger": true},
+  {"query": "can you add a --dry-run flag to the migrate command? should print what it would do and exit 0 without touching the db", "should_trigger": true},
+  {"query": "the InvoiceTotals class has grown to about 600 lines and four of us keep hitting merge conflicts in it. i want to break it apart but i don't want to change any behaviour", "should_trigger": true},
+  {"query": "lets build out the notifications system. email + in-app to start, slack later maybe. no idea how you'd structure it tbh, i've never touched that part of the codebase", "should_trigger": true},
+  {"query": "we're switching the auth flow from session cookies to short-lived JWTs with a refresh token. this touches the middleware, the login handler, and the mobile client's token store. use committee mode for this one", "should_trigger": true},
+  {"query": "just quickly add a healthcheck endpoint at /healthz that returns 200 and the git sha. should take you 2 minutes", "should_trigger": true},
+  {"query": "product wants the export to also include the cancelled orders, currently we filter them out in the query. changing that changes what every existing customer sees in their exports so i want to think about it properly first", "should_trigger": true},
+  {"query": "I'd like to introduce a caching layer in front of the pricing service. Redis is already in the stack for sessions. Walk me through how the pricing code is currently structured before we decide anything, I only joined last week", "should_trigger": true},
+  {"query": "need to add rate limiting to the public api. per-key, sliding window, and it has to work across our 3 app servers", "should_trigger": true},
+
+  {"query": "the export job times out on large accounts. started happening after tuesday's deploy. logs just show a 504 from the proxy, nothing in the app logs", "should_trigger": false},
+  {"query": "test_invoice_rounding is failing on CI but passes locally every time. can you work out what's going on", "should_trigger": false},
+  {"query": "work on #482", "should_trigger": false},
+  {"query": "ok i've pushed the changes for the invite flow, is that ticket done or is there something left?", "should_trigger": false},
+  {"query": "reviewer left a bunch of comments on the PR, mostly about the error handling in the webhook consumer. can you go through them", "should_trigger": false},
+  {"query": "how does the retry logic in src/queue/worker.go decide the backoff interval? just trying to understand it, not changing anything", "should_trigger": false},
+  {"query": "getting `TypeError: Cannot read properties of undefined (reading 'id')` in the checkout page but only for users who have a saved card. stack trace points at CartSummary.tsx:88", "should_trigger": false},
+  {"query": "can you update the README install section, the pnpm version we pin is out of date and the docker compose command has changed", "should_trigger": false},
+  {"query": "run the full test suite and tell me if anything's broken before i cut the release", "should_trigger": false},
+  {"query": "we approved the design for the notifications work last week and you've already built the email path. carry on with the in-app part", "should_trigger": false},
+  {"query": "what's the difference between subagent-driven-development and team-driven-development, when would i pick one over the other?", "should_trigger": false}
+]
