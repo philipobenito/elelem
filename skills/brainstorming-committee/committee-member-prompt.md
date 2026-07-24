@@ -37,7 +37,7 @@ If any specialised type is unavailable at dispatch time, fall back to `general-p
 
 ### Pragmatist
 
-```
+```yaml
 Agent ([PRAGMATIST_SUBAGENT_TYPE]):
   description: "Committee: Pragmatist perspective"
   prompt: |
@@ -96,7 +96,7 @@ Agent ([PRAGMATIST_SUBAGENT_TYPE]):
 
 ### Architect
 
-```
+```yaml
 Agent (architect-reviewer):
   description: "Committee: Architect perspective"
   prompt: |
@@ -155,7 +155,7 @@ Agent (architect-reviewer):
 
 ### Advocate
 
-```
+```yaml
 Agent (qa-expert):
   description: "Committee: Advocate perspective"
   prompt: |
@@ -216,7 +216,7 @@ Agent (qa-expert):
 
 If a deliberation round produces irreconcilable disagreement (not just preference differences), dispatch a single tiebreaking round where all members see each other's positions. Use `architect-reviewer` for tiebreaking as it is best positioned to weigh competing trade-offs holistically:
 
-```
+```yaml
 Agent (architect-reviewer):
   description: "Committee: Tiebreaking round"
   prompt: |
