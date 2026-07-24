@@ -34,7 +34,7 @@ Teammates and the lead coordinate over the life of the run through SendMessage, 
 
 - Address a specific teammate by its name; address the lead by sending to "main" (the lead's own conversation).
 - The lead uses SendMessage to hand a teammate its assignment, and to answer any question a teammate raises mid-task.
-- A teammate uses SendMessage to reach the lead when it has a question it cannot resolve from the task's own `description`, and again when it believes a task is finished (see "Completion Handoff" below).
+- A teammate uses SendMessage to reach the lead when it has a question it cannot resolve from the task's own `description`, and again when it believes a task is finished (see "Completion Handoff and Verification Authority" below).
 - Messages are delivered automatically; a teammate does not poll an inbox and the lead does not poll for messages either. Coordination happens because a message was sent, not because someone went looking.
 - A teammate's plain text output (anything it "says" outside a SendMessage call) is not visible to the lead or to other teammates. Anything that needs to reach another agent, a question, a status update, a completion claim, **MUST** go through SendMessage. Writing it to output and assuming it was seen is a coordination failure, not a shortcut.
 

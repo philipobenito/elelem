@@ -5,7 +5,7 @@
 # Rules (./rules/) install to ~/.claude/rules/ (user scope) or
 # <project>/.claude/rules/ (project scope). Common rules (rules/common/*.md)
 # are always-on and have no frontmatter. Language packs (rules/<lang>/*.md)
-# use YAML `paths:` frontmatter and are auto-loaded when Claude reads matching files.
+# use YAML `globs:` frontmatter and are auto-loaded when Claude reads matching files.
 #
 # Skills (./skills/) install to ~/.claude/skills/ or <project>/.claude/skills/.
 #
