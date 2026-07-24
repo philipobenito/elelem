@@ -41,9 +41,7 @@ These principles apply at every step of the procedure. They are what makes this 
 
 5. **Consolidate the design summary.** Once every section has been approved, write a single structured summary covering goal, architecture, components, interfaces, data flow, error handling, and testing strategy. It has to stand alone: `design-review` receives this text and nothing else, so anything that only makes sense against the walkthrough is missing from the summary.
 
-6. **Invoke `design-review`** via `Skill` against the consolidated summary, then follow what it returns:
-   - **Approved**: continue. If it reports substantive design changes made during the review, present those to the user before moving on. They approved sections, not the reviewer's edits to them.
-   - **Issues still outstanding**: `design-review` has spent its iteration budget applying fixes and re-reviewing, and it is handing the decision back. Do not re-invoke it. Stop, show the user the remaining issues alongside the current summary, and ask how they want to proceed.
+6. **Invoke `design-review`** via `Skill` against the consolidated summary and follow the Return Contract set out in that skill. Its two outcomes ask different things of you: Approved may carry substantive reviewer edits, which this user needs walked through as carefully as the rest of the design, since they approved sections rather than the reviewer's changes to them. Outstanding issues means the review budget is spent, so the decision goes to the user rather than to another dispatch.
 
 7. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval.
 

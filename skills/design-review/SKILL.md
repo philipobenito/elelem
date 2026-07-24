@@ -22,8 +22,18 @@ This skill **MUST NOT** be invoked until the caller has produced a consolidated 
    - **Issues Found**: extract each issue, decide whether the fix is a wording change, a missing section, or a substantive design change.
 4. **Apply fixes to the summary.** Edit the design summary text to address each issue. Substantive design changes (not just wording) **MUST** be flagged when the summary is returned to the caller, because the caller may need to surface the change to the user before continuing.
 5. **Re-dispatch.** Run the reviewer again against the updated summary.
-6. **Iteration budget.** Maximum three reviewer dispatches. If the third dispatch still returns issues, **STOP** and surface the remaining issues plus the current summary to the caller. The caller decides whether to escalate to the human partner.
+6. **Iteration budget.** Maximum three reviewer dispatches. If the third dispatch still returns issues, **STOP** and surface the remaining issues plus the current summary to the caller, per the Return Contract below.
 7. **Return the approved summary.** When a dispatch returns Approved, return the (possibly updated) design summary text to the caller along with a one-line note recording how many iterations the review took and whether any substantive changes were made.
+
+## Return Contract
+
+This section is addressed to whichever skill invoked this one, and it lives here rather than being restated in each caller because invoking `design-review` is what loads this file: the caller has this text in context at exactly the moment it needs it. A caller that re-implements the loop below instead of following it ends up running this skill's internal fix-and-re-dispatch cycle twice.
+
+**Approved.** The caller receives the design summary text, a one-line note on how many iterations the review took, and an explicit flag for any substantive design change made during the review. The caller continues, but a flagged substantive change means the user approved a design that the reviewer then altered, so the caller surfaces that change to the user before treating the design as settled.
+
+**Issues outstanding.** The three-dispatch budget is spent and issues remain. The caller receives those issues alongside the current summary, and **MUST NOT** invoke this skill again in the hope of a better verdict. The budget exists so that a design which will not converge reaches a human rather than a fourth reviewer. The caller stops and puts the decision to the user.
+
+**Invoking again after the summary changes.** An Approved status covers the exact text that was reviewed. If the caller then changes the summary substantively, because the user revised it or because a flagged reviewer edit went back through another design round, the Approved no longer describes the text the caller is holding, and the caller invokes this skill again against the new summary. That is not budget evasion; it is a first review of content no reviewer has seen. The distinction that matters is what prompted the new invocation: new content, or an unwelcome verdict on unchanged content.
 
 ## What the Reviewer Checks
 
