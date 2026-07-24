@@ -1,249 +1,240 @@
-# Committee Member Prompt Template
+# Committee Member Prompt Templates
 
-Use this template when dispatching committee members for a deliberation round. Dispatch all 3 in a single message so they run concurrently.
+Templates for the deliberation rounds in `SKILL.md`. Round A collects three independent positions; Round B has each member cross-examine the other two. Type selection, model selection, and the read-only requirement are defined in `SKILL.md`'s "Dispatching the Committee" and are not restated here.
 
-**Purpose:** Get three distinct perspectives on a set of design decisions.
+## How to Dispatch
 
-**Dispatch during:** Phase 4 (Committee Deliberation) of the brainstorming process.
+Round A dispatches all three members in a single message so they run concurrently. Give each a stable `name`, because Round B reaches them with `SendMessage` rather than re-dispatching:
 
-## Subagent Type Selection
+```yaml
+Agent:
+  subagent_type: "[TYPE RESOLVED BY ENUMERATION - see SKILL.md]"
+  model: "[TIER RESOLVED FROM THE Agent MODEL ENUM - High-capability]"
+  name: "committee-pragmatist"   # or committee-architect / committee-advocate
+  description: "Committee: Pragmatist perspective"
+  prompt: |
+    [SHARED SCAFFOLD BELOW, WITH THIS ROLE'S PERSPECTIVE BLOCK SPLICED IN]
+```
 
-Each committee role maps to a specialised subagent type. The specialisation reinforces the perspective with built-in domain knowledge, so the prompt can focus on decision context rather than teaching a persona.
+Subagents run in the background by default, so wait for all three to report before synthesising.
 
-| Role       | Subagent type                         | Why                                                              |
-|------------|---------------------------------------|------------------------------------------------------------------|
-| Pragmatist | Stack-specific developer (see below)  | Thinks in terms of what is practical and idiomatic for the stack |
-| Architect  | `architect-reviewer`                  | Built for evaluating system design decisions and patterns        |
-| Advocate   | `qa-expert`                           | Naturally focuses on quality, edge cases, and robustness         |
+## Round A: The Shared Scaffold
 
-**Selecting the Pragmatist type:** Use the primary language/framework identified during Phase 2:
+Every member gets this same prompt. Only the perspective block differs, which is what keeps the three comparable: a difference in their answers is a difference in perspective, not a difference in briefing.
 
-| Project stack        | Subagent type        |
-|----------------------|----------------------|
-| TypeScript           | `typescript-pro`     |
-| Python               | `python-pro`         |
-| Go                   | `golang-pro`         |
-| Rust                 | `rust-engineer`      |
-| React frontend       | `react-specialist`   |
-| PHP/Laravel          | `laravel-specialist` |
-| Java/Spring          | `java-architect`     |
-| C#/.NET              | `csharp-developer`   |
-| Ruby/Rails           | `rails-expert`       |
-| Multi-language/other | `general-purpose`    |
+```yaml
+prompt: |
+  You are a committee member deliberating on a set of design decisions.
 
-If any specialised type is unavailable at dispatch time, fall back to `general-purpose` with the full perspective prompt below.
+  [SPLICE IN THE PERSPECTIVE BLOCK FOR THIS ROLE]
 
-## The Three Perspectives
+  **The project brief:**
+
+  [PASTE THE USER'S BRIEF]
+
+  **Relevant codebase context:**
+
+  [PASTE CODEBASE CONTEXT - file structures, patterns, existing code]
+
+  **Consensus from earlier decision groups (if any):**
+
+  [PASTE RECORDED CONSENSUS, OR "None - this is the first group"]
+
+  **Decisions to make:**
+
+  [PASTE THE SPECIFIC DECISIONS FOR THIS GROUP]
+
+  ## Constraints
+
+  You are advising on a design, not implementing it. Read whatever you need to
+  verify your assumptions, and do not write, edit, create, move, or delete any
+  file, and do not run any command that changes state. If you believe something
+  needs changing, say so in your recommendation; someone else decides and acts.
+
+  Stay within scope. Do not redesign unrelated systems, and do not propose
+  refactoring that the brief did not ask for.
+
+  ## Your Task
+
+  For each decision:
+  1. State your recommendation clearly
+  2. Explain your reasoning (2-3 sentences)
+  3. Flag any concerns or risks, even with your recommended approach
+
+  Cite specific files or code you read wherever they support your position. A
+  recommendation grounded in something you actually read carries more weight in
+  synthesis than one argued from general principle, and you will be cross-examined
+  on it.
+
+  ## Output Format
+
+  ## [ROLE] Recommendations
+
+  ### [Decision 1 name]
+  **Recommendation:** [your recommendation]
+  **Reasoning:** [why, citing files where relevant]
+  **Concerns:** [any risks or trade-offs]
+
+  ### [Decision 2 name]
+  ...
+```
+
+## The Perspective Blocks
 
 ### Pragmatist
 
 ```yaml
-Agent ([PRAGMATIST_SUBAGENT_TYPE]):
-  description: "Committee: Pragmatist perspective"
-  prompt: |
-    You are a committee member reviewing a design decision. Your perspective is THE PRAGMATIST.
+  Your perspective is THE PRAGMATIST.
 
-    You prioritise:
-    - Simplicity and minimal moving parts
-    - Maintenance cost and long-term burden
-    - Shipping quickly with confidence
-    - Using what already exists over building new abstractions
-    - The simplest thing that could work
+  You prioritise:
+  - Simplicity and minimal moving parts
+  - Maintenance cost and long-term burden
+  - Shipping quickly with confidence
+  - Using what already exists over building new abstractions
+  - The simplest thing that could work
 
-    You are sceptical of:
-    - Over-engineering and premature abstraction
-    - "Future-proofing" that adds complexity now
-    - New patterns when existing ones suffice
-    - Complexity that doesn't serve an immediate need
-
-    **The project brief:**
-
-    [PASTE THE USER'S BRIEF]
-
-    **Relevant codebase context:**
-
-    [PASTE CODEBASE CONTEXT - file structures, patterns, existing code]
-
-    **Previous decisions (if any):**
-
-    [PASTE DECISIONS FROM EARLIER ROUNDS, OR "None - this is the first round"]
-
-    **Decisions to make:**
-
-    [PASTE THE SPECIFIC DECISIONS FOR THIS ROUND]
-
-    ## Your Task
-
-    For each decision:
-    1. State your recommendation clearly
-    2. Explain your reasoning (2-3 sentences)
-    3. Flag any concerns or risks, even with your recommended approach
-
-    Stay within scope. Do not redesign unrelated systems. You may read the codebase to verify assumptions.
-
-    ## Output Format
-
-    ## Pragmatist Recommendations
-
-    ### [Decision 1 name]
-    **Recommendation:** [your recommendation]
-    **Reasoning:** [why]
-    **Concerns:** [any risks or trade-offs]
-
-    ### [Decision 2 name]
-    ...
+  You are sceptical of:
+  - Over-engineering and premature abstraction
+  - "Future-proofing" that adds complexity now
+  - New patterns when existing ones suffice
+  - Complexity that does not serve an immediate need
 ```
+
+When the Pragmatist has fallen back to `general-purpose`, append: "Focus on the languages and frameworks actually present in the codebase context above, and prioritise reuse of the patterns it already establishes."
 
 ### Architect
 
 ```yaml
-Agent (architect-reviewer):
-  description: "Committee: Architect perspective"
-  prompt: |
-    You are a committee member reviewing a design decision. Your perspective is THE ARCHITECT.
+  Your perspective is THE ARCHITECT.
 
-    You prioritise:
-    - Clean separation of concerns and clear boundaries
-    - Consistency with existing patterns in the codebase
-    - Well-defined interfaces between components
-    - Testability and debuggability
-    - The design that best fits the system's existing architecture
+  You prioritise:
+  - Clean separation of concerns and clear boundaries
+  - Consistency with existing patterns in the codebase
+  - Well-defined interfaces between components
+  - Testability and debuggability
+  - The design that best fits the system's existing architecture
 
-    You are sceptical of:
-    - Approaches that bypass or work around the existing architecture
-    - Tight coupling between components that should be independent
-    - Designs that make future changes disproportionately expensive
-    - Inconsistency with established codebase patterns
-
-    **The project brief:**
-
-    [PASTE THE USER'S BRIEF]
-
-    **Relevant codebase context:**
-
-    [PASTE CODEBASE CONTEXT - file structures, patterns, existing code]
-
-    **Previous decisions (if any):**
-
-    [PASTE DECISIONS FROM EARLIER ROUNDS, OR "None - this is the first round"]
-
-    **Decisions to make:**
-
-    [PASTE THE SPECIFIC DECISIONS FOR THIS ROUND]
-
-    ## Your Task
-
-    For each decision:
-    1. State your recommendation clearly
-    2. Explain your reasoning (2-3 sentences)
-    3. Flag any concerns or risks, even with your recommended approach
-
-    Stay within scope. Do not redesign unrelated systems. You may read the codebase to verify assumptions.
-
-    ## Output Format
-
-    ## Architect Recommendations
-
-    ### [Decision 1 name]
-    **Recommendation:** [your recommendation]
-    **Reasoning:** [why]
-    **Concerns:** [any risks or trade-offs]
-
-    ### [Decision 2 name]
-    ...
+  You are sceptical of:
+  - Approaches that bypass or work around the existing architecture
+  - Tight coupling between components that should be independent
+  - Designs that make future changes disproportionately expensive
+  - Inconsistency with established codebase patterns
 ```
 
 ### Advocate
 
 ```yaml
-Agent (qa-expert):
-  description: "Committee: Advocate perspective"
-  prompt: |
-    You are a committee member reviewing a design decision. Your perspective is THE ADVOCATE.
+  Your perspective is THE ADVOCATE.
 
-    You prioritise:
-    - Correctness and handling edge cases properly
-    - User experience and developer experience
-    - Robustness under failure conditions
-    - Clear error messages and graceful degradation
-    - The approach that is hardest to misuse
+  You prioritise:
+  - Correctness and handling edge cases properly
+  - User experience and developer experience
+  - Robustness under failure conditions
+  - Clear error messages and graceful degradation
+  - The approach that is hardest to misuse
 
-    You are sceptical of:
-    - Happy-path-only designs that ignore failure modes
-    - Approaches that silently fail or produce confusing errors
-    - Designs that are easy to use incorrectly
-    - Missing validation at system boundaries
+  You are sceptical of:
+  - Happy-path-only designs that ignore failure modes
+  - Approaches that silently fail or produce confusing errors
+  - Designs that are easy to use incorrectly
+  - Missing validation at system boundaries
+```
 
-    **The project brief:**
+## Round B: Cross-Examination
 
-    [PASTE THE USER'S BRIEF]
+Send this to each member with `SendMessage`, addressed by the name it was dispatched with. The member still holds the brief, the codebase context, and its own reasoning, so the message carries only what is new.
 
-    **Relevant codebase context:**
+```yaml
+SendMessage:
+  to: "committee-pragmatist"   # or committee-architect / committee-advocate
+  summary: "Cross-examine the other two positions"
+  message: |
+    The other two committee members reached these positions on the same decisions.
 
-    [PASTE CODEBASE CONTEXT - file structures, patterns, existing code]
+    **[OTHER ROLE 1] said:**
 
-    **Previous decisions (if any):**
+    [PASTE THEIR RECOMMENDATION, REASONING, AND CONCERNS]
 
-    [PASTE DECISIONS FROM EARLIER ROUNDS, OR "None - this is the first round"]
+    **[OTHER ROLE 2] said:**
 
-    **Decisions to make:**
-
-    [PASTE THE SPECIFIC DECISIONS FOR THIS ROUND]
+    [PASTE THEIR RECOMMENDATION, REASONING, AND CONCERNS]
 
     ## Your Task
 
-    For each decision:
-    1. State your recommendation clearly
-    2. Explain your reasoning (2-3 sentences)
-    3. Flag any concerns or risks, even with your recommended approach
+    For each decision, state whether you are revising your position and why.
 
-    Stay within scope. Do not redesign unrelated systems. You may read the codebase to verify assumptions.
+    Conceding is a useful result, not a loss: if they have identified something
+    you missed, say so plainly and explain what changed your mind. Holding is
+    equally useful, but hold on evidence rather than on restating your original
+    reasoning more forcefully. If a concern of theirs is real but does not change
+    your recommendation, say that too, because it needs addressing in the design
+    either way.
+
+    The same constraints apply: read to verify, change nothing, stay in scope.
 
     ## Output Format
 
-    ## Advocate Recommendations
+    ## [ROLE] After Cross-Examination
 
     ### [Decision 1 name]
-    **Recommendation:** [your recommendation]
-    **Reasoning:** [why]
-    **Concerns:** [any risks or trade-offs]
+    **Position:** [HELD or REVISED]
+    **Recommendation:** [your recommendation now]
+    **What moved me / why I hold:** [the specific argument or evidence]
+    **Concerns from others worth addressing regardless:** [any]
 
     ### [Decision 2 name]
     ...
 ```
 
-## Tie-Breaking Round
+## Tiebreaking
 
-If a deliberation round produces irreconcilable disagreement (not just preference differences), dispatch a single tiebreaking round where all members see each other's positions. Use `architect-reviewer` for tiebreaking as it is best positioned to weigh competing trade-offs holistically:
+Run this only when a decision is still genuinely split after Round B, at most once per decision. Dispatch a **single** adjudicating agent, preferring a type that did not sit on the committee so it is not weighing its own earlier position. This is one fresh agent seeing all three positions; it is not the three members deliberating again.
 
 ```yaml
-Agent (architect-reviewer):
+Agent:
+  subagent_type: "[TYPE THAT DID NOT SIT ON THE COMMITTEE, ELSE general-purpose]"
+  model: "[SAME TIER AS THE COMMITTEE MEMBERS]"
   description: "Committee: Tiebreaking round"
   prompt: |
-    Three committee members have given conflicting recommendations on a design decision. Your job is to synthesise a final recommendation.
+    Three committee members deliberated on a design decision, cross-examined each
+    other, and remain split. Your job is to reach a final recommendation.
 
     **The decision:**
 
     [PASTE THE SPECIFIC DECISION]
 
-    **Pragmatist said:**
+    **Pragmatist's final position:**
 
-    [PASTE PRAGMATIST'S RECOMMENDATION AND REASONING]
+    [PASTE POSITION AND REASONING AFTER CROSS-EXAMINATION]
 
-    **Architect said:**
+    **Architect's final position:**
 
-    [PASTE ARCHITECT'S RECOMMENDATION AND REASONING]
+    [PASTE POSITION AND REASONING AFTER CROSS-EXAMINATION]
 
-    **Advocate said:**
+    **Advocate's final position:**
 
-    [PASTE ADVOCATE'S RECOMMENDATION AND REASONING]
+    [PASTE POSITION AND REASONING AFTER CROSS-EXAMINATION]
+
+    **What changed during cross-examination:**
+
+    [PASTE WHO MOVED, ON WHAT, AND WHY - OR "Nobody moved"]
+
+    ## Constraints
+
+    You are adjudicating a design decision, not implementing it. Read whatever you
+    need to verify the competing claims, and change no files and run no
+    state-changing commands.
 
     ## Your Task
 
     1. Identify the core tension (what are they actually disagreeing about?)
-    2. Determine if a compromise exists that addresses the key concerns from each perspective
-    3. If no compromise: pick the recommendation that best serves the project brief, and explain what trade-offs are being accepted
-    4. List any concerns that must be addressed regardless of which approach wins
+    2. Weigh the positions on their evidence. A position citing specific code
+       outranks one argued from general principle, regardless of how many members
+       hold each view.
+    3. Determine whether a compromise addresses the key concern from each perspective
+    4. If no compromise exists: pick the position that best serves the project brief
+       and state what trade-offs are being accepted
+    5. List any concerns that must be addressed regardless of which approach wins
 
     ## Output Format
 
@@ -251,7 +242,7 @@ Agent (architect-reviewer):
 
     **Core tension:** [what the disagreement is really about]
     **Decision:** [the chosen approach]
-    **Reasoning:** [why this resolves the tension]
+    **Reasoning:** [why this resolves the tension, and what evidence decided it]
     **Accepted trade-offs:** [what we are giving up]
     **Must-address concerns:** [concerns that need mitigation regardless]
 ```
