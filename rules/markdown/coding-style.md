@@ -32,6 +32,8 @@ Partials are exempt from the single-H1 requirement only: a partial **MAY** omit 
 
 You **MUST** keep table columns visually aligned in the raw source:
 
+**IMPORTANT**: Write tables first, then apply a script for alignment, multiple edits per row are slow and not permitted!
+
 - Pad every cell with spaces so that every `|` in a column lines up vertically in the raw source. Counting by characters is sufficient; do not attempt to compute per-glyph terminal display width
 - When a table is edited, adding, removing, or changing any row, you **MUST** re-pad every row so the whole table realigns. A partially re-padded table is a violation, not a partial fix
 - An escaped pipe (`\|`) inside a cell **MUST NOT** be treated as a column separator when calculating alignment
