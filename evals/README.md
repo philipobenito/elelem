@@ -37,9 +37,12 @@ It splits the set 60/40 into train and held-out test, runs each query three time
 
 ## Current sets
 
-| File                              | Skill                | Discriminates against                                                                         |
-|-----------------------------------|----------------------|-----------------------------------------------------------------------------------------------|
-| `brainstorming-trigger.json`      | `brainstorming`      | `debugging`, `work-on-ticket`, `receiving-code-review`, read-only questions                   |
-| `brainstorming-skip-trigger.json` | `brainstorming-skip` | `brainstorming` itself, `work-on-ticket`, `create-tickets`, unrelated uses of the word "skip" |
+| File                                  | Skill                    | Discriminates against                                                                         |
+|---------------------------------------|--------------------------|-----------------------------------------------------------------------------------------------|
+| `brainstorming-trigger.json`          | `brainstorming`          | `debugging`, `work-on-ticket`, `receiving-code-review`, read-only questions                   |
+| `brainstorming-skip-trigger.json`     | `brainstorming-skip`     | `brainstorming` itself, `work-on-ticket`, `create-tickets`, unrelated uses of the word "skip" |
+| `brainstorming-standard-trigger.json` | `brainstorming-standard` | `brainstorming` itself, the other three mode skills, unrelated uses of the word "standard"    |
 
-`brainstorming-skip` is a hand-off target rather than a self-triggering skill, so its set inverts the usual polarity: the positives are queries where the user has *named* the skip mode themselves, and the negatives include every phrasing that merely implies certainty ("I already know what I want", "just add X"). Those must reach the router, because picking skip on the user's behalf is exactly what `rules/common/workflow.md` forbids.
+`brainstorming-skip` and `brainstorming-standard` are hand-off targets rather than self-triggering skills, so their sets invert the usual polarity: the positives are queries where the user has *named* that mode themselves, and the negatives include every phrasing that merely implies it. "I already know what I want" must reach the router rather than skip, and "I know this codebase well" must reach the router rather than standard, because picking a mode on the user's behalf is exactly what `rules/common/workflow.md` forbids.
+
+`brainstorming-standard` is the harder of the two to get right. Its name is the closest of the four to the plain English of "brainstorming", so a description that only says what the skill does will pull generic design requests ("let's design X") away from the router, which silently costs the user their mode choice. That failure is what its negative set is built to catch.

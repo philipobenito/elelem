@@ -1,0 +1,78 @@
+[
+  {
+    "query": "standard mode please. i want to add a retry queue for the outbound webhooks in src/webhooks/, i wrote most of that package so you don't need to explain it to me",
+    "should_trigger": true
+  },
+  {
+    "query": "brainstorming-standard. we need per-tenant rate limits on the public API and i already know how the middleware chain is wired",
+    "should_trigger": true
+  },
+  {
+    "query": "use the standard brainstorm for this one. moving the report generation off the request thread and onto the existing sidekiq queue",
+    "should_trigger": true
+  },
+  {
+    "query": "i picked standard on the mode question and then you went straight to editing files. can we actually do the design conversation first",
+    "should_trigger": true
+  },
+  {
+    "query": "not the guided one, standard. i've been in app/billing for two years. i want to add proration when someone downgrades mid-cycle",
+    "should_trigger": true
+  },
+  {
+    "query": "standard brainstorming, and please push back on your own suggestion rather than giving me three options where two are obviously filler",
+    "should_trigger": true
+  },
+  {
+    "query": "lets do standard mode for the search reindex work. i know the elasticsearch bits, what i don't know is whether we can do it without downtime",
+    "should_trigger": true
+  },
+  {
+    "query": "run the normal interactive design thing (standard) for adding SAML alongside the existing password auth in internal/auth",
+    "should_trigger": true
+  },
+  {
+    "query": "standard mode. i want to split the monolithic settings page into tabs, and i'd rather you propose one approach and defend it than hand me a menu",
+    "should_trigger": true
+  },
+  {
+    "query": "i know this codebase well enough that you don't need to walk me through anything, so let's do the quick version of the design conversation",
+    "should_trigger": false
+  },
+  {
+    "query": "we need to let people export their saved searches as JSON as well as CSV. where do you want to start",
+    "should_trigger": false
+  },
+  {
+    "query": "i've never touched this repo before and i need to add an audit log for admin actions. teach me the layout as we go please",
+    "should_trigger": false
+  },
+  {
+    "query": "you decide on this one, i don't want to be involved. come back when you've got a design for the webhook delivery work",
+    "should_trigger": false
+  },
+  {
+    "query": "skip mode, i know exactly what i want: change the session TTL from 30 days to 7 in config/auth.yml",
+    "should_trigger": false
+  },
+  {
+    "query": "checkout returns a 500 on any order with more than 50 line items. it worked last week so something in the recent deploy broke it",
+    "should_trigger": false
+  },
+  {
+    "query": "pick up DEV-118 and get started, the design should already be on the parent epic from when we planned this",
+    "should_trigger": false
+  },
+  {
+    "query": "which brainstorming mode should i be picking for a big auth refactor across three services? standard or committee?",
+    "should_trigger": false
+  },
+  {
+    "query": "what's the standard way we handle pagination in this codebase? i've seen both cursor and offset styles in different controllers",
+    "should_trigger": false
+  },
+  {
+    "query": "the design's approved and written up in the epic body already, go ahead and cut the child tickets for it",
+    "should_trigger": false
+  }
+]

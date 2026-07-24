@@ -20,7 +20,7 @@ Before running the procedure below, you **MUST** read both files using the Read 
 
 ## Preconditions
 
-- You **MUST** be in plan mode before invoking this skill. Use `EnterPlanMode` if you are not; it is a deferred tool in some sessions, so load it with `ToolSearch` (`select:EnterPlanMode`) first if a direct call fails.
+- You **MUST** be in plan mode before invoking this skill. Use `EnterPlanMode` if you are not; both it and `ExitPlanMode` are deferred tools in some sessions, so load them with `ToolSearch` (`select:EnterPlanMode,ExitPlanMode`) first if a direct call fails.
 - If the `brainstorming` router has told you plan mode could not be entered, do not stop: the router's degraded path is sanctioned. Proceed, and treat the read-only instruction in "Keeping Members Read-Only" as load-bearing rather than belt-and-braces, because plan mode is no longer backing it up.
 - This skill is invoked either directly or by the `brainstorming` router after the user selects committee mode.
 - Use this skill only when there are at least two meaningful design decisions to make. For trivial requests (a single config change, a one-line fix), `brainstorming-standard` is the right tool.
@@ -36,7 +36,7 @@ Before running the procedure below, you **MUST** read both files using the Read 
 7. **Assemble the design summary.** Combine every consensus into a single coherent summary covering goal, architecture, components, interfaces, data flow, error handling, testing strategy, and integration points. Scale each section to its complexity. Follow existing patterns; do not propose unrelated refactoring.
 8. **Present the design to the user.** Include the full summary, a brief note on any decision where the committee stayed split (with the reasoning for the chosen direction), and any risks the committee flagged. **MUST NOT** dump the deliberation transcripts. The user wants the result, not the process.
 9. **Invoke `design-review`** via `Skill` against the consolidated summary and follow the Return Contract set out in that skill, with one addition specific to this mode. Where an Approved comes back carrying a substantive reviewer edit that settles a decision the committee actually deliberated, put it through a targeted round rather than accepting it silently: a reviewer working alone has just overruled three deliberated positions, and that is worth one round to test. Because that round changes the summary after approval, invoke `design-review` again against the new text. Outstanding issues, by contrast, means the review budget is spent, so the decision goes to the user rather than to another dispatch.
-10. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval.
+10. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval. Once the user approves, call `ExitPlanMode` carrying the approved summary. Approval came from the question you just asked, so this call releases the session rather than seeking approval again, and it has to happen before the hand-off: every downstream skill starts by writing something, and plan mode does not lapse on its own.
 11. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table: default to `subagent-driven-development`; use `team-driven-development` when the design qualifies for parallel execution (at least three independent components that can be built simultaneously with no shared state); use `dispatching-parallel-agents` for a stateless one-shot fan-out (all tasks are fully specified, idempotent, and require no inter-agent coordination). Invoke the chosen skill via `Skill`.
 
 ## The Three Perspectives
@@ -152,7 +152,7 @@ User: "Add webhook delivery for order events. I don't want to be involved, come 
 8. **Assemble** the summary from both consensuses.
 9. **Present** to the user, noting that the delivery-mechanism decision moved between rounds and why.
 10. **`design-review`** returns Approved, flagging one substantive change: the summary never said what happens when a customer endpoint 301-redirects, so the reviewer settled it. That is a behavioural decision the committee deliberated around but never resolved, so it goes back through a targeted round, which confirms the reviewer's call and adds a redirect cap. The summary has changed since approval, so `design-review` runs again against the new text and returns Approved.
-11. **Final approval** explicit, then `create-tickets`.
+11. **Final approval** explicit, then `ExitPlanMode` carrying the approved summary, then `create-tickets`.
 
 ## Completion Gate
 
@@ -160,8 +160,9 @@ You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-d
 
 - Every decision group has a recorded consensus
 - The design summary was assembled from those consensuses into a single text block
-- `design-review` returned Approved
+- `design-review` returned Approved against the text you are holding
 - The user gave explicit final approval against the reviewed summary
+- Plan mode has been released via `ExitPlanMode`, or was never entered because the router reported it unavailable
 
 ## Common Mistakes
 
@@ -182,3 +183,4 @@ You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-d
 | Re-invoking `design-review` after it returns outstanding issues        | By then it has spent three dispatches applying fixes and re-reviewing. A fresh invocation buys another three and hides the fact that a human now needs to decide. A targeted round after an Approved is different: that reviews new text. |
 | Running more than one tiebreaking round                                | If one tiebreaker cannot converge, the decision is genuinely unresolved and belongs to the user.                                                                                                                                          |
 | Letting the synthesiser quietly drop a concern flagged by two members  | Two members flagging a concern is signal. Address it in the design or the round did not really converge.                                                                                                                                  |
+| Handing off to a downstream skill while still in plan mode             | Every downstream skill starts by writing something, and plan mode does not lapse on its own. The hand-off fails somewhere the design cannot explain.                                                                                      |
