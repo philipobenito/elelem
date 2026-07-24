@@ -8,7 +8,7 @@ You **MAY** create commits without asking, provided they follow the rules below.
 
 You **MUST** use Conventional Commits:
 
-```
+```text
 <type>: <description>
 
 <optional body>

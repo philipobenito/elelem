@@ -7,9 +7,11 @@ User requests often contain ambiguity because they are written with implicit con
 The amount of reasoning required to resolve a gap serves as the primary signal for detecting ambiguity.
 
 **Proceed without clarification when:**
+
 - Only one interpretation is sensible in context, and resolving it effectively requires no reasoning
 
 **Stop and seek clarification when:**
+
 - Justifying a choice between competing interpretations
 - Weighing multiple plausible readings
 - Substituting a guess for information not provided by the user
@@ -22,11 +24,13 @@ If obeying an apparently clear instruction requires deliberation or justificatio
 When ambiguity is detected, classify the gap into one of two categories:
 
 **User intent or preference** (only the user can resolve):
+
 - Identify the specific gap clearly
 - Ask one direct question
 - Do not proceed until the user provides an answer
 
 **Externally verifiable fact** (can be checked from authoritative sources):
+
 - Do not ask the user
 - Verify from a current, authoritative source
 - Proceed with the verified information
