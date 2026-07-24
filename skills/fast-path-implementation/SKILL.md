@@ -13,6 +13,8 @@ Before running the procedure below, you **MUST** read `../_shared/subagent-dispa
 
 You **MUST NOT** enter this skill without a SIMPLE classification from `complexity-triage` that has been presented to the user. If you have not run triage, run it first. If triage returned COMPLEX, use `subagent-driven-development` instead.
 
+The one exception is a user who overrides a COMPLEX verdict, which the Return Contract in `../complexity-triage/SKILL.md` permits because the user outranks the skill. In that case the evidence table arrives with its failing rows intact and you pass it on unaltered, so the reviewer below can weigh the overridden criterion against the real diff.
+
 The caller of this skill is responsible for having asked the commit preference question before arriving here.
 
 ## Process
@@ -36,7 +38,7 @@ The reviewer returns one of three outcomes:
 After the reviewer approves and **before** the user checkpoint, run the verification gate against the implementer's work yourself. This is the same gate as the per-task pipeline in `../subagent-driven-development/SKILL.md` and is required by `../../rules/common/verification.md`. Even on the fast path, "the reviewer said it was fine" is not a substitute for running the verification yourself.
 
 1. **Inspect the diff yourself.** Run `git status` and `git diff`. Confirm the files changed match the spec and nothing else changed.
-2. **Confirm the implementer's TDD evidence.** Per `../subagent-driven-development/implementer-prompt.md`, the implementer report includes RED to GREEN evidence for each new behaviour. If the SIMPLE work introduced new behaviour (rare on the fast path; pure string replacements do not), the evidence **MUST** be present.
+2. **Read the implementer's report for new behaviour.** Per `../complexity-triage/SKILL.md`, criterion 2 means SIMPLE work changes no observable behaviour, so there is no RED to GREEN evidence to confirm here and no missing test to chase. Read the report for the opposite reason: an implementer reporting new behaviour has shown the triage was wrong regardless of what the table said, which is a `TRIAGE_INVALID` condition. Stop the fast path and hand back for re-decomposition rather than asking for a test after the fact.
 3. **Re-run the verification commands yourself.** Run the project's standard test command, the linter, and the build (or whatever the design's acceptance criteria called out), in this message, against the current working tree.
 4. **Read the output.** Capture exit codes and pass/fail counts.
 5. **Compare to the spec.** If any check fails, re-dispatch the implementer with the failure as fix instructions, then re-run the gate.

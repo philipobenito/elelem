@@ -34,9 +34,9 @@ Ask this once. The choice applies to every task in the session, including any fa
 
 ## Triage and Path Selection
 
-Run `complexity-triage` against the approved design. Present the evidence table to the user.
+Run `complexity-triage` against the approved design. That skill presents its own evidence table and defines what it returns; do not present the table again or re-run triage against the tasks this section then produces.
 
-- If the classification is **SIMPLE**, invoke `fast-path-implementation` and stop. That skill owns the rest of the flow.
+- If the classification is **SIMPLE**, invoke `fast-path-implementation` and stop. That skill owns the rest of the flow. Pass the evidence table through, and note the override if the SIMPLE verdict came from the user rather than the criteria.
 - If the classification is **COMPLEX**, continue with the task decomposition below.
 
 ## Task Decomposition
