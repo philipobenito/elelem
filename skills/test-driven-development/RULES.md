@@ -6,18 +6,18 @@ These rules apply once the `test-driven-development` skill has been invoked. The
 
 You will be tempted to skip TDD. Every excuse below means **start over with a failing test**:
 
-| Excuse                                  | Reality                                                                           |
-|-----------------------------------------|-----------------------------------------------------------------------------------|
-| "Too simple to test"                    | Simple code breaks. The test takes thirty seconds.                                |
-| "I'll test after"                       | Tests passing immediately prove nothing.                                          |
-| "I already manually tested it"          | Manual testing has no record and cannot be re-run.                                |
-| "Deleting hours of work is wasteful"    | Sunk cost. Unverified code is technical debt.                                     |
-| "Keep the code as reference"            | You will adapt it. That is testing after. Delete means delete.                    |
-| "The test is hard to write"             | Hard to test means hard to use. Fix the design.                                   |
-| "I must mock everything"                | Code is too coupled. Use dependency injection.                                    |
-| "TDD will slow me down"                 | TDD is faster than debugging in production.                                       |
-| "Existing code has no tests"            | You are improving it. Add the test.                                               |
-| "Just this once" / "this case is different" | No.                                                                           |
+| Excuse                                      | Reality                                                        |
+|---------------------------------------------|----------------------------------------------------------------|
+| "Too simple to test"                        | Simple code breaks. The test takes thirty seconds.             |
+| "I'll test after"                           | Tests passing immediately prove nothing.                       |
+| "I already manually tested it"              | Manual testing has no record and cannot be re-run.             |
+| "Deleting hours of work is wasteful"        | Sunk cost. Unverified code is technical debt.                  |
+| "Keep the code as reference"                | You will adapt it. That is testing after. Delete means delete. |
+| "The test is hard to write"                 | Hard to test means hard to use. Fix the design.                |
+| "I must mock everything"                    | Code is too coupled. Use dependency injection.                 |
+| "TDD will slow me down"                     | TDD is faster than debugging in production.                    |
+| "Existing code has no tests"                | You are improving it. Add the test.                            |
+| "Just this once" / "this case is different" | No.                                                            |
 
 ## Red Flags: Stop and Start Over
 

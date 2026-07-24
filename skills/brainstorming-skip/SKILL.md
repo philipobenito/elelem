@@ -126,13 +126,13 @@ If any one of these is false, the gate has not been crossed, and you **MUST NOT*
 
 ## Common Mistakes
 
-| Mistake                                                          | Why it is wrong                                                                                                                                |
-|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| Treating skip as "no design needed"                              | Skip is "lightweight design", not "no design". The brief statement IS the design.                                                              |
-| Stacking multiple clarifying questions                           | Skip is the lightweight path. If you need a dialogue, the user should be in standard or guided mode instead.                                   |
-| Skipping the `ExitPlanMode` step                           | `ExitPlanMode` is how the user approves. Without it, you have not satisfied the workflow.md "explicit approval" requirement.             |
-| Running `design-review`                                          | The user explicitly chose a lightweight path. Running design-review defeats the purpose. The reviewer is the user.                             |
-| Inventing requirements not in the user's statement               | YAGNI per `../../rules/common/coding-style.md`. The design covers what the user asked for, not what you would also build.                     |
-| Routing to skip yourself instead of letting the user pick        | The router asks; the user picks. You **MUST NOT** invoke this skill except as a hand-off from the router after the user explicitly picks skip. |
+| Mistake                                                                                       | Why it is wrong                                                                                                                                    |
+|-----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Treating skip as "no design needed"                                                           | Skip is "lightweight design", not "no design". The brief statement IS the design.                                                                  |
+| Stacking multiple clarifying questions                                                        | Skip is the lightweight path. If you need a dialogue, the user should be in standard or guided mode instead.                                       |
+| Skipping the `ExitPlanMode` step                                                              | `ExitPlanMode` is how the user approves. Without it, you have not satisfied the workflow.md "explicit approval" requirement.                       |
+| Running `design-review`                                                                       | The user explicitly chose a lightweight path. Running design-review defeats the purpose. The reviewer is the user.                                 |
+| Inventing requirements not in the user's statement                                            | YAGNI per `../../rules/common/coding-style.md`. The design covers what the user asked for, not what you would also build.                          |
+| Routing to skip yourself instead of letting the user pick                                     | The router asks; the user picks. You **MUST NOT** invoke this skill except as a hand-off from the router after the user explicitly picks skip.     |
 | Asking "what would you like to build" when a design was already discussed in the conversation | Re-check context first. Making the user repeat an already-stated design defeats the point of skip mode and ignores the spirit of prior discussion. |
-| Asking a follow-up question to confirm something already unambiguous in context | Only ask when something is genuinely ambiguous or missing, not as a reflexive double-check. |
+| Asking a follow-up question to confirm something already unambiguous in context               | Only ask when something is genuinely ambiguous or missing, not as a reflexive double-check.                                                        |

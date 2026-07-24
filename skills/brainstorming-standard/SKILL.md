@@ -62,5 +62,5 @@ If any one of these is false, the gate has not been crossed, and you **MUST NOT*
 | Skipping the consolidation step and dispatching review against the conversation | `design-review` requires a single summary block. Conversation history is not a design. |
 | Treating "looks fine" as final approval                                         | Explicit approval is required. Ask directly.                                           |
 | Inventing requirements the user did not state                                   | YAGNI. The design covers what was asked for, not what you would also build.            |
-| Invoking an implementation skill before the gate is crossed                     | Violates the `../../rules/common/workflow.md` design-before-implementation rule.                          |
+| Invoking an implementation skill before the gate is crossed                     | Violates the `../../rules/common/workflow.md` design-before-implementation rule.       |
 | Proposing unrelated refactors discovered during exploration                     | Log them as separate items for the user. Do not bundle them into the design.           |

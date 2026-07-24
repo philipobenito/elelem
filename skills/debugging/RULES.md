@@ -73,14 +73,14 @@ Any unrelated issues you notice during debugging **MUST** be logged separately (
 
 Every thought below means **stop and return to the procedure**:
 
-| You might think...                                               | Reality                                                                                        |
-|------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| "The error message tells me exactly what's wrong"                | Error messages describe symptoms. Reproduce and find the root cause.                           |
-| "This is obviously a simple typo or missing null check"          | If it is obvious, reproduction and root cause identification will be fast. Skip nothing.       |
-| "Let me just try this quick fix and see if it works"             | That is shotgun debugging. It wastes time when it fails and masks root causes when it works.   |
-| "I've been investigating for a while, let me just try something" | That is the investigation budget telling you to refocus, not to start guessing.                |
-| "I need to read more code to understand the system"              | You need scoped evidence, not system understanding. Read what the bug touches, not everything. |
-| "Let me check a few more files to be thorough"                   | Thoroughness without direction is waste. Form a hypothesis first, then read files to test it.  |
-| "The fix is so small it doesn't need a regression test"          | Small fixes for subtle bugs are exactly what regression tests exist for. See `../../rules/common/testing.md`.     |
-| "I can see other issues while I'm here, let me fix those too"    | One bug, one fix. Log other issues separately.                                                 |
-| "I don't need to reproduce this, the error is clear"             | Reproduction is verification infrastructure. Without it, you cannot confirm your fix works.    |
+| You might think...                                               | Reality                                                                                                       |
+|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| "The error message tells me exactly what's wrong"                | Error messages describe symptoms. Reproduce and find the root cause.                                          |
+| "This is obviously a simple typo or missing null check"          | If it is obvious, reproduction and root cause identification will be fast. Skip nothing.                      |
+| "Let me just try this quick fix and see if it works"             | That is shotgun debugging. It wastes time when it fails and masks root causes when it works.                  |
+| "I've been investigating for a while, let me just try something" | That is the investigation budget telling you to refocus, not to start guessing.                               |
+| "I need to read more code to understand the system"              | You need scoped evidence, not system understanding. Read what the bug touches, not everything.                |
+| "Let me check a few more files to be thorough"                   | Thoroughness without direction is waste. Form a hypothesis first, then read files to test it.                 |
+| "The fix is so small it doesn't need a regression test"          | Small fixes for subtle bugs are exactly what regression tests exist for. See `../../rules/common/testing.md`. |
+| "I can see other issues while I'm here, let me fix those too"    | One bug, one fix. Log other issues separately.                                                                |
+| "I don't need to reproduce this, the error is clear"             | Reproduction is verification infrastructure. Without it, you cannot confirm your fix works.                   |

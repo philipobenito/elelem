@@ -96,13 +96,13 @@ You **MUST NOT** invoke `create-tickets` or `subagent-driven-development` until 
 
 ## Common Mistakes
 
-| Mistake                                                                | Why it is wrong                                                                                                                |
-|------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
-| Asking the user clarifying questions during deliberation               | The committee replaces user questioning. The only allowed user questions are step 1 and the optional step 2 escape hatch.      |
-| Dispatching committee members sequentially                             | They **MUST** run concurrently. One message, three tool calls.                                                                 |
+| Mistake                                                                | Why it is wrong                                                                                                                                   |
+|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| Asking the user clarifying questions during deliberation               | The committee replaces user questioning. The only allowed user questions are step 1 and the optional step 2 escape hatch.                         |
+| Dispatching committee members sequentially                             | They **MUST** run concurrently. One message, three tool calls.                                                                                    |
 | Passing session history to committee members                           | Violates context isolation from `../../rules/common/subagents.md`. Pass the brief, the codebase context, the decisions, and prior consensus only. |
 | Using `general-purpose` when a specialised type is available           | Violates the type-selection rule in `../../rules/common/subagents.md`.                                                                            |
-| Showing the user the full deliberation transcripts                     | The user wants the design, not the process. Surface only the result, splits, and flagged risks.                                |
-| Skipping `design-review` because the committee already reviewed itself | The committee deliberates, it does not review. `design-review` is a separate, holistic check.                                  |
-| Running more than one tiebreaking round                                | If one tiebreaker cannot converge, the decision is genuinely unresolved and belongs to the user.                               |
-| Letting the synthesiser quietly drop a concern flagged by two members  | Two members flagging a concern is signal. Address it in the design or the round did not really converge.                       |
+| Showing the user the full deliberation transcripts                     | The user wants the design, not the process. Surface only the result, splits, and flagged risks.                                                   |
+| Skipping `design-review` because the committee already reviewed itself | The committee deliberates, it does not review. `design-review` is a separate, holistic check.                                                     |
+| Running more than one tiebreaking round                                | If one tiebreaker cannot converge, the decision is genuinely unresolved and belongs to the user.                                                  |
+| Letting the synthesiser quietly drop a concern flagged by two members  | Two members flagging a concern is signal. Address it in the design or the round did not really converge.                                          |

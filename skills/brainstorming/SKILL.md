@@ -66,6 +66,6 @@ If you find yourself doing any of the above inside this skill, stop. You have sk
 | Picking a mode for the user                                | The user picks. The router asks.                                                                   |
 | Picking `brainstorming-skip` because the work "looks easy" | The user picks the mode. The router never picks skip on the user's behalf.                         |
 | Skipping the router because the user said "just add X"     | "Just add X" does not waive the router. Invoke the router; the user can pick skip if they want to. |
-| Running the chosen mode's procedure inline                 | The router only routes. Hand off via `Skill`.                                      |
+| Running the chosen mode's procedure inline                 | The router only routes. Hand off via `Skill`.                                                      |
 | Skipping plan mode because the session "feels safe"        | Plan mode is the gate. Enter it before asking the question.                                        |
-| Asking the mode question as plain text                     | Use `AskUserQuestion`. Plain text invites freeform answers that defeat the routing.     |
+| Asking the mode question as plain text                     | Use `AskUserQuestion`. Plain text invites freeform answers that defeat the routing.                |

@@ -55,10 +55,10 @@ Examples:
 
 Three implementation skills orchestrate work across subagents. Use this table to pick between them; the full operational detail for the third lives in `skills/team-driven-development/SKILL.md` and `skills/_shared/teammate-protocol.md`, not here.
 
-| Situation                                                                                                                                                             | Skill                            |
-|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------|
-| Coupled or strictly ordered work, or the default sequential case                                                                                                       | `subagent-driven-development`      |
-| A stateless, single-message fan-out across independent domains with zero shared files and no persisted board                                                          | `dispatching-parallel-agents`      |
+| Situation                                                                                                                                                                                                                   | Skill                                                                                               |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| Coupled or strictly ordered work, or the default sequential case                                                                                                                                                            | `subagent-driven-development`                                                                       |
+| A stateless, single-message fan-out across independent domains with zero shared files and no persisted board                                                                                                                | `dispatching-parallel-agents`                                                                       |
 | A sustained feature whose tasks are mostly independent (disjoint file sets) with no shared mutable test/build state, where persistent peers over a shared task board add value, and the Agent Teams capability is available | `team-driven-development` (degrades to `subagent-driven-development` when the capability is absent) |
 
 When in doubt, default to `subagent-driven-development`; it is the safe sequential fallback for all three rows.
