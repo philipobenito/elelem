@@ -20,7 +20,7 @@ Invoke this skill before any code edit, no matter how small. The four modes give
 
 ## Procedure
 
-1. **Enter plan mode.** Use `EnterPlanMode`. Plan mode's read-only safety enforces the design-before-implementation rule from `../../rules/common/workflow.md` for the duration of the session, regardless of which mode is chosen.
+1. **Enter plan mode.** Use `EnterPlanMode`. Plan mode's read-only safety enforces the design-before-implementation rule from `../../rules/common/workflow.md` for the duration of the session, regardless of which mode is chosen. If `EnterPlanMode` fails or is unavailable, stop and surface the error to the user. Do not proceed to the mode question until plan mode is confirmed active.
 2. **Ask the user which mode.** Use `AskUserQuestion` exactly as specified below. **MUST NOT** ask as plain text, and **MUST NOT** assume a default mode without asking.
 3. **Hand off via `Skill`.** Invoke the chosen mode skill and stop. Do not run any of the steps yourself; the mode skill owns the entire procedure from this point. **MUST NOT** invoke more than one mode skill, and **MUST NOT** invoke `create-tickets` or `subagent-driven-development` directly: those are downstream of the mode skill, not of the router.
 
