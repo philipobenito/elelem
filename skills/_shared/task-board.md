@@ -4,15 +4,15 @@ This file defines, once, how an implementation-task decomposition maps onto the 
 
 ## Field Mapping
 
-| Board field   | Meaning                                                                              |
-|---------------|---------------------------------------------------------------------------------------|
-| `subject`     | The task name.                                                                        |
-| `description` | The human-readable narrative: scene-setting, file responsibilities, and acceptance criteria as prose. |
-| `owner`       | The sentinel string `"lead"` in the sequential path (there is no teammate); a teammate name in the team path. |
-| `status`      | The native lifecycle: `pending` -> `in_progress` -> `completed`.                      |
-| `blockedBy`   | Dependency edges: the tasks that must complete before this one may start.             |
-| `blocks`      | The inverse edge: the tasks that depend on this one.                                  |
-| `metadata`    | Structured fields not covered above, split by write authority (see below).            |
+| Board field   | Meaning                                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `subject`     | The task name.                                                                                                      |
+| `description` | The human-readable narrative: scene-setting, file responsibilities, and acceptance criteria as prose.               |
+| `owner`       | The sentinel string `"lead"` in the sequential path (there is no teammate); a teammate name in the team path.       |
+| `status`      | The native lifecycle: `pending` -> `in_progress` -> `completed`.                                                    |
+| `blockedBy`   | Dependency edges: the tasks that must complete before this one may start.                                           |
+| `blocks`      | The inverse edge: the tasks that depend on this one.                                                                |
+| `metadata`    | Structured fields not covered above, split by write authority (see below).                                          |
 
 The native `status` field is teammate-writable and advisory in the team path: a teammate moves it through `pending` -> `in_progress` -> `completed` to report its own progress. It is **never** authoritative for completion; only the lead-only `verified` key establishes that a task is done. In the sequential path the lead is the only writer, so this distinction is latent.
 
@@ -34,20 +34,20 @@ The load-bearing property of this schema is that `metadata` keys are partitioned
 
 These keys **MUST** be written only by the orchestrator or lead. A teammate **MUST NOT** write them, even if the board technically permits it.
 
-| Key           | Meaning                                                                               |
-|---------------|-----------------------------------------------------------------------------------------|
-| `files`       | The exclusive set of file paths this task owns.                                        |
-| `verified`    | Boolean. Set `true` only after the lead's own verification gate has passed.            |
-| `base_sha`    | The commit the task's diff is measured against.                                        |
-| `commit_sha`  | The commit the task's diff landed as, once committed.                                  |
+| Key          | Meaning                                                                     |
+| ------------ | --------------------------------------------------------------------------- |
+| `files`      | The exclusive set of file paths this task owns.                             |
+| `verified`   | Boolean. Set `true` only after the lead's own verification gate has passed. |
+| `base_sha`   | The commit the task's diff is measured against.                             |
+| `commit_sha` | The commit the task's diff landed as, once committed.                       |
 
 ### Teammate-Advisory Keys
 
 A teammate **MAY** write these keys, but they are **never** authoritative for a completion or commit decision. They exist to give the lead visibility into in-flight work, not to make claims the lead must accept.
 
-| Key      | Meaning                                                                                    |
-|----------|----------------------------------------------------------------------------------------------|
-| `claim`  | A heartbeat marking that a teammate is actively working the task.                            |
+| Key     | Meaning                                                           |
+| ------- | ----------------------------------------------------------------- |
+| `claim` | A heartbeat marking that a teammate is actively working the task. |
 
 ## Guiding Invariant
 
