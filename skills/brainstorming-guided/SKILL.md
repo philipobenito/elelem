@@ -32,7 +32,7 @@ These principles apply at every step of the procedure. They are what makes this 
 5. **Consolidate the design summary.** Once every section has been approved, write a single structured summary covering goal, architecture, components, interfaces, data flow, error handling, and testing strategy. The summary stands alone: it does not require the walkthrough to be understood.
 6. **Invoke `design-review`.** Use `Skill` against the consolidated summary. Surface substantive change notes to the user before continuing. If `design-review` escalates, stop and ask the user how to proceed.
 7. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval.
-8. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The only permitted downstream skills are `create-tickets` and `subagent-driven-development`; invoke whichever the user picks via `Skill`.
+8. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table (`subagent-driven-development` by default; `team-driven-development` when the design qualifies for parallel execution, or `dispatching-parallel-agents` for a stateless one-shot fan-out). Invoke the chosen skill via `Skill`.
 
 ## What Guided Mode Does Not Change
 

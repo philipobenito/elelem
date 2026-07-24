@@ -35,7 +35,7 @@ Before running the procedure below, you **MUST** read both files using the Read 
 7. **Present the design to the user.** Include the full summary, a brief note on any decisions where the committee was split (with the reasoning for the chosen direction), and any risks the committee flagged. **MUST NOT** dump the deliberation transcripts. The user wants the result, not the process.
 8. **Invoke `design-review`** via `Skill` against the consolidated summary. If the review surfaces issues that require new decisions (not just wording fixes), feed the affected decisions back into a targeted committee round, update the summary, and re-invoke `design-review`. If `design-review` escalates after three iterations, stop and ask the user how to proceed.
 9. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval.
-10. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The only permitted downstream skills are `create-tickets` and `subagent-driven-development`; invoke whichever the user picks via `Skill`.
+10. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table (`subagent-driven-development` by default; `team-driven-development` when the design qualifies for parallel execution, or `dispatching-parallel-agents` for a stateless one-shot fan-out). Invoke the chosen skill via `Skill`.
 
 ## The Three Perspectives
 
@@ -87,7 +87,7 @@ If a round produces irreconcilable disagreement (not just preference differences
 
 ## Completion Gate
 
-You **MUST NOT** invoke `create-tickets` or `subagent-driven-development` until all of these are true:
+You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-driven-development`, `team-driven-development`, `dispatching-parallel-agents`) until all of these are true:
 
 - Every identified decision group has a recorded consensus
 - The design summary was assembled from those consensuses into a single text block

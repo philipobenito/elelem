@@ -23,7 +23,7 @@ For the rule that no implementation may begin until the user has approved a desi
 5. **Consolidate the design summary.** Once every section has been approved individually, write a single structured summary covering goal, architecture, components, interfaces, data flow, error handling, and testing strategy. This block of text is the input to the next step.
 6. **Invoke `design-review`.** Use `Skill` to invoke the `design-review` skill against the consolidated summary. If `design-review` returns substantive change notes, surface them to the user before continuing. If `design-review` escalates after three iterations, stop and ask the user how to proceed.
 7. **Get explicit final approval.** Present the reviewed summary to the user and obtain explicit approval. Implicit signals ("looks fine", "sure") do not count; ask directly.
-8. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The only permitted downstream skills are `create-tickets` and `subagent-driven-development`; invoke whichever the user picks via `Skill`. **MUST NOT** invoke any other skill from here.
+8. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table (`subagent-driven-development` by default; `team-driven-development` when the design qualifies for parallel execution, or `dispatching-parallel-agents` for a stateless one-shot fan-out). Invoke the chosen skill via `Skill`. **MUST NOT** invoke any other skill from here.
 
 ## Working in Existing Codebases
 
@@ -46,7 +46,7 @@ User: "I want to add structured logging across the API service."
 
 ## Completion Gate
 
-You **MUST NOT** invoke `create-tickets` or `subagent-driven-development` until all of these are true:
+You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-driven-development`, `team-driven-development`, `dispatching-parallel-agents`) until all of these are true:
 
 - The design summary was consolidated into a single text block
 - `design-review` returned Approved

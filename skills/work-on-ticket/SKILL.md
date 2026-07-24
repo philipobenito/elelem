@@ -67,11 +67,11 @@ You **MUST** complete these steps in order. Do not skip a step and do not reorde
 
    If the user selects "Adjust scope" or "Need more context", address the feedback and re-present with `AskUserQuestion` again. Only proceed to step 8 after "Looks good, proceed".
 
-8. **Hand off to subagent-driven-development.** Use `Skill` to invoke the `subagent-driven-development` skill. This **MUST** be an actual skill invocation, not a conceptual handoff; if you skip the invocation, the downstream skill's full instructions will not be loaded and implementation quality will suffer.
+8. **Hand off to an orchestration skill.** Select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table: `subagent-driven-development` by default, or `team-driven-development` when the recovered design qualifies for parallel execution (a sustained feature of mostly-independent, file-disjoint tasks with no shared mutable test/build state) and Agent Teams is available. Use `Skill` to invoke the chosen skill. This **MUST** be an actual skill invocation, not a conceptual handoff; if you skip the invocation, the downstream skill's full instructions will not be loaded and implementation quality will suffer.
 
    ```
    Skill:
-     skill: "subagent-driven-development"
+     skill: "subagent-driven-development"   # or team-driven-development per the routing table
    ```
 
    Before invoking, construct the approved design input by combining:

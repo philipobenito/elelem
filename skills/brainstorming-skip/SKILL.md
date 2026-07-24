@@ -45,13 +45,13 @@ For the rule that no implementation may begin until the user has approved a desi
      header: "Next step"
      options:
        - label: "Implement directly"
-         description: "Hand off to subagent-driven-development to implement this now."
+         description: "Implement now via the orchestration skill chosen per skills-policy (subagent-driven-development by default; team-driven-development when the design qualifies for parallel execution)."
        - label: "Create tickets first"
          description: "Hand off to create-tickets to track this work in the project's ticketing system."
      multiSelect: false
    ```
 
-6. **Hand off via `Skill`.** Invoke `subagent-driven-development` or `create-tickets` per the user's choice. **MUST NOT** invoke any other skill from here.
+6. **Hand off via `Skill`.** Per the user's choice, invoke `create-tickets`, or the orchestration skill selected per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table (`subagent-driven-development` by default; `team-driven-development` when the design qualifies for parallel execution). **MUST NOT** invoke any other skill from here.
 
 ## What Skip Mode Does Not Do
 
@@ -116,7 +116,7 @@ User picks: Implement directly
 
 ## Completion Gate
 
-You **MUST NOT** invoke `create-tickets` or `subagent-driven-development` until all of these are true:
+You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-driven-development`, `team-driven-development`, `dispatching-parallel-agents`) until all of these are true:
 
 - The user provided a brief design statement
 - You presented it via `ExitPlanMode` and the user approved
