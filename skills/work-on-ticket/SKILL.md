@@ -9,7 +9,7 @@ description: Picks up a ticket from the project's ticketing system, fetches its 
 
 This skill depends on the rules in `skills/_shared/tickets.md`. Those rules are **not** always in context; they live next to the ticket skills and are loaded only when a ticket skill is invoked. Before running the procedure below, you **MUST** read `skills/_shared/tickets.md` using the Read tool if you have not already read it in this session.
 
-The detection of which ticketing system is in use lives in the `detect-ticketing-system` skill. The downstream implementation workflow lives in the `subagent-driven-development` skill. This skill bridges the gap across session boundaries between a ticket that was created in a prior session and the implementation workflow that delivers it.
+The detection of which ticketing system is in use lives in the `detect-ticketing-system` skill. The downstream implementation workflow lives in the orchestration skills such as `subagent-driven-development`, `team-driven-development`, and `dispatching-parallel-agents`. This skill bridges the gap across session boundaries between a ticket that was created in a prior session and the implementation workflow that delivers it.
 
 **Precondition**: the user has referenced a specific ticket to work on (for example, "work on #42", "pick up PROJ-123", "implement issue 7"). Without a specific reference, this skill does not apply; if the user is asking what to work on next, that is a triage question, not this skill.
 
