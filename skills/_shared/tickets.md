@@ -14,6 +14,8 @@ There is no fourth Sub-task tier. If finer decomposition is needed inside a Task
 
 The Story tier is introduced by `create-tickets` only when the decomposition rule (in `create-tickets/SKILL.md`) is satisfied. Most epics stay two-tier (Epic plus flat Tasks), and that remains the default shape.
 
+Stories group the Tasks that group. An Epic **MAY** hold Stories and loose Tasks side by side, and this mixed shape is normal rather than a degradation: a cross-cutting concern that yields a single Task belongs directly under the Epic, because a Story needs at least 2 child Tasks. Recovery treats a loose Task the same as a Task in a flat epic, resolving to the Epic in one hop.
+
 ## Epic Design Embedding
 
 When a design is broken into multiple tickets, there **MUST** be an epic or parent ticket, and the epic body **MUST** contain the full approved design under a `## Design` heading. The design section is the bridge between the brainstorming session and every future implementation session that picks up a child ticket.
@@ -31,7 +33,7 @@ The epic body **MUST** include, at minimum:
 
 The epic body **MUST** be the single source of truth for the design. You **MUST NOT** replace the design section with a link to an external file, a conversation transcript, a gist, a commit, or any other artefact outside the ticketing system. Links rot, external context disappears, and future sessions will open the epic and find nothing usable.
 
-If the epic is too large for the ticketing system's body limit, split the design across multiple headings in the same body, not across multiple documents.
+If the design does not fit inside the ticketing system's body limit, that is a signal about the epic rather than about the formatting: adding headings does not make a body smaller. Split the work into multiple Epics along theme boundaries, each carrying in full the portion of the design its own children need. Every epic stays the single source of truth for the children beneath it, which is the property that matters, and no child is left pointing at a design it cannot read.
 
 Stories **MUST NOT** carry a `## Design` heading or any design content. The epic body is the only place the design lives. A Story body that contains a `## Design` heading is a single-source-of-truth violation and is an error in both creation (rejected before the Story is created) and recovery (surfaced to the user). See "Validation" below.
 
@@ -45,9 +47,24 @@ Every ticket created from a design carries a tier marker so recovery does not ne
 | GitHub   | Label: `tier:epic` / `tier:story` / `tier:task`                  |
 | Linear   | Label: `tier:epic` / `tier:story` / `tier:task`                  |
 | GitLab   | Native group Epic where available, otherwise label as for GitHub |
-| Markdown | Heading level: `##` Epic, `###` Story, `####` Task               |
+| Markdown | Heading level inside `## Tickets`; the file itself is the Epic   |
 
 Tier markers are mandatory on every ticket the `create-tickets` skill produces. They are the primary discriminator used by `resolve_epic_context` (see "Recovery Before Implementation").
+
+The Markdown row needs unpacking, because a heading level alone does not identify a tier in that
+format. The file is the Epic, so its `#` title and its `## Goal`, `## Design` and `## Tickets`
+headings are document structure rather than tier markers. Only headings **inside `## Tickets`**
+identify tickets:
+
+- `### Tasks` is a bucket holding the Tasks that belong to no Story. It is not itself a ticket.
+- `### Story: <name>` is a Story.
+- `#### Task: <title>` is a Task, and its parent is the nearest preceding H3.
+
+Scoping to `## Tickets` is what keeps the `### Story:` rationale sub-heading inside `## Design`
+from being read as a grouping, since the same heading text appears in both places by design: one
+records why the grouping exists, the other is the grouping. The `####` level for a Task is
+invariant whether or not the epic has Stories. See `../create-tickets/per-system-creation.md` for
+the full file shape.
 
 ## Recovery Before Implementation
 

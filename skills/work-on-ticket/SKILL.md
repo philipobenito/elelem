@@ -123,7 +123,7 @@ With Linear MCP tools. Response includes the `parent` field. The tier marker is 
 - **Jira**: the `parent` or `epic` field on `getJiraIssue`. Jira natively supports Epic-Story and Story-Sub-task relationships.
 - **Linear**: the `parent` field on the issue.
 - **GitLab**: epic associations (where group Epics are available) or `Part of #N` references in the body (where they are not).
-- **Markdown fallback**: heading nesting in the single epic file. A Task's parent is the nearest preceding `### Story:` heading, or the file itself (the Epic) when there is no enclosing Story.
+- **Markdown fallback**: heading nesting within the `## Tickets` section of the single epic file. A Task (`#### Task:`) takes the nearest preceding H3 as its parent: under `### Story: <name>` it is a child of that Story, and under the `### Tasks` bucket it is a direct child of the Epic (the file itself). Confine the scan to `## Tickets`, because a `### Story:` sub-heading also appears inside `## Design` as the grouping rationale and reading that one as a parent invents a Story hop that never happened.
 
 If `resolve_epic_context` cannot resolve a parent reference (the ticket is missing, deleted, or permission is denied), this is an **error**. Surface the unresolved reference to the user via `AskUserQuestion` and stop. The legacy fallback documented in `skills/_shared/tickets.md` applies only when a node has no parent reference at all, not when a parent reference exists but cannot be fetched.
 
@@ -136,4 +136,4 @@ If the user wants to work on multiple tickets, work on them one at a time in dep
 - **Ticket already partially implemented**: read git history and current code state, present what exists to the user, and adjust the scope to cover only the remaining work before step 7.
 - **Ticket depends on unfinished work**: flag the dependency. Ask the user whether to work on the dependency first or to proceed with stubs or interfaces for the missing pieces.
 - **Ticket description is vague**: use the epic's design context to fill in gaps. If still unclear after that, ask the user targeted questions before proceeding. You **MUST NOT** guess at requirements.
-- **No ticketing system detected**: if the user provides a ticket reference but `detect-ticketing-system` returns "none", ask the user to paste the ticket content (and the parent epic content if applicable) directly, then run `resolve_epic_context` against the pasted content using markdown heading levels as the tier marker.
+- **No ticketing system detected**: if the user provides a ticket reference but `detect-ticketing-system` returns "none", ask the user to paste the ticket content (and the parent epic content if applicable) directly, then run `resolve_epic_context` against the pasted content using the markdown heading structure described in `skills/_shared/tickets.md`'s Tier Markers section as the tier marker.
