@@ -239,8 +239,8 @@ singleselect() {
 # Prompts the user to select an install scope and resolves the base install path.
 # Usage: resolve_install_base RESULT_VAR USER_BASE PROJECT_SUFFIX
 #   RESULT_VAR      - name of a global variable to populate with the resolved base path
-#   USER_BASE       - user-scope base path (e.g. $HOME/.claude or $HOME/.config/opencode)
-#   PROJECT_SUFFIX  - project-scope directory name (e.g. .claude or .opencode)
+#   USER_BASE       - user-scope base path (e.g. $HOME/.claude)
+#   PROJECT_SUFFIX  - project-scope directory name (e.g. .claude)
 resolve_install_base() {
   local result_var="$1"
   local user_base="$2"
@@ -283,48 +283,6 @@ resolve_install_base() {
   esac
 
   eval "${result_var}=\"\$resolved_base\""
-}
-
-# Substitutes tool-name placeholders in every .md file under the given directory.
-# Usage: substitute_tool_names dir placeholders_ref substitutions_ref
-#   dir               - directory to operate on (recursively, all *.md files)
-#   placeholders_ref  - name of an array variable containing placeholder tokens (without braces)
-#   substitutions_ref - name of an array variable containing replacement strings (parallel to placeholders)
-#
-# Builds a perl -i -pe expression dynamically from the arrays. Compatible with bash 3.2+.
-#
-# NOTE: substitution strings are interpolated directly into a perl s/.../.../g
-# expression. Callers MUST NOT pass substitutions containing '/', '\', '$', or
-# '@'. Escape or switch to a different delimiter strategy before passing such
-# values. The current Claude Code placeholder map (defined in install.sh) is
-# verified safe; a future OpenCode map must be verified before use.
-substitute_tool_names() {
-  local dir="$1"
-  local placeholders_ref="$2"
-  local substitutions_ref="$3"
-
-  [[ -d "$dir" ]] || return 0
-  [[ "$placeholders_ref"  =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "substitute_tool_names: invalid placeholders variable name: $placeholders_ref"  >&2; return 1; }
-  [[ "$substitutions_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "substitute_tool_names: invalid substitutions variable name: $substitutions_ref" >&2; return 1; }
-
-  local placeholders substitutions
-  eval "placeholders=(\"\${${placeholders_ref}[@]}\")"
-  eval "substitutions=(\"\${${substitutions_ref}[@]}\")"
-
-  local count="${#placeholders[@]}"
-  if (( count == 0 )); then
-    return 0
-  fi
-
-  local perl_expr=""
-  local i
-  for (( i=0; i<count; i++ )); do
-    local placeholder="${placeholders[$i]}"
-    local substitution="${substitutions[$i]}"
-    perl_expr="${perl_expr}s/\\{\\{${placeholder}\\}\\}/${substitution}/g; "
-  done
-
-  find "$dir" -type f -name '*.md' -exec perl -i -pe "$perl_expr" {} +
 }
 
 # Prunes stale entries from the manifest: files present in the old manifest but
@@ -507,69 +465,3 @@ install_files_from_dir() {
   done
 }
 
-# Scans AGENTS.md files and skill files under root_dir for unsubstituted placeholders
-# (literal '{{') and TODO markers. Exits 1 with a diagnostic message if any are found.
-# Returns 0 if root_dir does not exist or contains no matching files.
-# Usage: scan_no_unsubstituted_placeholders root_dir
-scan_no_unsubstituted_placeholders() {
-  local root_dir="$1"
-
-  [[ -d "$root_dir" ]] || return 0
-
-  local file found_any=0 hits
-  while IFS= read -r -d '' file; do
-    hits="$(grep -n -F -e '{{' -e 'TODO:' "$file" 2>/dev/null)" || true
-    if [[ -n "$hits" ]]; then
-      say_err "scan_no_unsubstituted_placeholders: '$file' contains unsubstituted placeholder or TODO marker:"
-      while IFS= read -r hit_line; do
-        echo "  $hit_line" >&2
-      done <<< "$hits"
-      found_any=1
-    fi
-  done < <(find "$root_dir" \( -name 'AGENTS.md' -o -name 'SKILL.md' \) -type f -print0)
-
-  if (( found_any )); then
-    exit 1
-  fi
-}
-
-# Validates that one or more glob patterns each match at least one file.
-# Aborts with a clear error message on stderr if any pattern matches nothing.
-# Usage: validate_globs_resolve pattern [pattern ...]
-validate_globs_resolve() {
-  local pattern
-  for pattern in "$@"; do
-    if ! compgen -G "$pattern" > /dev/null 2>&1; then
-      say_err "glob pattern '$pattern' matched no files."
-      exit 1
-    fi
-  done
-}
-
-# Sets the "instructions" array in opencode.json to the given globs, preserving
-# every other key in an existing file. Writes through the target path so that a
-# symlinked config keeps its symlink. Creates a minimal document when the target
-# does not yet exist. Requires jq.
-# Usage: write_opencode_instructions target [glob ...]
-write_opencode_instructions() {
-  local target="$1"
-  shift
-  local globs=("$@")
-  local schema="https://opencode.ai/config.json"
-
-  local tmp
-  tmp="$(mktemp)"
-  trap 'rm -f "$tmp"' RETURN
-  if [[ -f "$target" ]]; then
-    if ! jq --args '.instructions = $ARGS.positional' \
-      < "$target" -- "${globs[@]+"${globs[@]}"}" > "$tmp"; then
-      say_err "could not parse '$target' as JSON; leaving it unchanged."
-      return 1
-    fi
-  else
-    jq -n --arg schema "$schema" --args \
-      '{"$schema": $schema, "instructions": $ARGS.positional}' \
-      -- "${globs[@]+"${globs[@]}"}" > "$tmp"
-  fi
-  cat "$tmp" > "$target"
-}

@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 #
-# Removes one or more elelem installs by reading the manifest files written
-# by install-claude.sh, install-opencode.sh, or install-codex.sh.
+# Removes the elelem install by reading the manifest file written by install.sh.
 #
-# For each selected manifest the script builds a removal plan (files to
-# delete, empty directories to prune, and for Codex the managed block
-# to strip from AGENTS.md), shows it to the user, and executes it after a
-# final confirmation.
+# The script builds a removal plan (files to delete and empty directories to
+# prune), shows it to the user, and executes it after a final confirmation.
 #
 # No CLI flags. No dry-run mode. Run from anywhere; the script is
 # self-contained via SCRIPT_DIR resolution.
@@ -19,25 +16,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=_install-common.sh
 source "$SCRIPT_DIR/_install-common.sh"
 
-# Managed-block markers for Codex. Duplicate of install-codex.sh:59-60.
-CODEX_MANAGED_START='<!-- elelem:codex:start -->'
-CODEX_MANAGED_END='<!-- elelem:codex:end -->'
-
 # ---------------------------------------------------------------------------
 # Pure helper functions (no TTY required; exercisable from tests by sourcing)
 # ---------------------------------------------------------------------------
-
-# Resolves the AGENTS.md path for a Codex manifest given the install base.
-# Prints the resolved path to stdout.
-# Usage: resolve_codex_agents_md base
-resolve_codex_agents_md() {
-  local base="$1"
-  if [[ "$base" == "$HOME" ]]; then
-    printf '%s/.codex/AGENTS.md\n' "$HOME"
-  else
-    printf '%s/AGENTS.md\n' "$base"
-  fi
-}
 
 # Validates a manifest base line. Returns 0 if valid, 1 otherwise.
 # Usage: validate_manifest_base base manifest_name
@@ -193,34 +174,6 @@ prune_empty_dirs() {
   done
 }
 
-# Strips the elelem managed block from a file using awk, writing to a
-# tempfile then moving into place. If the result is whitespace-only,
-# the file is deleted.
-# Usage: strip_codex_managed_block target
-strip_codex_managed_block() {
-  local target="$1"
-
-  [[ -f "$target" ]] || return 0
-
-  local tmp_file
-  tmp_file="$(mktemp)"
-
-  awk \
-    -v start="$CODEX_MANAGED_START" \
-    -v end="$CODEX_MANAGED_END" \
-    'BEGIN { in_block = 0 }
-     $0 == start { in_block = 1; next }
-     in_block && $0 == end { in_block = 0; next }
-     !in_block { print }' \
-    "$target" > "$tmp_file"
-
-  mv "$tmp_file" "$target"
-
-  if ! grep -q '[^[:space:]]' "$target"; then
-    rm -f "$target"
-  fi
-}
-
 # ---------------------------------------------------------------------------
 # Main body - guarded so this file is sourceable for testing
 # ---------------------------------------------------------------------------
@@ -232,94 +185,48 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     exit 1
   fi
 
-  manifest_glob="$SCRIPT_DIR/.elelem-manifest-*"
-  if ! compgen -G "$manifest_glob" > /dev/null 2>&1; then
+  manifest_file="$SCRIPT_DIR/.elelem-manifest-claude"
+  if [[ ! -f "$manifest_file" ]]; then
     say_info "Nothing to uninstall."
     exit 0
   fi
 
-  manifest_paths=()
-  while IFS= read -r -d '' _mp; do
-    manifest_paths+=("$_mp")
-  done < <(compgen -G "$manifest_glob" | sort | tr '\n' '\0')
+  manifest_base=""
+  manifest_files=()
+  manifest_gone=()
 
-  manifest_labels=()
-  manifest_defaults=()
-  for _mp in "${manifest_paths[@]}"; do
-    manifest_labels+=("$(basename "$_mp")")
-    manifest_defaults+=(0)
-  done
-
-  echo
-  say_step "Select manifests to uninstall:"
-  multiselect selected_labels manifest_labels manifest_defaults
-
-  if (( ${#selected_labels[@]} == 0 )); then
-    say_info "Aborted."
-    exit 0
+  if ! parse_manifest "$manifest_file" manifest_base manifest_files manifest_gone; then
+    say_err "could not parse $(basename "$manifest_file"); aborting."
+    exit 1
   fi
 
-  selected_manifests=()
-  for _label in "${selected_labels[@]}"; do
-    selected_manifests+=("$SCRIPT_DIR/$_label")
+  say_step "Planned removal:"
+  echo
+  say_info "Manifest: $(basename "$manifest_file")"
+  say_info "  Base: $manifest_base"
+
+  if [[ ! -d "$manifest_base" ]]; then
+    say_warn "  $manifest_base does not exist (already removed)."
+  fi
+
+  for _f in "${manifest_files[@]+"${manifest_files[@]}"}"; do
+    say_info "  delete: ${_f#"$manifest_base/"}"
   done
 
-  say_step "Planned removals:"
-
-  declare -a all_files=()
-  declare -a all_gone=()
-  declare -a all_dirs=()
-  declare -a all_agents_md=()
-  declare -a all_manifest_files=()
-
-  for manifest_file in "${selected_manifests[@]}"; do
-    manifest_name="$(basename "$manifest_file")"
-    manifest_base=""
-    manifest_files=()
-    manifest_gone=()
-
-    if ! parse_manifest "$manifest_file" manifest_base manifest_files manifest_gone; then
-      continue
-    fi
-
-    echo
-    say_info "Manifest: $manifest_name"
-    say_info "  Base: $manifest_base"
-
-    if [[ ! -d "$manifest_base" ]]; then
-      say_warn "  $manifest_base does not exist (already removed)."
-    fi
-
-    for _f in "${manifest_files[@]+"${manifest_files[@]}"}"; do
-      say_info "  delete: ${_f#"$manifest_base/"}"
-      all_files+=("$_f")
-    done
-
-    for _g in "${manifest_gone[@]+"${manifest_gone[@]}"}"; do
-      say_info "  (already gone): $_g"
-      all_gone+=("$manifest_base/$_g")
-    done
-
-    combined_entries=()
-    for _f in "${manifest_files[@]+"${manifest_files[@]}"}"; do
-      combined_entries+=("$_f")
-    done
-    for _g in "${manifest_gone[@]+"${manifest_gone[@]}"}"; do
-      combined_entries+=("$manifest_base/$_g")
-    done
-
-    collect_dirs_to_prune "$manifest_base" combined_entries all_dirs
-
-    if [[ "$manifest_name" == ".elelem-manifest-codex" ]]; then
-      agents_md="$(resolve_codex_agents_md "$manifest_base")"
-      if [[ -f "$agents_md" ]] && grep -Fq "$CODEX_MANAGED_START" "$agents_md"; then
-        say_info "  strip elelem managed block from: $agents_md"
-        all_agents_md+=("$agents_md")
-      fi
-    fi
-
-    all_manifest_files+=("$manifest_file")
+  for _g in "${manifest_gone[@]+"${manifest_gone[@]}"}"; do
+    say_info "  (already gone): $_g"
   done
+
+  combined_entries=()
+  for _f in "${manifest_files[@]+"${manifest_files[@]}"}"; do
+    combined_entries+=("$_f")
+  done
+  for _g in "${manifest_gone[@]+"${manifest_gone[@]}"}"; do
+    combined_entries+=("$manifest_base/$_g")
+  done
+
+  all_dirs=()
+  collect_dirs_to_prune "$manifest_base" combined_entries all_dirs
 
   if (( ${#all_dirs[@]} > 0 )); then
     echo
@@ -340,20 +247,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     exit 0
   fi
 
-  for _f in "${all_files[@]+"${all_files[@]}"}"; do
+  for _f in "${manifest_files[@]+"${manifest_files[@]}"}"; do
     rm -f "$_f"
   done
 
   prune_empty_dirs all_dirs
 
-  for _am in "${all_agents_md[@]+"${all_agents_md[@]}"}"; do
-    strip_codex_managed_block "$_am"
-  done
-
-  for manifest_file in "${all_manifest_files[@]+"${all_manifest_files[@]}"}"; do
-    rm -f "$manifest_file"
-    say_ok "removed $(basename "$manifest_file")"
-  done
+  rm -f "$manifest_file"
+  say_ok "removed $(basename "$manifest_file")"
 
   echo
   say_ok "Done."
