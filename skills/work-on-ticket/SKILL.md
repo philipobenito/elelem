@@ -129,7 +129,7 @@ If `resolve_epic_context` cannot resolve a parent reference (the ticket is missi
 
 ## Handling Multiple Tickets
 
-If the user wants to work on multiple tickets, work on them one at a time in dependency order per `../../rules/common/workflow.md`. Complete one ticket through the full `subagent-driven-development` cycle (including reviews) before starting the next. If the user wants genuinely parallel work, suggest separate sessions rather than trying to parallelise in one.
+If the user wants to work on multiple tickets, work on them one at a time in dependency order per `../../rules/common/workflow.md`. Complete one ticket through the full `subagent-driven-development` cycle (including reviews) before starting the next. If the user wants genuinely parallel work, use `../team-driven-development/SKILL.md` (which runs tasks across Agent Teams teammates, degrading to sequential `subagent-driven-development` when the capability is unavailable) rather than separate sessions.
 
 ## Edge Cases
 

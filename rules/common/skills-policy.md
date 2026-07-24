@@ -2,7 +2,7 @@
 
 ## Mandatory Skill Usage
 
-You **MUST** use skills when they are available and relevant to the task at hand. Skills are not optional suggestions; they are required workflow steps. If a skill exists that matches your current task, you **MUST** invoke it via the Skill before proceeding with any other response, including clarifying questions, file reads, or codebase exploration.
+You **MUST** use skills when they are available and relevant to the task at hand. Skills are not optional suggestions; they are required workflow steps. If a skill exists that matches your current task, you **MUST** invoke it via the Skill tool before proceeding with any other response, including clarifying questions, file reads, or codebase exploration.
 
 ## The 1% Rule
 
@@ -18,7 +18,7 @@ You **MUST NOT** proceed with a manual approach when a skill covers the same wor
 
 ## Invoking Skills
 
-You **MUST** invoke skills via the Skill. You **MUST NOT** use the Read tool to open a skill file. Skills evolve; the Skill loads the current version, a Read call loads whatever is on disk out of band and bypasses the skill harness.
+You **MUST** invoke skills via the Skill tool. You **MUST NOT** use the Read tool to open a skill file. Skills evolve; the Skill tool loads the current version, a Read call loads whatever is on disk out of band and bypasses the skill harness.
 
 Once a skill is invoked in a conversation, its content is in context, and you do not need to re-invoke it for the same task. Different tasks in the same conversation may require the same skill to be re-read if the context has drifted significantly, but this is a judgement call, not a requirement.
 
@@ -41,7 +41,7 @@ When more than one skill could apply, you **MUST** invoke them in this order:
 
 1. **Entry skills first**: `brainstorming` (always, before any code edit), `debugging` (when the task is "something is broken"), `work-on-ticket` (when the user references a ticket). These determine *what* you are doing.
 2. **Process skills second**: `complexity-triage`, `verification-before-completion`. These determine *how* to approach the work.
-3. **Implementation skills third**: `subagent-driven-development`, `fast-path-implementation`, `test-driven-development`, `dispatching-parallel-agents`, and domain-specific skills. These guide execution.
+3. **Implementation skills third**: `subagent-driven-development`, `fast-path-implementation`, `test-driven-development`, `dispatching-parallel-agents`, `team-driven-development`, and domain-specific skills. These guide execution.
 4. **Review skills fourth**: `requesting-code-review`, `receiving-code-review`. These run before completion claims.
 
 Examples:
@@ -50,6 +50,18 @@ Examples:
 - "Fix this bug" -> `debugging` first (reproduce, find root cause, get user approval on the fix approach); then `test-driven-development` for the regression test; then the fix; then `verification-before-completion`.
 - "Work on #42" -> `work-on-ticket` first; it recovers the design from the parent epic and hands off to `subagent-driven-development`.
 - "Is this done?" -> `verification-before-completion` first, nothing else until the gate has been run.
+
+### Choosing an Orchestration Skill
+
+Three implementation skills orchestrate work across subagents. Use this table to pick between them; the full operational detail for the third lives in `skills/team-driven-development/SKILL.md` and `skills/_shared/teammate-protocol.md`, not here.
+
+| Situation                                                                                                                                                             | Skill                            |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------|
+| Coupled or strictly ordered work, or the default sequential case                                                                                                       | `subagent-driven-development`      |
+| A stateless, single-message fan-out across independent domains with zero shared files and no persisted board                                                          | `dispatching-parallel-agents`      |
+| A sustained feature whose tasks are mostly independent (disjoint file sets) with no shared mutable test/build state, where persistent peers over a shared task board add value, and the Agent Teams capability is available | `team-driven-development` (degrades to `subagent-driven-development` when the capability is absent) |
+
+When in doubt, default to `subagent-driven-development`; it is the safe sequential fallback for all three rows.
 
 Specific mandatory pairings:
 
