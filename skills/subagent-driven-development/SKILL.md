@@ -189,16 +189,15 @@ After the per-task pipeline has been run for every task in the decomposition and
 
 The procedure:
 
-1. **Identify the feature range.** Capture the base commit (the parent of the first task's first commit, or the commit at session start) and the head commit (current `HEAD`).
-2. **Invoke `requesting-code-review`** against that range. The skill dispatches a `code-reviewer` subagent (or a more specific reviewer per `../../rules/common/subagents.md`) using `skills/requesting-code-review/code-reviewer.md`. This is the production-readiness review mandated by `../../rules/common/code-review.md`; the per-task reviews do not replace it.
-3. **Process the reviewer output via `receiving-code-review`.** Apply severity discipline per `../../rules/common/code-review.md`:
-   - **Critical** issues: stop, fix before reporting completion. Re-dispatch the implementer for the affected task scope, re-run the per-task pipeline including the verification gate, and re-run the feature-level review.
-   - **Important** issues: same as Critical for orchestrated work, fix before completion.
-   - **Minor** issues: log them in the completion report; the user decides whether to address them in this session or later.
-4. **Run `verification-before-completion`** against the feature range. The per-task verification gates verified each task in isolation; this final pass verifies the feature as a whole. Run the project's full test suite, the linter, the build, and any feature-specific verification the design called out. Cite the output.
-5. **Report completion** with: the list of tasks completed, the feature-level review verdict, the verification commands and their outputs, and any deferred Minor issues.
+1. **Invoke `requesting-code-review`** for the feature as a whole. It establishes its own range from the `base_sha` recorded for the first task per `../_shared/task-board.md`, dispatches the reviewer, and owns the fix-and-re-review loop until no Critical or Important issue remains. Do not run that loop here: it belongs to that skill, and running it from both sides means either skipping the re-review or paying for it twice. This is the production-readiness review mandated by `../../rules/common/code-review.md`; the per-task reviews do not replace it.
+2. **Branch on its Return Contract.**
+   - **Approved**: the deferred Minor issues travel back with it. Log them in the completion report; the user decides whether to address them in this session or later.
+   - **Issues outstanding**: stop, and do not re-invoke the skill for a better verdict. Where closing the issues needs implementation work rather than a fix, re-dispatch the implementer for the affected task scope, re-run the per-task pipeline including its verification gate, then invoke `requesting-code-review` again. That is a first review of code no reviewer has seen, and it gets a full budget.
+   - **Nothing to review** or **Range unknown**: a precondition failed, so the mandatory review has not happened and this is not an approval. Establish where the work actually is, or get the base from the user, and invoke again.
+3. **Run `verification-before-completion`** against the feature range. The per-task verification gates verified each task in isolation; this final pass verifies the feature as a whole. Run the project's full test suite, the linter, the build, and any feature-specific verification the design called out. Cite the output.
+4. **Report completion** with: the list of tasks completed, the feature-level review verdict, the verification commands and their outputs, and any deferred Minor issues.
 
-You **MUST NOT** report the feature complete without steps 2 and 4 having been run in this message. The per-task verification gates do not satisfy `../../rules/common/verification.md` for the feature claim; only a fresh feature-level run does.
+You **MUST NOT** report the feature complete without steps 1 and 3 having been run in this message, with step 1 returning Approved. The per-task verification gates do not satisfy `../../rules/common/verification.md` for the feature claim; only a fresh feature-level run does.
 
 ## Worked Example
 

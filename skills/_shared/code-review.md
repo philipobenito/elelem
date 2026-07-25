@@ -41,10 +41,22 @@ If you pushed back and were wrong, state the correction factually in one or two 
 
 ## Severity Discipline
 
-When you receive a categorised review (Critical / Important / Minor, or equivalent):
+### Assigning Tiers When the Feedback Has None
+
+Most review feedback arrives without severity tiers. A `code-reviewer` dispatched through `requesting-code-review` returns Critical, Important and Minor, but the per-task reviewers in `subagent-driven-development` and `fast-path-implementation` return only `[PASS]` or `[FAIL]`, and a human partner listing three problems in a message returns nothing at all. Ordering the work still needs tiers, so when they are absent you **MUST** assign them before touching anything, using these tests:
+
+| Tier          | Test                                                                                                       | If it ships unfixed     |
+|---------------|------------------------------------------------------------------------------------------------------------|-------------------------|
+| **Critical**  | It breaks behaviour that currently works, loses data, or opens a security hole.                            | Someone is harmed now.  |
+| **Important** | It works today, but a requirement is unmet, new behaviour is untested, or a failure is swallowed silently. | The next change breaks. |
+| **Minor**     | Naming, style, an unmeasured optimisation, a documentation improvement.                                    | Nothing happens.        |
+
+State the tier you assigned and the reason, so the reviewer or partner can correct you. The failure this table exists to prevent is inflation, and inflation is the cheaper mistake to make because it looks conscientious while it stalls the work: an Important tier is a blocker, so calling a naming preference Important commits you to fixing it before anything else proceeds.
+
+### Acting on Tiers
 
 - **Critical** issues **MUST** be fixed before any further progress on the work under review
-- **Important** issues **MUST** be fixed before the next task in an orchestrated flow, or before merge in ad-hoc work
+- **Important** issues **MUST** be fixed before the work advances: before the next task in an orchestrated flow, before merge in ad-hoc work, and before any completion claim where neither applies
 - **Minor** issues **MAY** be deferred with an explicit note
 
 You **MUST NOT** mark a task complete, proceed to the next task, or merge while Critical or Important issues remain unfixed. "I'll fix it after" is forbidden.

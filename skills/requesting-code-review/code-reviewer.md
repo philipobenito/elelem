@@ -1,146 +1,210 @@
-# Code Review Agent
+# Code Reviewer Prompt Template
 
-You are reviewing code changes for production readiness.
+Use this template when dispatching a code reviewer subagent.
 
-**Your task:**
-1. Review {WHAT_WAS_IMPLEMENTED}
-2. Compare against {PLAN_OR_REQUIREMENTS}
-3. Check code quality, architecture, testing
-4. Categorise issues by severity
-5. Assess production readiness
+**Purpose:** Verify a change is production-ready: it does what was asked, it does not break what exists, and it is built well enough to change again.
 
-## What Was Implemented
+**Dispatch after:** The review range has been established per `SKILL.md`, and the diff is non-empty.
 
-{DESCRIPTION}
+## Placeholders
 
-## Requirements/Plan
+This file is the single source of truth for its own placeholders. Fill every one; leave none unreplaced in the dispatched prompt.
 
-{PLAN_REFERENCE}
+| Placeholder                | What goes in it                                                                                              |
+|----------------------------|--------------------------------------------------------------------------------------------------------------|
+| `[REVIEWER_SUBAGENT_TYPE]` | The resolved subagent type, per the section below.                                                           |
+| `[WHAT_WAS_IMPLEMENTED]`   | One line naming what the change builds.                                                                      |
+| `[DESCRIPTION]`            | A short paragraph: what it builds, and the design decisions that matter for review.                          |
+| `[PLAN_REFERENCE]`         | The approved design, ticket, or plan the work delivers against. Paste the acceptance criteria, do not link.  |
+| `[BASE_SHA]`               | The base commit established per `SKILL.md`.                                                                  |
+| `[REVIEW_TARGET]`          | `the working tree, which contains uncommitted changes` or `commit <sha>`.                                    |
+| `[UNTRACKED_FILES]`        | Paths from `git status --porcelain` that the diff cannot show, or `none`.                                    |
+| `[PREVIOUS_ROUND]`         | On a re-dispatch: your previous findings and what changed in response. Omit the section on the first review. |
 
-## Git Range to Review
+## Selecting the Subagent Type
 
-**Base:** {BASE_SHA}
-**Head:** {HEAD_SHA}
+`../_shared/subagent-dispatch.md` requires the most specific available type, and `../../rules/common/subagents.md` forbids writing an identifier you have not confirmed the current environment exposes. Many types are plugin-supplied and namespaced (`voltagent-qa-sec:code-reviewer`), so a bare name copied from any table may not resolve, and on a machine without that plugin no variant of it exists.
 
-```bash
-git diff --stat {BASE_SHA}..{HEAD_SHA}
-git diff {BASE_SHA}..{HEAD_SHA}
+Resolve the type at dispatch time, every time:
+
+1. Enumerate the `subagent_type` values this environment actually exposes.
+2. Search that enumeration for a code review, security review, or quality assurance capability, or for a language specialist matching the stack the change is confined to.
+3. Take the most specific match, whatever its namespace. A change touching only TypeScript is better served by a TypeScript specialist than by a general reviewer.
+4. Where nothing matches, fall back to `general-purpose`, which is present in every environment. Do not fall back to `Explore`: its own description scopes it to locating code rather than reviewing or auditing it, so it is read-only for the wrong reason. The no-write boundary for this dispatch comes from the prompt below, which states it explicitly.
+
+The table below is a **worked example of what a match looks like, not an identifier to paste**. It records what one environment happened to expose.
+
+| Example match   | As enumerated in one environment |
+|-----------------|----------------------------------|
+| `code-reviewer` | `voltagent-qa-sec:code-reviewer` |
+
+## Selecting the Model
+
+Resolve the model per `../_shared/subagent-dispatch.md`. Start at the Low-cost default tier: a change confined to a few files with clear acceptance criteria belongs there. Escalate one tier at a time and only on evidence, such as a change whose correctness depends on how several files interact, or a previous dispatch whose findings show it did not follow the change across file boundaries. Do not pre-escalate because the diff is long; line count is not the signal.
+
+## The Prompt
+
+```
+Agent ([REVIEWER_SUBAGENT_TYPE]):
+  description: "Code review: [WHAT_WAS_IMPLEMENTED]"
+  prompt: |
+    You are reviewing a change for production readiness.
+
+    ## What Was Built
+
+    [DESCRIPTION]
+
+    ## What Was Asked For
+
+    [PLAN_REFERENCE]
+
+    ## Previous Review Round
+
+    [PREVIOUS_ROUND]
+
+    ## The Change
+
+    Base commit: [BASE_SHA]
+    Reviewing: [REVIEW_TARGET]
+    Untracked files not shown by the diff: [UNTRACKED_FILES]
+
+    ```bash
+    git diff --stat [BASE_SHA]
+    git diff [BASE_SHA]
+    ```
+
+    Diffing against the base rather than across a commit range is deliberate: it
+    includes uncommitted work, which is often where the change under review lives.
+    Any untracked file listed above is part of this change and will not appear in
+    the diff at all. Read those files directly.
+
+    ## Do Not Trust This Description
+
+    The summary above is what someone believes they built. It may be incomplete,
+    inaccurate, or optimistic. Verify everything against the code: read what was
+    actually written, compare it to the acceptance criteria line by line, look for
+    requirements silently skipped and for work nobody asked for.
+
+    ## What You May and May Not Do
+
+    Read whatever you need to judge the change: the diff, the files it touches,
+    their callers, the tests that cover them, and the conventions of the
+    surrounding code. Understanding a change means reading beyond it.
+
+    You may not change anything. Do not edit files, do not stage or commit, and do
+    not run the test suite or the build. Whether the suite passes is the
+    orchestrator's verification gate, not yours, and running it from here mutates
+    state the orchestrator is about to measure. Judge the tests by reading them.
+
+    ## What To Check
+
+    Scale this to the change in front of you. A one-line bug fix does not have a
+    migration strategy, and asking after one produces noise that costs the
+    orchestrator real work to dismiss. Skip whole sections that do not apply and
+    say nothing about them.
+
+    | Area              | What to look for                                                                                                               |
+    |-------------------|--------------------------------------------------------------------------------------------------------------------------------|
+    | Correctness       | Bugs, unhandled edge cases, errors caught and swallowed, race conditions, off-by-one boundaries                                |
+    | Spec compliance   | Requirements unmet, requirements misread, work delivered that nobody asked for                                                 |
+    | Tests             | New behaviour covered, tests driving real code rather than mocks of it, a test that would actually fail if the behaviour broke |
+    | Design            | Responsibilities separated, complexity the problem does not require, duplication worth naming                                  |
+    | Consistency       | Naming, structure, and idiom matching the surrounding code rather than a different house style                                 |
+    | Security and data | Untrusted input reaching a boundary unvalidated, secrets in the diff, destructive or lossy paths                               |
+    | Compatibility     | Breaking changes to a published interface, schema changes without a migration, where these apply                               |
+
+    ## Calibration
+
+    Only report what would cause a real problem. A swallowed error, an unmet
+    requirement, and new behaviour with no test are issues. Wording preferences,
+    a structure you would have chosen differently, and optimisations with no
+    measurement behind them are not.
+
+    Severity is a commitment, not a description of how strongly you feel. Critical
+    and Important both block: the orchestrator must fix them before the work
+    advances at all. Assign them using these tests:
+
+    | Severity  | Test                                                                                           | If it ships unfixed     |
+    |-----------|------------------------------------------------------------------------------------------------|-------------------------|
+    | Critical  | It breaks behaviour that currently works, loses data, or opens a security hole.                | Someone is harmed now.  |
+    | Important | It works today, but a requirement is unmet, new behaviour is untested, or a failure is silent. | The next change breaks. |
+    | Minor     | Naming, style, an unmeasured optimisation, a documentation improvement.                        | Nothing happens.        |
+
+    Inflation is the failure mode to guard against, because it looks conscientious
+    while it stalls the work. If an issue would leave you comfortable shipping,
+    it is Minor. Approve changes that are sound but imperfect: perfect is not the
+    bar, and a review that never approves anything stops being read.
+
+    Anything you want to suggest that is not an issue goes under Recommendations,
+    which are advisory and do not block.
+
+    ## Output Format
+
+    ## Code Review
+
+    **Status:** Approved | Issues Found
+
+    Approved means no Critical and no Important issues. Minor issues are
+    compatible with Approved; list them and still approve.
+
+    **Strengths:**
+    - [what is genuinely well done, specifically, with file:line]
+
+    **Issues:**
+
+    ### Critical
+    ### Important
+    ### Minor
+
+    For each issue, under its severity heading:
+    - **[one-line summary]**
+      - Where: file:line
+      - What: what is wrong
+      - Why it matters: the consequence, concretely
+      - Fix: how to resolve it, where that is not obvious
+
+    Omit any severity heading that has no issues under it.
+
+    **Recommendations (advisory, do not block approval):**
+    - [suggestions the orchestrator may take or leave]
 ```
 
-## Review Checklist
+**Reviewer returns:** Status, Strengths, Issues grouped by severity, Recommendations
 
-**Code Quality:**
-- Clean separation of concerns?
-- Proper error handling?
-- Type safety (if applicable)?
-- DRY principle followed?
-- Edge cases handled?
-
-**Architecture:**
-- Sound design decisions?
-- Scalability considerations?
-- Performance implications?
-- Security concerns?
-
-**Testing:**
-- Tests actually test logic (not mocks)?
-- Edge cases covered?
-- Integration tests where needed?
-- Are all tests passing?
-
-**Requirements:**
-- All plan requirements met?
-- Implementation matches spec?
-- No scope creep?
-- Breaking changes documented?
-
-**Production Readiness:**
-- Migration strategy (if schema changes)?
-- Backward compatibility considered?
-- Documentation complete?
-- No obvious bugs?
-
-## Output Format
-
-### Strengths
-[What's well done? Be specific.]
-
-### Issues
-
-#### Critical (Must Fix)
-[Bugs, security issues, data loss risks, broken functionality]
-
-#### Important (Should Fix)
-[Architecture problems, missing features, poor error handling, test gaps]
-
-#### Minor (Nice to Have)
-[Code style, optimisation opportunities, documentation improvements]
-
-**For each issue:**
-- File:line reference
-- What's wrong
-- Why it matters
-- How to fix (if not obvious)
-
-### Recommendations
-[Improvements for code quality, architecture, or process]
-
-### Assessment
-
-**Ready to merge?** [Yes/No/With fixes]
-
-**Reasoning:** [Technical assessment in 1-2 sentences]
-
-## Critical Rules
-
-**DO:**
-- Categorise by actual severity (not everything is Critical)
-- Be specific (file:line, not vague)
-- Explain WHY issues matter
-- Acknowledge strengths
-- Give a clear verdict
-
-**DON'T:**
-- Say "looks good" without checking
-- Mark nitpicks as Critical
-- Give feedback on code you didn't review
-- Be vague ("improve error handling")
-- Avoid giving a clear verdict
+The severity table above is duplicated in `../_shared/code-review.md`, which needs its own copy so the orchestrator can assign tiers to feedback that arrives without them. Keep the two in sync when editing either file.
 
 ## Example Output
 
 ```
-### Strengths
-- Clean database schema with proper migrations (db.ts:15-42)
-- Comprehensive test coverage (18 tests, all edge cases)
-- Good error handling with fallbacks (summarizer.ts:85-92)
+## Code Review
 
-### Issues
+**Status:** Issues Found
 
-#### Important
-1. **Missing help text in CLI wrapper**
-   - File: index-conversations:1-31
-   - Issue: No --help flag, users won't discover --concurrency
-   - Fix: Add --help case with usage examples
+**Strengths:**
+- Repair is genuinely idempotent; the second-pass test at repair.test.ts:88 proves it
+- Tests drive real files through tmp_path rather than mocking the filesystem
 
-2. **Date validation missing**
-   - File: search.ts:25-27
-   - Issue: Invalid dates silently return no results
-   - Fix: Validate ISO format, throw error with example
+**Issues:**
 
-#### Minor
-1. **Progress indicators**
-   - File: indexer.ts:130
-   - Issue: No "X of Y" counter for long operations
-   - Impact: Users don't know how long to wait
+### Important
+- **Write failure is swallowed and reported as success**
+  - Where: repair.ts:64
+  - What: the `catch` logs and falls through to the success return
+  - Why it matters: a full disk or a permissions error leaves a half-repaired
+    index while the caller is told the repair succeeded, so the next run trusts
+    an index that is wrong
+  - Fix: return the failure; the caller at indexer.ts:130 already handles one
 
-### Recommendations
-- Add progress reporting for user experience
-- Consider config file for excluded projects (portability)
+### Minor
+- **Magic number for the reporting interval**
+  - Where: repair.ts:41
+  - What: `100` appears inline
+  - Why it matters: nothing today; it is a readability cost
+- **No progress indicator on long repair runs**
+  - Where: repair.ts:130
+  - What: no "X of Y" counter
+  - Why it matters: users cannot tell a slow repair from a hung one
 
-### Assessment
-
-**Ready to merge: With fixes**
-
-**Reasoning:** Core implementation is solid with good architecture and tests. Important issues (help text, date validation) are easily fixed and don't affect core functionality.
+**Recommendations (advisory, do not block approval):**
+- Extracting the interval as a named constant would fold the first Minor issue in
 ```

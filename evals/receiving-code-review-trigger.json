@@ -1,0 +1,21 @@
+[
+  {"query": "here's what the reviewer said on my PR: 1. the cache key doesn't include the tenant id 2. no test for the empty batch case 3. rename processThing. can you sort these out", "should_trigger": true},
+  {"query": "coderabbit left about 15 comments on #218 and honestly half of them look like nonsense. work through them properly rather than just doing what it says", "should_trigger": true},
+  {"query": "my tech lead reckons the caching layer in search.ts is over engineered and wants it ripped out before merge. what do you think, and if he's right just do it", "should_trigger": true},
+  {"query": "the reviewer wants me to build out proper metrics tracking on that endpoint, database, date filters, csv export, the lot. that feels like a lot for something we added last week", "should_trigger": true},
+  {"query": "sonarcloud flagged four things on release/2.4, go through them and address the ones that are real", "should_trigger": true},
+  {"query": "review feedback is in review-notes.md, six items. implement it please", "should_trigger": true},
+  {"query": "i disagree with one of the comments on my PR but i don't want to just quietly ignore it, how do i handle that", "should_trigger": true},
+  {"query": "the subagent that reviewed task 2 came back FAIL with three issues, what happens now", "should_trigger": true},
+  {"query": "greg says my error handling in the importer is wrong. he's usually right but the retry behaviour he's describing doesn't apply on python 3.11 as far as i know", "should_trigger": true},
+  {"query": "can you review my branch before i open the PR, i want to know if it's ready", "should_trigger": false},
+  {"query": "how do i reply to an inline review comment on github from the command line rather than the web ui", "should_trigger": false},
+  {"query": "CI is red on the PR, the integration suite times out on the third run. fix it", "should_trigger": false},
+  {"query": "write me a PR description for this branch, there's about 12 commits and i want it to actually explain the change", "should_trigger": false},
+  {"query": "give me feedback on the design doc for the notifications rework before i circulate it", "should_trigger": false},
+  {"query": "review this candidate's take home submission in ~/Downloads/submission and tell me whether we should move them to onsite", "should_trigger": false},
+  {"query": "our code review turnaround is about three days and it's killing us, how do other teams speed that up", "should_trigger": false},
+  {"query": "summarise the discussion on issue 88 for me, there are about 40 comments and i've lost the thread", "should_trigger": false},
+  {"query": "approve and merge PR 51, it's the dependabot bump for the json parser", "should_trigger": false},
+  {"query": "i got some fairly blunt feedback in my performance review at work and i want help drafting a reply to my manager", "should_trigger": false}
+]

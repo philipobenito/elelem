@@ -1,0 +1,21 @@
+[
+  {"query": "just finished the retry logic on the webhook consumer, can you give it a once over before i open the PR against main", "should_trigger": true},
+  {"query": "I think the billing migration branch is done. before I merge it into main can you get a proper look over the diff, it's about 400 lines across the invoice service and the two workers", "should_trigger": true},
+  {"query": "ok the auth refactor is finished and the tests pass locally. what's left before I can call this done?", "should_trigger": true},
+  {"query": "we're shipping feature/csv-export to staging tomorrow morning. i want a real production readiness check on everything since we branched off, not a skim", "should_trigger": true},
+  {"query": "the fix for the null deref in OrderMapper is in along with the regression test. can you sign it off", "should_trigger": true},
+  {"query": "before i commit this can you check the diff for anything that'll bite us later, especially the error handling i added in payments.ts", "should_trigger": true},
+  {"query": "i've got the whole importer working end to end now. get a second pair of eyes on it please, i've been staring at it too long", "should_trigger": true},
+  {"query": "task 4 of the plan is implemented and committed. moving on to task 5 now", "should_trigger": true},
+  {"query": "changes are all in the working tree, nothing committed yet because i wasn't sure about the approach. can you have someone look at it", "should_trigger": true},
+  {"query": "the reviewer left 6 comments on my PR, can you work through them and fix what needs fixing", "should_trigger": false},
+  {"query": "have a look at PR 442 from Sam and tell me whether it's ok for me to approve it", "should_trigger": false},
+  {"query": "review the design summary we just put together before we start cutting tickets for it", "should_trigger": false},
+  {"query": "review this ADR I wrote about moving the order pipeline to event sourcing, I want to know if the reasoning holds up", "should_trigger": false},
+  {"query": "the tests on this branch started failing after i rebased and i can't work out why", "should_trigger": false},
+  {"query": "can you explain what parseLegacyManifest does, i inherited this file and have no idea what half of it is for", "should_trigger": false},
+  {"query": "we're thinking of adopting fastexcel, can you read through its source and tell me if it looks well maintained enough to depend on", "should_trigger": false},
+  {"query": "run the full test suite and the linter and tell me if anything is broken", "should_trigger": false},
+  {"query": "what are good code review practices for a team of four where nobody has much time", "should_trigger": false},
+  {"query": "set up a github action that runs eslint and the type checker on every pull request", "should_trigger": false}
+]
