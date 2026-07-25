@@ -95,7 +95,9 @@ A triage verdict is a prediction made before the code exists. Two things can fal
 - **The reviewer reports `TRIAGE_INVALID`.** The combined reviewer dispatched by `fast-path-implementation` re-checks the classification against the actual diff and names the criterion that failed (see `../fast-path-implementation/fast-path-reviewer-prompt.md`). This check is stronger than the one in this skill, because it reads code that exists rather than predicting code that does not, and it is run by an agent with no stake in the answer. It is a stop, not an advisory.
 - **The orchestrator sees it directly.** If the work is plainly more complex than the table concluded, stop without waiting for a reviewer to say so.
 
-Either route ends the same way: reclassify as COMPLEX and hand back to `subagent-driven-development` for re-decomposition. The sunk cost of the interrupted attempt is negligible, because nothing is committed before the fast path's checkpoint, and it is far cheaper than pushing complex work through a review shaped for mechanical edits.
+Either route ends the same way: reclassify as COMPLEX and hand back to `subagent-driven-development` at its Task Decomposition step for re-decomposition. This skill is not re-run on the way through, for the reason in Preconditions: the same design against the same predictive evidence returns the same verdict, and the falsification is the stronger evidence now.
+
+The sunk cost of the interrupted attempt is negligible, because nothing is committed before the fast path's checkpoint, and it is far cheaper than pushing complex work through a review shaped for mechanical edits. Negligible is not nothing, though: the implementer's edits are still sitting uncommitted in the working tree, and discarding them is a destructive git operation the user has to authorise. `../fast-path-implementation/SKILL.md` settles that with the user before handing back.
 
 ## Return Contract
 

@@ -39,6 +39,14 @@ Run `complexity-triage` against the approved design. That skill presents its own
 - If the classification is **SIMPLE**, invoke `fast-path-implementation` and stop. That skill owns the rest of the flow. Pass the evidence table through, and note the override if the SIMPLE verdict came from the user rather than the criteria.
 - If the classification is **COMPLEX**, continue with the task decomposition below.
 
+### Re-entry After a Failed Fast Path
+
+`fast-path-implementation` returns `TRIAGE_INVALID` when the actual code falsifies the SIMPLE verdict. Its Return Contract sends the work back here, and the re-entry point is the **Task Decomposition** section below, not the top of this skill.
+
+Two steps above it are already settled and are not repeated. The commit preference was asked once and holds for the session. `complexity-triage` is not re-run: its Preconditions bind triage to once per design, and putting the same design back through the same predictive evidence returns the same SIMPLE verdict and reopens the path that just failed. Take COMPLEX as given, along with the criterion the fast path named and its evidence, and decompose.
+
+The fast path settles what happens to its uncommitted partial work with the user before handing back, so arrive at decomposition knowing whether those edits are still in the tree and plan the file structure against the tree as it actually is.
+
 ## Task Decomposition
 
 Decompose the design into implementable tasks before dispatching any subagent.
