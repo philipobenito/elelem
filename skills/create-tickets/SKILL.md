@@ -12,8 +12,9 @@ context; they live next to the ticket skills and load only when a ticket skill i
 Before running the procedure below, read `../_shared/tickets.md` using the Read tool if you have
 not already read it in this session.
 
-Detection of which ticketing system is in use lives in the `detect-ticketing-system` skill. This
-skill is the procedure that decomposes an approved design into tickets and creates them.
+Detection of which ticketing system is in use lives in `../_shared/ticketing-detection.md`, loaded
+at step 1. This skill is the procedure that decomposes an approved design into tickets and creates
+them.
 
 ## Preconditions
 
@@ -30,9 +31,9 @@ router's own rules.
 
 ## Procedure
 
-1. **Detect the ticketing system.** Invoke the `detect-ticketing-system` skill. This skill is
-   that skill's caller, so confirming the result is this skill's job and does not pass further
-   up the chain.
+1. **Detect the ticketing system.** Read `../_shared/ticketing-detection.md` and run its procedure.
+   This skill ran the detection, so confirming the result is this skill's job and does not pass
+   further up any chain.
 
    | Result             | Action                                                                                                                                     |
    |--------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
@@ -290,16 +291,16 @@ reader nothing the epic title did not.
 
 ## Common Mistakes
 
-| Mistake                                              | Why it is wrong                                                                                                                                        |
-|------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Creating tickets before the step 5 gate              | Creation writes outside this repository and step 7 forbids rollback. Step 8 cannot undo what step 6 did.                                               |
-| Leaving the system confirmation to "the caller"      | This skill **is** the caller of `detect-ticketing-system`. The obligation stops here, and a chain where each end points at the other confirms nothing. |
-| Padding a one-Task theme into a Story                | Stories hold 2 to 6 Tasks. A loose Task is the designed shape, not a failure to group.                                                                 |
-| Wrapping every Task in a single Story                | The Story Tier Rule makes this unreachable, so arriving at it means the rule was not applied.                                                          |
-| Copying the design into a Story body                 | Two copies diverge on the first edit and recovery cannot tell which is authoritative.                                                                  |
-| Creating Tasks in presentation order                 | A `Depends on #N` reference needs `#N` to exist. Dependencies cross Story boundaries, so only a global topological order is safe.                      |
-| Treating a failed back-fill as fatal                 | Native parent links already carry recovery. The index is a convenience, and abandoning a correct ticket tree over it helps nobody.                     |
-| Handing off to an orchestration skill after creating | Implementation from a ticket enters through `work-on-ticket`, which confirms scope against the code as it is now.                                      |
+| Mistake                                              | Why it is wrong                                                                                                                            |
+|------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| Creating tickets before the step 5 gate              | Creation writes outside this repository and step 7 forbids rollback. Step 8 cannot undo what step 6 did.                                   |
+| Leaving the system confirmation to "the caller"      | This skill ran the detection procedure itself. The obligation stops here, and a chain where each end points at the other confirms nothing. |
+| Padding a one-Task theme into a Story                | Stories hold 2 to 6 Tasks. A loose Task is the designed shape, not a failure to group.                                                     |
+| Wrapping every Task in a single Story                | The Story Tier Rule makes this unreachable, so arriving at it means the rule was not applied.                                              |
+| Copying the design into a Story body                 | Two copies diverge on the first edit and recovery cannot tell which is authoritative.                                                      |
+| Creating Tasks in presentation order                 | A `Depends on #N` reference needs `#N` to exist. Dependencies cross Story boundaries, so only a global topological order is safe.          |
+| Treating a failed back-fill as fatal                 | Native parent links already carry recovery. The index is a convenience, and abandoning a correct ticket tree over it helps nobody.         |
+| Handing off to an orchestration skill after creating | Implementation from a ticket enters through `work-on-ticket`, which confirms scope against the code as it is now.                          |
 
 ## Closing the Loop
 

@@ -38,7 +38,7 @@ The escape hatch for the brainstorming router. The user already has a clear desi
 
 5. **Ask what happens next.** Use `AskUserQuestion` with two options: "Implement directly" and "Create tickets first".
 
-6. **Hand off via `Skill`.** Either `create-tickets`, or the orchestrator chosen per the "Choosing an Orchestration Skill" table in `../../rules/common/skills-policy.md` (`subagent-driven-development` by default, `team-driven-development` when the design qualifies for parallel execution, `dispatching-parallel-agents` for a stateless one-shot fan-out). Nothing else.
+6. **Hand off via `Skill`.** Either `create-tickets`, or the orchestrator chosen per the "Choosing an Orchestration Skill" table in `../../rules/common/skills-policy.md` (`subagent-driven-development` by default, `team-driven-development` when the design qualifies for parallel execution). Nothing else.
 
 ## What Skip Mode Does Not Do
 

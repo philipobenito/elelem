@@ -39,7 +39,7 @@ Before running the procedure below, you **MUST** read both files using the Read 
 
    A decision required return takes the same route for the same reason, and this is the mode where it belongs there rather than with the user: the review found a question the design never answered, the user picked a mode on the promise of not being asked questions, and three deliberating members are better placed to answer it than a reviewer working alone would have been. Run the targeted round, then invoke `design-review` again against the revised summary. Escalate to the user only where the round cannot settle it, which per `../../rules/common/workflow.md` is a stopping condition rather than a failure of the mode. Outstanding issues, by contrast, means the review budget is spent, so the decision goes to the user rather than to another dispatch.
 10. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval. Once the user approves, call `ExitPlanMode` carrying the approved summary. Approval came from the question you just asked, so this call releases the session rather than seeking approval again, and it has to happen before the hand-off: every downstream skill starts by writing something, and plan mode does not lapse on its own.
-11. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table: default to `subagent-driven-development`; use `team-driven-development` when the design qualifies for parallel execution (at least three independent components that can be built simultaneously with no shared state); use `dispatching-parallel-agents` for a stateless one-shot fan-out (all tasks are fully specified, idempotent, and require no inter-agent coordination). Invoke the chosen skill via `Skill`.
+11. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table: default to `subagent-driven-development`; use `team-driven-development` when the design qualifies for parallel execution (at least three independent components that can be built simultaneously with no shared state). Invoke the chosen skill via `Skill`.
 
 ## The Three Perspectives
 
@@ -158,7 +158,7 @@ User: "Add webhook delivery for order events. I don't want to be involved, come 
 
 ## Completion Gate
 
-You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-driven-development`, `team-driven-development`, `dispatching-parallel-agents`) until all of these are true:
+You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-driven-development`, `team-driven-development`) until all of these are true:
 
 - Every decision group has a recorded consensus
 - The design summary was assembled from those consensuses into a single text block

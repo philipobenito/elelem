@@ -2,7 +2,7 @@
 
 These rules apply to every subagent dispatch made from inside a skill. They are the procedural detail behind the iron laws in `../../rules/common/subagents.md`. The iron laws (context isolation, the git ban, the worktree ban, the privilege ban) live in the always-on rule file and bind whether or not a skill is running. The rules below govern *how* a dispatch is constructed and managed once a skill has decided to dispatch.
 
-Skills that dispatch subagents (`subagent-driven-development`, `team-driven-development`, `dispatching-parallel-agents`, `fast-path-implementation`, `brainstorming-committee`, `debugging`, `design-review`, `requesting-code-review`) **MUST** read this file before performing a dispatch.
+Skills that dispatch subagents (`subagent-driven-development`, `team-driven-development`, `fast-path-implementation`, `brainstorming-committee`, `debugging`, `design-review`, `requesting-code-review`) **MUST** read this file before performing a dispatch.
 
 ## Subagent Type Selection
 
@@ -57,6 +57,19 @@ Every thought below means **stop and re-run the resolution procedure**:
 | "This was valid last month"                             | Catalogues change. Re-verify against the current environment before every dispatch, not from memory.                                                              |
 | "The table lists it, so it exists"                      | The tier table is a worked example, not an availability guarantee. Confirm the value against the enumerated list.                                                 |
 | "I will use the session model to be safe"               | That is pre-escalation. Sort by cost first and start at the cheapest tier.                                                                                        |
+
+## Parallel Dispatch
+
+When more than one subagent runs concurrently, two mechanics bind in addition to everything above. They apply to any concurrent round, whatever the dispatching skill is doing with it.
+
+**Parallelism comes from the message, not the intent.** Issue every `Agent` call for a concurrent round in the same message. A dispatch issued in the next turn runs only after the previous one has returned, which is sequential however it was described.
+
+**Reconcile before drawing conclusions.** When a concurrent round returns, read every agent's full report before acting on any of them, and check for:
+
+- **File-level overlap**, for any agent that wrote to the tree. If two agents touched the same file, read both diffs and confirm neither edit overwrote the other. Work that cannot be partitioned into non-overlapping write sets **MUST** be serialised instead of dispatched concurrently.
+- **Systematic error.** Agents working in isolation can reach the same wrong conclusion. Convergent answers from isolated agents are as often a shared blind spot as they are proof.
+
+For a round that changed the tree, per-agent local verification does not satisfy `../../rules/common/verification.md`. Run the full suite against the merged state; concurrent changes only pass the gate once they pass together. If reconciliation fails, use the Escalation section below. You **MUST NOT** patch a subagent's output manually in the orchestrator context.
 
 ## Answering Subagent Questions
 

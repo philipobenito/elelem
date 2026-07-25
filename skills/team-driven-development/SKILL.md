@@ -21,7 +21,7 @@ This skill is a thin parallel wrapper over `../subagent-driven-development/SKILL
 
 ## When to Run
 
-This skill is a sibling to SDD, not a mode of it: SDD is invoked directly for sequential work, and this skill is invoked directly when parallel teammates are the right fit. It is also not `../dispatching-parallel-agents/SKILL.md`, which is a stateless, one-shot fan-out for a single message with no board, no persistence, and no ongoing coordination; this skill runs a multi-task feature over a shared task board and mailbox for the life of the session.
+This skill is a sibling to SDD, not a mode of it: SDD is invoked directly for sequential work, and this skill is invoked directly when parallel teammates are the right fit. It runs a multi-task feature over a shared task board and mailbox for the life of the session, so it is the only route to parallel implementation; a bare concurrent fan-out with no board and no per-task review gate is not an orchestration option, because it would bypass the review and testing gates SDD supplies.
 
 Use this skill only when all of the following hold:
 
@@ -29,7 +29,7 @@ Use this skill only when all of the following hold:
 - Persistent peers coordinating over a shared board add real value, because enough ready, unblocked, file-disjoint work exists at once to justify more than one agent on the board concurrently.
 - There is no shared mutable test/build state that concurrent teammates would contend for (see "Shared-Tree Execution Safety" below). A project where every task exercises the same such state is a poor candidate.
 
-Route elsewhere otherwise: tightly coupled or strictly ordered work goes to `../subagent-driven-development/SKILL.md`; a single-message, stateless fan-out with zero shared files and no persisted board goes to `../dispatching-parallel-agents/SKILL.md`. Routing between the orchestration skills is governed by `../../rules/common/skills-policy.md`.
+Route elsewhere otherwise: tightly coupled or strictly ordered work, and anything that does not clear all three conditions above, goes to `../subagent-driven-development/SKILL.md`. Routing between the orchestration skills is governed by `../../rules/common/skills-policy.md`.
 
 ## Capability Gate
 
@@ -132,7 +132,6 @@ Once every task is drained, shut down every teammate first, per `../_shared/team
 ## Integration
 
 - **`../subagent-driven-development/SKILL.md`**: supplies the decomposition, the per-task code review and verification gate, the user checkpoint, and the final feature-level review this skill reuses by reference; also supplies `reviewer-prompt.md` and is the fallback target when the capability gate fails or a run degrades.
-- **`../dispatching-parallel-agents/SKILL.md`**: the stateless one-shot sibling for parallel work with no board and no persistence; not used by, and not a substitute for, this skill.
 - **`../_shared/teammate-protocol.md`**: the operational procedure for lead-assignment, the pre-flight ownership check, the mailbox, completion handoff, idle handling, and failure recovery.
 - **`../_shared/task-board.md`**: the board schema this skill's tasks are created and updated against.
 - **`../_shared/subagent-dispatch.md`**: type and model selection for every teammate, unchanged from one-shot subagent dispatch.

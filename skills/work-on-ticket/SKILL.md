@@ -9,7 +9,7 @@ description: Picks up a ticket from the project's ticketing system, fetches its 
 
 This skill depends on the rules in `skills/_shared/tickets.md`. Those rules are **not** always in context; they live next to the ticket skills and are loaded only when a ticket skill is invoked. Before running the procedure below, you **MUST** read `skills/_shared/tickets.md` using the Read tool if you have not already read it in this session.
 
-The detection of which ticketing system is in use lives in the `detect-ticketing-system` skill. The downstream implementation workflow lives in the orchestration skills such as `subagent-driven-development`, `team-driven-development`, and `dispatching-parallel-agents`. This skill bridges the gap across session boundaries between a ticket that was created in a prior session and the implementation workflow that delivers it.
+The detection of which ticketing system is in use lives in `skills/_shared/ticketing-detection.md`, loaded at step 1. The downstream implementation workflow lives in the orchestration skills, `subagent-driven-development` and `team-driven-development`. This skill bridges the gap across session boundaries between a ticket that was created in a prior session and the implementation workflow that delivers it.
 
 **Precondition**: the user has referenced a specific ticket to work on (for example, "work on #42", "pick up PROJ-123", "implement issue 7"). Without a specific reference, this skill does not apply; if the user is asking what to work on next, that is a triage question, not this skill.
 
@@ -17,7 +17,7 @@ The detection of which ticketing system is in use lives in the `detect-ticketing
 
 You **MUST** complete these steps in order. Do not skip a step and do not reorder them.
 
-1. **Detect the ticketing system.** Invoke the `detect-ticketing-system` skill to identify where the ticket lives.
+1. **Detect the ticketing system.** Read `skills/_shared/ticketing-detection.md` and run its procedure to identify where the ticket lives.
 
 2. **Fetch the ticket.** Retrieve its full content: title, description, labels, status, parent or epic relationship, child or sub-issue references, and linked tickets. See "Per-system fetch" below for the specific API calls.
 
@@ -136,4 +136,4 @@ If the user wants to work on multiple tickets, work on them one at a time in dep
 - **Ticket already partially implemented**: read git history and current code state, present what exists to the user, and adjust the scope to cover only the remaining work before step 7.
 - **Ticket depends on unfinished work**: flag the dependency. Ask the user whether to work on the dependency first or to proceed with stubs or interfaces for the missing pieces.
 - **Ticket description is vague**: use the epic's design context to fill in gaps. If still unclear after that, ask the user targeted questions before proceeding. You **MUST NOT** guess at requirements.
-- **No ticketing system detected**: if the user provides a ticket reference but `detect-ticketing-system` returns "none", ask the user to paste the ticket content (and the parent epic content if applicable) directly, then run `resolve_epic_context` against the pasted content using the markdown heading structure described in `skills/_shared/tickets.md`'s Tier Markers section as the tier marker.
+- **No ticketing system detected**: if the user provides a ticket reference but detection returns "none", ask the user to paste the ticket content (and the parent epic content if applicable) directly, then run `resolve_epic_context` against the pasted content using the markdown heading structure described in `skills/_shared/tickets.md`'s Tier Markers section as the tier marker.

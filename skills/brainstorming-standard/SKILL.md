@@ -50,7 +50,7 @@ For the rule that no implementation may begin until the user has approved a desi
 
    Once they approve, call `ExitPlanMode` carrying the approved summary. Approval came from the question you just asked, so this call is releasing the session rather than seeking approval again, and it has to happen before the hand-off: every downstream skill starts by writing something, and plan mode does not lapse on its own.
 
-8. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table (`subagent-driven-development` by default; `team-driven-development` when the design qualifies for parallel execution, or `dispatching-parallel-agents` for a stateless one-shot fan-out). Invoke the chosen skill via `Skill`. **MUST NOT** invoke any other skill from here.
+8. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table (`subagent-driven-development` by default; `team-driven-development` when the design qualifies for parallel execution). Invoke the chosen skill via `Skill`. **MUST NOT** invoke any other skill from here.
 
 ## Working in Existing Codebases
 
@@ -79,7 +79,7 @@ User: "I want to add structured logging across the API service."
 
 ## Completion Gate
 
-You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-driven-development`, `team-driven-development`, `dispatching-parallel-agents`) until all of these are true:
+You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-driven-development`, `team-driven-development`) until all of these are true:
 
 - The design summary was consolidated into a single text block
 - `design-review` returned Approved against the text you are holding

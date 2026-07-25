@@ -41,7 +41,7 @@ When more than one skill could apply, you **MUST** invoke them in this order:
 
 1. **Entry skills first**: `brainstorming` (always, before any code edit), `debugging` (when the task is "something is broken"), `work-on-ticket` (when the user references a ticket). These determine *what* you are doing.
 2. **Process skills second**: `complexity-triage`, `verification-before-completion`. These determine *how* to approach the work.
-3. **Implementation skills third**: `subagent-driven-development`, `fast-path-implementation`, `test-driven-development`, `dispatching-parallel-agents`, `team-driven-development`, and domain-specific skills. These guide execution.
+3. **Implementation skills third**: `subagent-driven-development`, `fast-path-implementation`, `test-driven-development`, `team-driven-development`, and domain-specific skills. These guide execution.
 4. **Review skills fourth**: `requesting-code-review`, `receiving-code-review`. These run before completion claims.
 
 Examples:
@@ -53,15 +53,16 @@ Examples:
 
 ### Choosing an Orchestration Skill
 
-Three implementation skills orchestrate work across subagents. Use this table to pick between them; the full operational detail for the third lives in `skills/team-driven-development/SKILL.md` and `skills/_shared/teammate-protocol.md`, not here.
+Two implementation skills orchestrate work across subagents. Use this table to pick between them; the full operational detail for the second lives in `skills/team-driven-development/SKILL.md` and `skills/_shared/teammate-protocol.md`, not here.
 
 | Situation                                                                                                                                                                                                                   | Skill                                                                                               |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
 | Coupled or strictly ordered work, or the default sequential case                                                                                                                                                            | `subagent-driven-development`                                                                       |
-| A stateless, single-message fan-out across independent domains with zero shared files and no persisted board                                                                                                                | `dispatching-parallel-agents`                                                                       |
 | A sustained feature whose tasks are mostly independent (disjoint file sets) with no shared mutable test/build state, where persistent peers over a shared task board add value, and the Agent Teams capability is available | `team-driven-development` (degrades to `subagent-driven-development` when the capability is absent) |
 
-When in doubt, default to `subagent-driven-development`; it is the safe sequential fallback for all three rows.
+When in doubt, default to `subagent-driven-development`; it is the safe sequential fallback for both rows.
+
+These two are the only orchestration options. You **MUST NOT** substitute a bare concurrent fan-out of implementer subagents for either of them, however independent the tasks look: a fan-out with no task board carries no complexity triage, no per-task review, no user checkpoint, and no final feature-level review, so it silently bypasses the mandatory gates in `testing.md` and `code-review.md`. The mechanics of running agents concurrently live in `skills/_shared/subagent-dispatch.md` and are available to any skill that needs them; they are not an orchestration skill in their own right.
 
 Specific mandatory pairings:
 
@@ -93,14 +94,14 @@ If a subagent dispatch prompt directly instructs the subagent to use a specific 
 
 Every thought below means **stop and invoke the skill**:
 
-| Thought                             | Reality                                                       |
-|-------------------------------------|---------------------------------------------------------------|
-| "This is just a simple question"    | Questions are tasks. Check for skills.                        |
-| "Let me explore the codebase first" | Skills tell you how to explore. Check first.                  |
-| "This does not need a formal skill" | If a skill exists, use it.                                    |
-| "I remember this skill"             | Skills evolve. Invoke the current version.                    |
-| "The skill is overkill"             | Simple things become complex. Use it.                         |
-| "I know what that skill means"      | Knowing the concept is not using the skill. Invoke it.        |
+| Thought                             | Reality                                                |
+|-------------------------------------|--------------------------------------------------------|
+| "This is just a simple question"    | Questions are tasks. Check for skills.                 |
+| "Let me explore the codebase first" | Skills tell you how to explore. Check first.           |
+| "This does not need a formal skill" | If a skill exists, use it.                             |
+| "I remember this skill"             | Skills evolve. Invoke the current version.             |
+| "The skill is overkill"             | Simple things become complex. Use it.                  |
+| "I know what that skill means"      | Knowing the concept is not using the skill. Invoke it. |
 
 ## No Exceptions
 

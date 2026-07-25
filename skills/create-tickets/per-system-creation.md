@@ -1,8 +1,9 @@
 # Per-System Creation
 
 **Load model**: this file is **not** always in context. `create-tickets/SKILL.md` loads it at
-step 6, once `detect-ticketing-system` has resolved which system to create in. Read the section
-for the detected system and skip the rest; the others describe APIs this run will not call.
+step 6, once `../_shared/ticketing-detection.md` has resolved which system to create in. Read
+the section for the detected system and skip the rest; the others describe APIs this run will
+not call.
 
 Two rules bind every section below and are not repeated in each:
 
@@ -96,7 +97,7 @@ Attempt the two-level nest first. On rejection from Linear's API, **degrade to t
 
 ## Markdown Fallback
 
-When `detect-ticketing-system` returns "none", write a structured Markdown file to the project
+When detection returns "none", write a structured Markdown file to the project
 root or a location the user specifies. One file per Epic. The file itself is the Epic, and
 heading levels carry the tier markers for the Tasks and Stories inside `## Tickets`.
 

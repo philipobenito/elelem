@@ -1,6 +1,6 @@
 # Tickets
 
-**Load model**: this file is **not** always in context. It lives next to the ticket skills and is loaded on demand when `create-tickets`, `work-on-ticket`, or `detect-ticketing-system` is invoked. The rules here apply to any workflow that creates tickets from a design or picks up tickets for implementation, regardless of the ticketing system in use (GitHub Issues, Jira, GitLab, Linear, or a Markdown fallback).
+**Load model**: this file is **not** always in context. It lives next to the ticket skills and is loaded on demand when `create-tickets` or `work-on-ticket` is invoked. The rules here apply to any workflow that creates tickets from a design or picks up tickets for implementation, regardless of the ticketing system in use (GitHub Issues, Jira, GitLab, Linear, or a Markdown fallback).
 
 ## Hierarchy Model
 
@@ -139,8 +139,8 @@ The implementation order of tickets follows the sequencing rule in `../../rules/
 
 ## Procedures
 
-- To detect the ticketing system in use, invoke the `detect-ticketing-system` skill.
 - To turn an approved design into tickets, invoke the `create-tickets` skill.
 - To pick up an existing ticket for implementation, invoke the `work-on-ticket` skill.
+- To detect which ticketing system is in use, read `ticketing-detection.md`. That is a partial, not a skill: it is a lookup procedure the two skills above run at their first step, not an entry point of its own.
 
-All three skills cite this file. The rules here apply whether or not the skills have been invoked.
+Both skills cite this file. The rules here apply whether or not the skills have been invoked.

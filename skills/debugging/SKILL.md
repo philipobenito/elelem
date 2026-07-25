@@ -93,7 +93,7 @@ Test the most likely hypothesis first:
 3. Record the result as evidence for or against
 4. If confirmed, proceed to Phase 6. If disproven, move to the next hypothesis.
 
-In **Autonomous mode**, test the top two or three hypotheses in parallel using investigator subagents (see `investigator-prompt.md`), each with a clear scope and a single question to answer. Invoke the `dispatching-parallel-agents` skill if more than one investigator runs at once.
+In **Autonomous mode**, test the top two or three hypotheses in parallel using investigator subagents (see `investigator-prompt.md`), each with a clear scope and a single question to answer. When more than one investigator runs at once, the Parallel Dispatch section of `../_shared/subagent-dispatch.md` binds: issue every dispatch in a single message, and read every investigator's report before drawing a conclusion from any one of them. Investigators write nothing, so overlapping reads are expected and need no partitioning; what does apply is the shared-blind-spot check, because two isolated investigators agreeing on a wrong hypothesis is not evidence that it is right.
 
 Apply the Investigation Budget from `RULES.md`: three cycles maximum before you stop and refocus with the user. A parallel round is one cycle however many hypotheses it tests, because the budget limits how many times you re-frame the problem before asking for help, not how many hypotheses you hold at once.
 
