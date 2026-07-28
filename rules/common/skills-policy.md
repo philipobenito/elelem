@@ -41,14 +41,14 @@ When more than one skill could apply, you **MUST** invoke them in this order:
 
 1. **Entry skills first**: `brainstorming` (always, before any code edit), `debugging` (when the task is "something is broken"), `work-on-ticket` (when the user references a ticket). These determine *what* you are doing.
 2. **Process skills second**: `complexity-triage`, `verification-before-completion`. These determine *how* to approach the work.
-3. **Implementation skills third**: `subagent-driven-development`, `fast-path-implementation`, `test-driven-development`, `team-driven-development`, and domain-specific skills. These guide execution.
+3. **Implementation skills third**: `subagent-driven-development`, `fast-path-implementation`, `test-driven-development`, `team-driven-development` (preferred), and domain-specific skills. These guide execution.
 4. **Review skills fourth**: `requesting-code-review`, `receiving-code-review`. These run before completion claims.
 
 Examples:
 
 - "Let's build X" -> `brainstorming` first (the router asks the user which mode); the user picks a mode; the mode skill produces a design; an implementation skill takes over.
 - "Fix this bug" -> `debugging` first (reproduce, find root cause, get user approval on the fix approach); then `test-driven-development` for the regression test; then the fix; then `requesting-code-review`; then `verification-before-completion`.
-- "Work on #42" -> `work-on-ticket` first; it recovers the design from the parent epic and hands off to `subagent-driven-development`.
+- "Work on #42" -> `work-on-ticket` first; it recovers the design from the parent epic and hands off to `team-driven-development` or `subagent-driven-development`.
 - "Is this done?" -> `verification-before-completion` first, nothing else until the gate has been run.
 
 ### Choosing an Orchestration Skill
@@ -60,7 +60,7 @@ Two implementation skills orchestrate work across subagents. Use this table to p
 | Coupled or strictly ordered work, or the default sequential case                                                                                                                                                            | `subagent-driven-development`                                                                       |
 | A sustained feature whose tasks are mostly independent (disjoint file sets) with no shared mutable test/build state, where persistent peers over a shared task board add value, and the Agent Teams capability is available | `team-driven-development` (degrades to `subagent-driven-development` when the capability is absent) |
 
-When in doubt, default to `subagent-driven-development`; it is the safe sequential fallback for both rows.
+Prefer `team-driven-development`, but when in doubt, default to `subagent-driven-development`; it is the safe sequential fallback for both rows.
 
 These two are the only orchestration options. You **MUST NOT** substitute a bare concurrent fan-out of implementer subagents for either of them, however independent the tasks look: a fan-out with no task board carries no complexity triage, no per-task review, no user checkpoint, and no final feature-level review, so it silently bypasses the mandatory gates in `testing.md` and `code-review.md`. The mechanics of running agents concurrently live in `skills/_shared/subagent-dispatch.md` and are available to any skill that needs them; they are not an orchestration skill in their own right.
 
