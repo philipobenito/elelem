@@ -57,7 +57,7 @@ State the tier you assigned and the reason, so the reviewer or partner can corre
 
 - **Critical** issues **MUST** be fixed before any further progress on the work under review
 - **Important** issues **MUST** be fixed before the work advances: before the next task in an orchestrated flow, before merge in ad-hoc work, and before any completion claim where neither applies
-- **Minor** issues **MAY** be deferred with an explicit note
+- **Minor** issues **MAY** be deferred with an explicit note, this is permission, not a default, if it makes sense to fix now, then fix now
 
 You **MUST NOT** mark a task complete, proceed to the next task, or merge while Critical or Important issues remain unfixed. "I'll fix it after" is forbidden.
 
