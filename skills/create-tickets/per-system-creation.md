@@ -148,27 +148,14 @@ Theme: [one-sentence theme statement]
 
 ### Reading the Structure Back
 
-`## Goal`, `## Design` and `## Tickets` are document structure, not tier markers. Only headings
-**inside `## Tickets`** identify tickets, which is what keeps the `### Story:` rationale under
-`## Design` from being mistaken for a grouping.
+See the Tier Markers section of `../_shared/tickets.md` for the complete rules on identifying
+tier markers in the Markdown fallback format. That section covers how to read `### Tasks`,
+`### Story: <name>`, and `#### Task:` headings within `## Tickets` to recover the hierarchy.
 
-Within `## Tickets`:
-
-| Heading        | Meaning                                                      |
-|----------------|--------------------------------------------------------------|
-| `### Tasks`    | Bucket for Tasks belonging to no Story. Not a ticket itself. |
-| `### Story: X` | A Story. Carries a theme statement, never design content.    |
-| `#### Task: Y` | A Task. Its parent is the nearest preceding H3.              |
-
-A Task's parent is therefore decided by the **type** of the nearest preceding H3 rather than by
-its position in the file: under `### Tasks` it is a direct child of the Epic, and under
-`### Story: X` it is a child of that Story. Emit the `### Tasks` bucket before any Story so the
-file reads in implementation order (cross-cutting foundations first, per
-`../../rules/common/workflow.md`), but note that ordering is for the human reader; correctness
-does not depend on it.
-
-Omit `### Tasks` entirely when every Task belongs to a Story, and omit all `### Story:` headings
-when the epic is flat. The `####` level for a Task is invariant across both shapes.
+Emit the `### Tasks` bucket before any Story so the file reads in implementation order
+(cross-cutting foundations first, per `../../rules/common/workflow.md`), but note that ordering
+is for the human reader; correctness does not depend on it. Omit `### Tasks` entirely when
+every Task belongs to a Story, and omit all `### Story:` headings when the epic is flat.
 
 The file becomes the epic equivalent, and `work-on-ticket` reads it directly when the user
 references a Task.

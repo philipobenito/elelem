@@ -123,7 +123,7 @@ With Linear MCP tools. Response includes the `parent` field. The tier marker is 
 - **Jira**: the `parent` or `epic` field on `getJiraIssue`. Jira natively supports Epic-Story and Story-Sub-task relationships.
 - **Linear**: the `parent` field on the issue.
 - **GitLab**: epic associations (where group Epics are available) or `Part of #N` references in the body (where they are not).
-- **Markdown fallback**: heading nesting within the `## Tickets` section of the single epic file. A Task (`#### Task:`) takes the nearest preceding H3 as its parent: under `### Story: <name>` it is a child of that Story, and under the `### Tasks` bucket it is a direct child of the Epic (the file itself). Confine the scan to `## Tickets`, because a `### Story:` sub-heading also appears inside `## Design` as the grouping rationale and reading that one as a parent invents a Story hop that never happened.
+- **Markdown fallback**: see the Tier Markers section of `skills/_shared/tickets.md` for the complete rules on identifying tier markers and resolving parent relationships in the Markdown fallback format.
 
 If `resolve_epic_context` cannot resolve a parent reference (the ticket is missing, deleted, or permission is denied), this is an **error**. Surface the unresolved reference to the user via `AskUserQuestion` and stop. The legacy fallback documented in `skills/_shared/tickets.md` applies only when a node has no parent reference at all, not when a parent reference exists but cannot be fetched.
 
