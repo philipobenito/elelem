@@ -90,64 +90,11 @@ Work from: [directory]
 **While you work:** if you encounter something unexpected or unclear, **ask**. It is
 always OK to pause and clarify. Do not guess or make assumptions.
 
-## Test-Driven Development: The Iron Law
+## Test-Driven Development
 
-**No production code without a failing test first.** This is not a suggestion. It is a
-hard requirement and applies to every new behaviour you implement, regardless of how
-simple it seems or how confident you are.
+For every new behaviour you implement, **you MUST invoke the `test-driven-development` skill** and follow its cycle. Per the Subagent Exemption in `../../rules/common/skills-policy.md`: "If a subagent dispatch prompt directly instructs the subagent to use a specific skill, the subagent MUST invoke that skill." The skill provides the complete TDD procedure, including the RED-GREEN-REFACTOR cycle and the evidence verification requirements.
 
-### The Cycle
-
-For every new behaviour:
-
-1. **RED**: write one minimal test that expresses the behaviour you want. Name it as a
-   complete phrase describing the behaviour. Exercise real code, not mocks of the code
-   under test.
-2. **Verify RED**: run the test and confirm:
-   - It FAILS (does not error). A test that errors due to import error, syntax error, or
-     missing symbol does NOT count as RED, fix the error and re-run until it fails for
-     the right reason.
-   - The failure message is the one you expected.
-   - The failure is because the feature is missing, not because of a typo.
-   - If the test PASSES on first run, you are testing existing behaviour. Fix the test.
-3. **GREEN**: write the simplest code that makes the test pass. No options, no error paths
-   the test doesn't cover, no "while I am here" improvements, no future-proofing. Only what
-   the test requires.
-4. **Verify GREEN**: run the test and confirm it passes, AND that the other tests covering
-   your own files still pass. Output must be pristine: no warnings, no stray errors, no
-   unintended skips.
-5. **REFACTOR** (optional, only while green): clean up duplication, improve names, extract
-   helpers. Keep every test green throughout. Do not add new behaviour during refactor.
-6. **Repeat** for the next behaviour.
-
-### The Forbidden Shortcuts
-
-You **MUST NOT**:
-
-- Write production code before writing the test for it
-- "Adapt" production code you already wrote into a test that "happens to test it"
-- Keep production code "as reference" while writing the test
-- Look at production code while writing the test
-- Write multiple tests in a batch then implement them all at once
-- Write a test after the implementation and call it TDD
-- Skip the RED-verification step ("I know it would have failed")
-- Skip the GREEN-verification step ("the test should pass now")
-
-If you wrote production code before a test for it, you **MUST** delete that code and start
-fresh from a failing test. Delete means delete. Not comment out, not move to a side file.
-
-### The Banned Rationalisations
-
-Every excuse below means **start over with a failing test**:
-
-- "Too simple to test" - simple code breaks. The test takes thirty seconds.
-- "I'll test after" - tests passing immediately prove nothing.
-- "I already manually tested it" - manual testing has no record and cannot be re-run.
-- "Deleting hours of work is wasteful" - sunk cost. Unverified code is technical debt.
-- "I need to explore first" - fine, throw away the exploration, then start with TDD.
-- "TDD will slow me down" - TDD is faster than debugging in production.
-- "Just this once" - no.
-- "This case is different because..." - no.
+The sole exception is when the task description explicitly carves out an exception (see Exceptions section below).
 
 ### Reporting RED to GREEN Evidence
 
@@ -158,12 +105,7 @@ pass (test name + N/N passed). The lead checks this at the verification gate.
 
 ### Exceptions
 
-The Iron Law applies to all new behaviour. The narrow exceptions are:
-
-- Pure refactors that change no observable behaviour (existing tests must stay green)
-- Configuration files, generated code, throwaway prototypes (rare; the task will say so explicitly if this applies)
-
-If the task does not explicitly carve out an exception, no exception applies.
+If the task description explicitly carves out an exception to the requirement to invoke the test-driven-development skill, that exception applies. Otherwise, the requirement holds for all new behaviour.
 
 ## Git Rules
 
@@ -233,17 +175,7 @@ Review your work with fresh eyes. Ask yourself:
 - Did I leave `owner` and task assignment alone?
 - Did I run only my own tests rather than the full suite?
 
-**Testing (TDD compliance):**
-- Did I write the test BEFORE the production code for every new behaviour?
-- Did I watch each test fail for the right reason before implementing?
-- Did I write minimal code to pass each test, with no extras?
-- Do my tests exercise real code, not mocks of the code under test?
-- Are mocks used only at true boundaries (network, filesystem, clocks, randomness)?
-- Do my tests pass now? Is the output pristine?
-- Can I report the RED to GREEN sequence for each new behaviour?
-
-If I cannot answer YES to all of these, I broke the Iron Law and **MUST** delete the
-untested production code and restart from a failing test.
+**Testing**: Did I follow the test-driven-development skill and can I report RED to GREEN evidence for each behaviour?
 
 If you find issues during self-review, fix them now before reporting.
 
@@ -264,6 +196,7 @@ Use BLOCKED if you cannot complete the task. Use NEEDS_CONTEXT if you need infor
 that wasn't provided. Never silently produce work you're unsure about.
 
 Reports without TDD RED to GREEN evidence will be rejected at the verification gate and
-sent back. If you broke the Iron Law and want to be honest about it, report
-DONE_WITH_CONCERNS and describe what happened, that is recoverable. Hiding it is not.
+sent back. If you skipped the test-driven-development requirement and want to be honest
+about it, report DONE_WITH_CONCERNS and describe what happened, that is recoverable.
+Hiding it is not.
 ```
