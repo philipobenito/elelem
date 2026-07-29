@@ -66,7 +66,7 @@ User-scope path-scoped rules have a known issue ([claude-code#21858](https://git
 - Each skill folder has a `SKILL.md` that defines the procedure. Skill folders may also contain a `RULES.md` or other supporting files.
 - `skills/_shared/` holds files referenced by more than one skill, plus every dispatch prompt template. A skill's own folder holds its procedure and its rules; the templates it fills to dispatch an agent live in one place, named `*-prompt.md`.
 
-Cross-references between files use relative paths from the citing file's location (for example, `../../rules/common/debugging.md` from inside `skills/debugging/SKILL.md`) so that they resolve correctly in the source repo and in the installed directory tree.
+`rules/` and `skills/` keep the same internal structure once installed, which is what lets files reference each other across the tree. See `CLAUDE.md` for the cross-reference convention itself.
 
 ## Uninstalling
 

@@ -31,7 +31,7 @@ Where a suggestion conflicts with an architectural decision your human partner p
 
 1. **Read all of it first.** Every item, to the end. Do not react, do not start implementing, do not respond. A batch of review items is frequently one problem described from several angles, and you cannot see that from the first item.
 
-2. **Assign severity if the feedback has none.** Most feedback arrives without tiers: a `[FAIL]` from a per-task reviewer, or a partner listing three problems in a message. Use the tests in `../_shared/code-review.md` and state the tier you assigned with your reason, so the reviewer or partner can correct it. Skip this where the feedback is already categorised.
+2. **Assign severity if the feedback has none.** A reviewer dispatched from `../_shared/code-reviewer-prompt.md` returns tiers natively, so this step is usually a no-op for one. It is the other sources that arrive untiered: a bot's comments, or a partner listing three problems in a message. Use the tests in `../_shared/code-review.md` and state the tier you assigned with your reason, so the reviewer or partner can correct it. Skip this where the feedback is already categorised.
 
 3. **Verify each item against the codebase**, applying the source trust rules above. Restate each item in your own words as you go: if you cannot, you have not understood it yet, and that is worth knowing now rather than after you have changed code. Check that the suggestion is correct for this stack, version, and platform, that it does not break existing behaviour, that it does not conflict with a prior decision, and that it does not build out code nothing calls.
 
@@ -85,7 +85,7 @@ Correct: "I understand items 1, 2, 3, 6. I need clarification on items 4 and 5 b
 
 ### Uncategorised Feedback
 
-A per-task reviewer returns `[FAIL]` with three items and no severities: a swallowed write error, an inconsistent variable name, and a new function with no test.
+A bot leaves three comments with no severities: a swallowed write error, an inconsistent variable name, and a new function with no test.
 
 Correct: "Assigning severity before starting. The swallowed error at `repair.ts:64` is Important: it works today but reports success on a failed write, so the next run trusts a bad index. The missing test on `verifyIndex()` is Important: new behaviour, nothing covering it. The naming inconsistency is Minor. Fixing the two Important items now, logging the Minor one."
 
