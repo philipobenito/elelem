@@ -4,7 +4,7 @@ This file governs the persistent-peer model: teammates are long-running Claude C
 
 ## Universal Laws Apply
 
-The universal laws in `subagents.md` (Part A: worktree ban, privilege ban, git ownership, model identifiers) apply to teammates in full. They are not restated here. Read `subagents.md` Part A before dispatching or coordinating with a teammate.
+The universal laws in `subagents.md` (Part A: authorisation, worktree ban, privilege ban, git ownership, model identifiers) apply to teammates in full. They are not restated here. Read `subagents.md` Part A before dispatching or coordinating with a teammate.
 
 ## Peer Isolation Model
 
