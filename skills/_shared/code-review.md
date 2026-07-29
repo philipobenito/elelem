@@ -43,7 +43,7 @@ If you pushed back and were wrong, state the correction factually in one or two 
 
 ### Assigning Tiers When the Feedback Has None
 
-Most review feedback arrives without severity tiers. A reviewer dispatched through `requesting-code-review` returns Critical, Important and Minor, but the per-task reviewers in `orchestrated-implementation` and `fast-path-implementation` return only `[PASS]` or `[FAIL]`, and a human partner listing three problems in a message returns nothing at all. Ordering the work still needs tiers, so when they are absent you **MUST** assign them before touching anything, using these tests:
+Most review feedback arrives without severity tiers. A reviewer dispatched from `code-reviewer-prompt.md`, whether through `requesting-code-review`, the per-task review in `orchestrated-implementation`, or `fast-path-implementation`, returns Critical, Important and Minor natively, so this section does not apply to it. It applies to the sources that still return feedback untiered: a bot's comments, or a human partner listing problems in a message. Ordering that feedback still needs tiers, so when they are absent you **MUST** assign them before touching anything, using these tests:
 
 | Tier          | Test                                                                                                       | If it ships unfixed     |
 |---------------|------------------------------------------------------------------------------------------------------------|-------------------------|
@@ -52,6 +52,8 @@ Most review feedback arrives without severity tiers. A reviewer dispatched throu
 | **Minor**     | Naming, style, an unmeasured optimisation, a documentation improvement.                                    | Nothing happens.        |
 
 State the tier you assigned and the reason, so the reviewer or partner can correct you. The failure this table exists to prevent is inflation, and inflation is the cheaper mistake to make because it looks conscientious while it stalls the work: an Important tier is a blocker, so calling a naming preference Important commits you to fixing it before anything else proceeds.
+
+This table is duplicated in `code-reviewer-prompt.md`, which needs its own copy because it is pasted verbatim into an isolated reviewer subagent that cannot read this file. Keep the two tables in sync when editing either file.
 
 ### Acting on Tiers
 

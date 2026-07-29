@@ -4,21 +4,23 @@ Use this template when dispatching a code reviewer subagent.
 
 **Purpose:** Verify a change is production-ready: it does what was asked, it does not break what exists, and it is built well enough to change again.
 
-**Dispatch after:** The review range has been established per `../requesting-code-review/SKILL.md`, and the diff is non-empty.
+**Dispatch after:** The review range has been established by the calling skill, whichever it is: `../requesting-code-review/SKILL.md` for a standalone review, the per-task review inside `../orchestrated-implementation/SKILL.md`, or `../fast-path-implementation/SKILL.md`. The diff must be non-empty.
 
 ## Placeholders
 
 This file is the single source of truth for its own placeholders. Fill every one; leave none unreplaced in the dispatched prompt.
 
-| Placeholder              | What goes in it                                                                                              |
-|--------------------------|--------------------------------------------------------------------------------------------------------------|
-| `[WHAT_WAS_IMPLEMENTED]` | One line naming what the change builds.                                                                      |
-| `[DESCRIPTION]`          | A short paragraph: what it builds, and the design decisions that matter for review.                          |
-| `[PLAN_REFERENCE]`       | The approved design, ticket, or plan the work delivers against. Paste the acceptance criteria, do not link.  |
-| `[BASE_SHA]`             | The base commit established per `../requesting-code-review/SKILL.md`.                                        |
-| `[REVIEW_TARGET]`        | `the working tree, which contains uncommitted changes` or `commit <sha>`.                                    |
-| `[UNTRACKED_FILES]`      | Paths from `git status --porcelain` that the diff cannot show, or `none`.                                    |
-| `[PREVIOUS_ROUND]`       | On a re-dispatch: your previous findings and what changed in response. Omit the section on the first review. |
+| Placeholder              | What goes in it                                                                                                                                                                                                             |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `[WHAT_WAS_IMPLEMENTED]` | One line naming what the change builds.                                                                                                                                                                                     |
+| `[DESCRIPTION]`          | A short paragraph: what it builds, and the design decisions that matter for review.                                                                                                                                         |
+| `[PLAN_REFERENCE]`       | The approved design, ticket, or plan the work delivers against. Paste the acceptance criteria, do not link.                                                                                                                 |
+| `[BASE_SHA]`             | The base commit established per `../requesting-code-review/SKILL.md`.                                                                                                                                                       |
+| `[REVIEW_TARGET]`        | `the working tree, which contains uncommitted changes` or `commit <sha>`.                                                                                                                                                   |
+| `[UNTRACKED_FILES]`      | Paths from `git status --porcelain` that the diff cannot show, or `none`.                                                                                                                                                   |
+| `[PREVIOUS_ROUND]`       | On a re-dispatch: your previous findings and what changed in response. Omit the section on the first review.                                                                                                                |
+| `[SCOPE_FILES]`          | Optional, filled only by the per-task review in `orchestrated-implementation`: the exclusive set of files the task owns. Fills the Scope section below; omit that section entirely, heading included, for any other caller. |
+| `[TRIAGE_EVIDENCE]`      | Optional, filled only by `fast-path-implementation`: the completed complexity-triage evidence table. Fills the Triage Re-Check section below; omit that section entirely, heading included, for any other caller.           |
 
 ## Selecting the Model
 
@@ -60,6 +62,19 @@ Agent (general-purpose):
     Any untracked file listed above is part of this change and will not appear in
     the diff at all. Read those files directly.
 
+    ## Scope
+
+    Optional section, filled only by the per-task review dispatched from
+    `orchestrated-implementation`. Omit this whole section, heading included, for
+    any other caller.
+
+    This task owns the following files exclusively:
+
+    [SCOPE_FILES]
+
+    Confine your review to the diff within that set. Changes outside it belong to
+    a different task on the same board and are not yours to judge.
+
     ## Do Not Trust This Description
 
     The summary above is what someone believes they built. It may be incomplete,
@@ -77,6 +92,57 @@ Agent (general-purpose):
     not run the test suite or the build. Whether the suite passes is the
     orchestrator's verification gate, not yours, and running it from here mutates
     state the orchestrator is about to measure. Judge the tests by reading them.
+
+    ## Triage Re-Check
+
+    Optional section, filled only by `fast-path-implementation`. Omit this whole
+    section, heading included, for any other caller. Where it is present, do this
+    before anything under "What To Check".
+
+    Complexity triage classified this work as SIMPLE before the code existed:
+
+    [TRIAGE_EVIDENCE]
+
+    If any row in that table is marked N, a user overrode a COMPLEX verdict. The
+    row was left failing on purpose so you could test it against the real diff
+    rather than take the override on trust. Weigh that row first.
+
+    The triage table is a prediction; you are reading the code it predicted, so
+    your evidence is stronger than the table's. Work through all six criteria
+    against the actual diff:
+
+    1. **Uniform change type**: are the changes genuinely the same kind of edit
+       applied across locations, or do they mix concerns (docs plus feature code,
+       config plus new logic)?
+    2. **No new logic**: is there any new function, class, conditional, loop, error
+       handling, or business rule?
+    3. **No new interfaces**: is there any new export, endpoint, contract, event,
+       or other public surface area?
+    4. **Deterministic from spec**: did any change require a design decision,
+       judgement call, or contextual understanding beyond the immediate edit? Look
+       for choices the implementer had to make, especially ones its report
+       mentions making.
+    5. **Independently verifiable**: can each change be understood and checked by
+       reading it in isolation, or does one change's correctness depend on another
+       in a different file?
+    6. **Small total delta**: run `git diff --stat` and count the substantive
+       changed lines. The cap is 50, and the criterion also rejects any count
+       landing between 40 and 50, because estimation error at that boundary is
+       wider than the margin.
+
+    Criterion 6 deserves particular attention, because it is the one triage could
+    only estimate and you can measure. A count above 50, or inside the rejected 40
+    to 50 band, falsifies the classification no matter how cleanly the other five
+    hold.
+
+    If the actual changes are more complex than the triage suggested, stop here
+    and report **TRIAGE_INVALID** as your Status, naming the specific criterion
+    that was wrong and why. The controller will switch to the full path.
+
+    Testing expectations follow from criterion 2: work triaged SIMPLE introduces
+    no observable behaviour, so absent new tests is correct here, not a gap, and
+    you MUST NOT report it as a failure. A NEW test appearing IS the finding worth
+    reporting, because it usually means criterion 2 was falsified.
 
     ## What To Check
 
@@ -129,6 +195,12 @@ Agent (general-purpose):
     Approved means no Critical and no Important issues. Minor issues are
     compatible with Approved; list them and still approve.
 
+    Where the Triage Re-Check section above is present in this prompt,
+    TRIAGE_INVALID is also a valid Status: use it exactly as that section
+    instructs, in place of Issues Found, when the fast-path classification does
+    not hold. Where that section is absent, the status set stays exactly Approved
+    | Issues Found.
+
     **Strengths:**
     - [what is genuinely well done, specifically, with file:line]
 
@@ -153,7 +225,7 @@ Agent (general-purpose):
 
 **Reviewer returns:** Status, Strengths, Issues grouped by severity, Recommendations
 
-The severity table above is duplicated in `code-review.md`, which needs its own copy so the orchestrator can assign tiers to feedback that arrives without them. Keep the two in sync when editing either file.
+The severity table above is duplicated in `code-review.md`, which keeps its own copy for the feedback that still reaches the orchestrator without tiers already assigned, a human partner or a bot, rather than a reviewer dispatched from this template. Keep the two tables in sync when editing either file.
 
 ## Example Output
 
