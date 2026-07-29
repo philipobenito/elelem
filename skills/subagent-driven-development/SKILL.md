@@ -7,7 +7,7 @@ description: Implements an approved design by decomposing it into sequential tas
 
 Implement an approved design by decomposing it into ordered tasks, then executing each task with an isolated subagent plus a combined review and a user checkpoint.
 
-The iron-law rules (context isolation, git ownership, worktree ban, privilege ban) live in `../../rules/common/subagents.md`. The procedural rules that bind once this skill is dispatching subagents (subagent type selection, model selection, process discipline, escalation) live in `../_shared/subagent-dispatch.md` and apply throughout this skill. The rule that implementation requires an approved design lives in `../../rules/common/workflow.md`.
+The iron-law rules (context isolation, git ownership, worktree ban, privilege ban) live in `../../rules/common/subagents.md`. The procedural rules that bind once this skill is dispatching subagents (model selection, process discipline, escalation) live in `../_shared/subagent-dispatch.md` and apply throughout this skill. The rule that implementation requires an approved design lives in `../../rules/common/workflow.md`.
 
 Before running the procedure below, you **MUST** read `../_shared/subagent-dispatch.md` using the Read tool if you have not already read it in this session.
 
@@ -83,14 +83,13 @@ Create a task per work item with `TaskCreate`, building a shared task list cover
 Each entry includes:
 
 - Task name and description
-- Recommended subagent type (selected per `../../rules/common/subagents.md`)
 - Recommended model (pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`; escalate only with justification)
 - Files to create or modify (exact paths)
 - Acceptance criteria
 - Dependencies on other tasks
 - Scene-setting context describing where this task fits in the overall design
 
-Files, acceptance criteria, and dependencies belong in `description` as prose (per `../_shared/task-board.md`); the recommended subagent type and model may be recorded alongside them or in `metadata`, at the orchestrator's discretion.
+Files, acceptance criteria, and dependencies belong in `description` as prose (per `../_shared/task-board.md`); the recommended model may be recorded alongside them or in `metadata`, at the orchestrator's discretion.
 
 ## Per-Task Pipeline
 
@@ -100,7 +99,7 @@ Execute tasks sequentially. Each task follows the same pipeline.
 digraph per_task_pipeline {
     rankdir=TB;
 
-    "Select specialised subagent type\nand model (Low-cost default tier)" [shape=box, style=bold];
+    "Select model\n(Low-cost default tier)" [shape=box, style=bold];
     "Dispatch implementer subagent\n(./implementer-prompt.md)" [shape=box];
     "Implementer subagent asks questions?" [shape=diamond];
     "Answer questions, provide context" [shape=box];
@@ -113,7 +112,7 @@ digraph per_task_pipeline {
     "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [shape=box, style=bold];
     "Mark task complete with TaskUpdate" [style=bold];
 
-    "Select specialised subagent type\nand model (Low-cost default tier)" -> "Dispatch implementer subagent\n(./implementer-prompt.md)";
+    "Select model\n(Low-cost default tier)" -> "Dispatch implementer subagent\n(./implementer-prompt.md)";
     "Dispatch implementer subagent\n(./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent\n(./implementer-prompt.md)";

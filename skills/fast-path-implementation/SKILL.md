@@ -5,7 +5,7 @@ description: Implements a batch of uniformly simple changes as one implementer d
 
 # Fast Path Implementation
 
-When `complexity-triage` has classified the work as SIMPLE with full evidence, implementation collapses to two subagent dispatches plus a user checkpoint. This skill covers that shortened process. The iron-law rules on subagent dispatch (context isolation, git ownership, worktree ban, privilege ban) live in `../../rules/common/subagents.md`. The procedural rules (subagent type selection, model selection, escalation) live in `../_shared/subagent-dispatch.md` and apply throughout.
+When `complexity-triage` has classified the work as SIMPLE with full evidence, implementation collapses to two subagent dispatches plus a user checkpoint. This skill covers that shortened process. The iron-law rules on subagent dispatch (context isolation, git ownership, worktree ban, privilege ban) live in `../../rules/common/subagents.md`. The procedural rules (model selection, escalation) live in `../_shared/subagent-dispatch.md` and apply throughout.
 
 Before running the procedure below, you **MUST** read `../_shared/subagent-dispatch.md` using the Read tool if you have not already read it in this session.
 
@@ -21,7 +21,7 @@ The one exception is a user who overrides a COMPLEX verdict, which the Return Co
 
 ### 1. Single Implementation Dispatch
 
-Dispatch one implementer with every change as a single batch, using `../subagent-driven-development/implementer-prompt.md` with a task description covering the full scope of changes. Select the specialised subagent type for the work per `../../rules/common/subagents.md`. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`. If the work is simple enough for this path, it is simple enough for the cheapest model.
+Dispatch one implementer with every change as a single batch, using `../subagent-driven-development/implementer-prompt.md` with a task description covering the full scope of changes. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`. If the work is simple enough for this path, it is simple enough for the cheapest model.
 
 #### Adapting the Shared Prompt
 

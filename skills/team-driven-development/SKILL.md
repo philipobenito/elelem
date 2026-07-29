@@ -69,7 +69,7 @@ The tasks that are ready to run are those unblocked per `blockedBy` and file-dis
 
 The clamp counts live teammates, not how many are started each time tasks unblock. Teammates persist as tasks unblock and complete: an idle teammate whose task is verified is reassigned the next ready task rather than respawned, and a new teammate is spawned only when a ready task has no free live teammate to take it and the live count is still below the clamp.
 
-Select each teammate's agent type and model exactly as a one-shot subagent's, per `../_shared/subagent-dispatch.md`; only the lifecycle differs (spawned once, kept alive across tasks), per `../_shared/teammate-protocol.md`.
+Spawn each teammate as `general-purpose` and resolve its model exactly as a one-shot subagent's, both per `../_shared/subagent-dispatch.md`; only the lifecycle differs (spawned once, kept alive across tasks), per `../_shared/teammate-protocol.md`. The type matters here beyond the usual: a teammate that cannot use `SendMessage` cannot be assigned a task, report a claim, or receive findings.
 
 Assignment is lead-assign only: the lead sets each task's `owner` and delivers the assignment over SendMessage. Self-claiming is forbidden; see `../_shared/teammate-protocol.md`.
 

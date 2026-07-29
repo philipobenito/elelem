@@ -24,6 +24,12 @@ Only the lead/orchestrator commits. A delegated agent, whether a one-shot subage
 
 You **MUST NOT** write a model identifier you have not confirmed the current environment exposes. Recognising the shape of an identifier is not the same as confirming it exists; constructing an identifier from a pattern is inventing it.
 
+### Agent Types
+
+You **MUST** dispatch every delegated agent as a harness built-in type, per the table in `skills/_shared/subagent-dispatch.md`. You **MUST NOT** select an installed or plugin-supplied agent definition, and you **MUST NOT** pick a type on the basis of the task's language, framework, or domain.
+
+An installed definition carries its own tool permissions, which no dispatch can verify beforehand: an agent silently missing `SendMessage` fails mid-task rather than at the call site.
+
 ## Part B: One-Shot Subagent Model
 
 These rules apply specifically to one-shot subagents: agents dispatched for a single task that terminate on completion, with no resumption and no peer-to-peer coordination. For the persistent-teammate model, see `teammates.md`.
@@ -36,4 +42,4 @@ You **MUST NOT** instruct a subagent to "discover" context on its own when you c
 
 ## Procedural Rules
 
-The procedural rules that bind once a skill is dispatching a one-shot subagent, subagent type selection, model selection with identifier resolution and verification (tier table, resolution procedure, and escalation triggers), answering subagent questions, process discipline, and escalation handling, live in `skills/_shared/subagent-dispatch.md` and load when any dispatching skill is invoked.
+The procedural rules that bind once a skill is dispatching a one-shot subagent, the agent type lookup, model selection with identifier resolution and verification (tier table, resolution procedure, and escalation triggers), answering subagent questions, process discipline, and escalation handling, live in `skills/_shared/subagent-dispatch.md` and load when any dispatching skill is invoked.

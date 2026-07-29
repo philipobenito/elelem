@@ -1,6 +1,6 @@
 # Committee Member Prompt Templates
 
-Templates for the deliberation rounds in `SKILL.md`. Round A collects three independent positions; Round B has each member cross-examine the other two. Type selection, model selection, and the read-only requirement are defined in `SKILL.md`'s "Dispatching the Committee" and are not restated here.
+Templates for the deliberation rounds in `SKILL.md`. Round A collects three independent positions; Round B has each member cross-examine the other two. Model selection and the read-only requirement are defined in `SKILL.md`'s "Dispatching the Committee" and are not restated here.
 
 ## How to Dispatch
 
@@ -8,7 +8,7 @@ Round A dispatches all three members in a single message so they run concurrentl
 
 ```yaml
 Agent:
-  subagent_type: "[TYPE RESOLVED BY ENUMERATION - see SKILL.md]"
+  subagent_type: "Plan"
   model: "[TIER RESOLVED FROM THE Agent MODEL ENUM - High-capability]"
   name: "committee-pragmatist"   # or committee-architect / committee-advocate
   description: "Committee: Pragmatist perspective"
@@ -100,8 +100,6 @@ prompt: |
   - Complexity that does not serve an immediate need
 ```
 
-When the Pragmatist has fallen back to `general-purpose`, append: "Focus on the languages and frameworks actually present in the codebase context above, and prioritise reuse of the patterns it already establishes."
-
 ### Architect
 
 ```yaml
@@ -188,11 +186,11 @@ SendMessage:
 
 ## Tiebreaking
 
-Run this only when a decision is still genuinely split after Round B, at most once per decision. Dispatch a **single** adjudicating agent, preferring a type that did not sit on the committee so it is not weighing its own earlier position. This is one fresh agent seeing all three positions; it is not the three members deliberating again.
+Run this only when a decision is still genuinely split after Round B, at most once per decision. Dispatch a **single** adjudicating agent. This is one fresh agent seeing all three positions; it is not the three members deliberating again.
 
 ```yaml
 Agent:
-  subagent_type: "[TYPE THAT DID NOT SIT ON THE COMMITTEE, ELSE general-purpose]"
+  subagent_type: "Plan"
   model: "[SAME TIER AS THE COMMITTEE MEMBERS]"
   description: "Committee: Tiebreaking round"
   prompt: |

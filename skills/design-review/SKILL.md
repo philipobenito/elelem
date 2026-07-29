@@ -50,7 +50,7 @@ Report every substantive fix when you return. The user approved text that no lon
 
 2. **Dispatch the reviewer** with `Agent`, following `design-reviewer-prompt.md`. Paste the full summary into the prompt and pass no session history.
 
-   Resolve the subagent type and the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier. This skill's task signal is design judgement, which that file's tier table maps to High-capability, so escalation as far as that tier is available here. It is still one tier at a time and still only on evidence, per the no-pre-escalation rule: a dispatch that returned nothing but editorial noise, a dispatch that missed something you can see in the summary yourself, or a design whose architecture turns on several interacting components.
+   Resolve the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier. This skill's task signal is design judgement, which that file's tier table maps to High-capability, so escalation as far as that tier is available here. It is still one tier at a time and still only on evidence, per the no-pre-escalation rule: a dispatch that returned nothing but editorial noise, a dispatch that missed something you can see in the summary yourself, or a design whose architecture turns on several interacting components.
 
 3. **Read the reviewer's status.**
    - **Approved**: go to step 7.

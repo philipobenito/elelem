@@ -12,7 +12,6 @@ This file is the single source of truth for its own placeholders. Fill every one
 
 | Placeholder                | What goes in it                                                                                              |
 |----------------------------|--------------------------------------------------------------------------------------------------------------|
-| `[REVIEWER_SUBAGENT_TYPE]` | The resolved subagent type, per the section below.                                                           |
 | `[WHAT_WAS_IMPLEMENTED]`   | One line naming what the change builds.                                                                      |
 | `[DESCRIPTION]`            | A short paragraph: what it builds, and the design decisions that matter for review.                          |
 | `[PLAN_REFERENCE]`         | The approved design, ticket, or plan the work delivers against. Paste the acceptance criteria, do not link.  |
@@ -21,23 +20,6 @@ This file is the single source of truth for its own placeholders. Fill every one
 | `[UNTRACKED_FILES]`        | Paths from `git status --porcelain` that the diff cannot show, or `none`.                                    |
 | `[PREVIOUS_ROUND]`         | On a re-dispatch: your previous findings and what changed in response. Omit the section on the first review. |
 
-## Selecting the Subagent Type
-
-`../_shared/subagent-dispatch.md` requires the most specific available type, and `../../rules/common/subagents.md` forbids writing an identifier you have not confirmed the current environment exposes. Many types are plugin-supplied and namespaced (`voltagent-qa-sec:code-reviewer`), so a bare name copied from any table may not resolve, and on a machine without that plugin no variant of it exists.
-
-Resolve the type at dispatch time, every time:
-
-1. Enumerate the `subagent_type` values this environment actually exposes.
-2. Search that enumeration for a code review, security review, or quality assurance capability, or for a language specialist matching the stack the change is confined to.
-3. Take the most specific match, whatever its namespace. A change touching only TypeScript is better served by a TypeScript specialist than by a general reviewer.
-4. Where nothing matches, fall back to `general-purpose`, which is present in every environment. Do not fall back to `Explore`: its own description scopes it to locating code rather than reviewing or auditing it, so it is read-only for the wrong reason. The no-write boundary for this dispatch comes from the prompt below, which states it explicitly.
-
-The table below is a **worked example of what a match looks like, not an identifier to paste**. It records what one environment happened to expose.
-
-| Example match   | As enumerated in one environment |
-|-----------------|----------------------------------|
-| `code-reviewer` | `voltagent-qa-sec:code-reviewer` |
-
 ## Selecting the Model
 
 Resolve the model per `../_shared/subagent-dispatch.md`. Start at the Low-cost default tier: a change confined to a few files with clear acceptance criteria belongs there. Escalate one tier at a time and only on evidence, such as a change whose correctness depends on how several files interact, or a previous dispatch whose findings show it did not follow the change across file boundaries. Do not pre-escalate because the diff is long; line count is not the signal.
@@ -45,7 +27,7 @@ Resolve the model per `../_shared/subagent-dispatch.md`. Start at the Low-cost d
 ## The Prompt
 
 ```
-Agent ([REVIEWER_SUBAGENT_TYPE]):
+Agent (general-purpose):
   description: "Code review: [WHAT_WAS_IMPLEMENTED]"
   prompt: |
     You are reviewing a change for production readiness.

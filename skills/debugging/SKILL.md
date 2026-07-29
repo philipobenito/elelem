@@ -124,13 +124,6 @@ Autonomous mode is the only mode in which subagents run. Phase 3 dispatches evid
 
 Provide each subagent with: the bug description (expected vs actual), its single assignment (the evidence question at Phase 3, the hypothesis at Phase 5), and the scoped list of files or areas it may examine.
 
-Resolve the subagent type at dispatch time, every time. `../_shared/subagent-dispatch.md` requires the most specific available type, and `../../rules/common/subagents.md` forbids writing an identifier you have not confirmed this environment exposes. Many types are plugin-supplied and namespaced (`voltagent-qa-sec:debugger`), so a bare name copied from any table may not resolve at all:
-
-1. Enumerate the `subagent_type` values this environment exposes.
-2. Search that enumeration for a debugging, diagnostic, or error-analysis type, or for a language specialist matching the code under investigation.
-3. Take the most specific match, whatever its namespace.
-4. Where nothing matches, use `general-purpose`, which is present in every environment.
-
 Start at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`, unless the investigation requires integration reasoning, in which case escalate to Standard escalation.
 
 Reconcile the returned reports yourself in the orchestrator context. Evidence reports feed Phase 4. Investigator verdicts route as follows: CONFIRMED advances you to Phase 6, ELIMINATED moves you to the next hypothesis, INCONCLUSIVE needs either a better-scoped re-dispatch or a refocus with the user.

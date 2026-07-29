@@ -2,12 +2,10 @@
 
 Use this template when dispatching an implementer subagent.
 
-**Subagent type selection:** Replace `[SPECIALISED_SUBAGENT_TYPE]` with the most specific implementer type available for the task per `../../rules/common/subagents.md`. Examples: `typescript-pro` for a TypeScript task, `python-pro` for Python, `react-specialist` for React components, `golang-pro` for Go, `rust-engineer` for Rust. Use `general-purpose` only when no specialised type fits. The recommended type for each task should already be in the task entry the orchestrator created during decomposition.
-
 **Model selection:** Pick one concrete model. Start at the Low-cost default tier and escalate only on evidence to Standard escalation, resolving each per `../_shared/subagent-dispatch.md`.
 
 ```
-Agent ([SPECIALISED_SUBAGENT_TYPE]):
+Agent (general-purpose):
   description: "Implement Task N: [task name]"
   prompt: |
     You are implementing Task N: [task name]

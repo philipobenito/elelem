@@ -4,20 +4,19 @@ These rules apply to every subagent dispatch made from inside a skill. They are 
 
 Skills that dispatch subagents (`subagent-driven-development`, `team-driven-development`, `fast-path-implementation`, `brainstorming-committee`, `debugging`, `design-review`, `requesting-code-review`) **MUST** read this file before performing a dispatch.
 
-## Subagent Type Selection
+## Agent Type
 
-Before every dispatch, you **MUST** check the available subagent types and select the most specific one that fits the task. Generic agents produce generic work; specialised agents understand their domain, follow its conventions, and catch domain-specific issues a general-purpose agent will miss.
+Per `../../rules/common/subagents.md`, agent type is a lookup. Dispatch templates already carry the value; this table is the source they follow.
 
-The selection process:
+| Dispatch                                                  | Type              |
+|-----------------------------------------------------------|-------------------|
+| Implementers, teammates, fast-path implementer            | `general-purpose` |
+| Code reviewers (per-task, fast-path, feature-level)       | `general-purpose` |
+| Debugging evidence gatherers and hypothesis investigators | `general-purpose` |
+| Design reviewer                                           | `Plan`            |
+| Committee members and the committee tiebreaker            | `Plan`            |
 
-1. Identify the language, framework, or domain the task involves
-2. Scan available subagent types for a match (e.g. `typescript-pro` for TypeScript, `react-specialist` for React components, `python-pro` for Python, `code-reviewer` for reviews)
-3. If a specialised type matches, use it via the `subagent_type` parameter
-4. Fall back to `general-purpose` only when no specialised type fits
-
-This applies to implementers and reviewers equally. A TypeScript task gets a TypeScript implementer and a code-review specialist, not two general-purpose agents.
-
-When decomposing work into tasks, you **MUST** annotate each task with its recommended subagent type during decomposition, not at dispatch time. This makes the choice explicit and reviewable.
+Both types carry `Bash`, so a read-only boundary that matters **MUST** be stated in the dispatched prompt as well.
 
 ## Model Selection
 

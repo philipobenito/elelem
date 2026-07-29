@@ -43,7 +43,7 @@ If you pushed back and were wrong, state the correction factually in one or two 
 
 ### Assigning Tiers When the Feedback Has None
 
-Most review feedback arrives without severity tiers. A `code-reviewer` dispatched through `requesting-code-review` returns Critical, Important and Minor, but the per-task reviewers in `subagent-driven-development` and `fast-path-implementation` return only `[PASS]` or `[FAIL]`, and a human partner listing three problems in a message returns nothing at all. Ordering the work still needs tiers, so when they are absent you **MUST** assign them before touching anything, using these tests:
+Most review feedback arrives without severity tiers. A reviewer dispatched through `requesting-code-review` returns Critical, Important and Minor, but the per-task reviewers in `subagent-driven-development` and `fast-path-implementation` return only `[PASS]` or `[FAIL]`, and a human partner listing three problems in a message returns nothing at all. Ordering the work still needs tiers, so when they are absent you **MUST** assign them before touching anything, using these tests:
 
 | Tier          | Test                                                                                                       | If it ships unfixed     |
 |---------------|------------------------------------------------------------------------------------------------------------|-------------------------|

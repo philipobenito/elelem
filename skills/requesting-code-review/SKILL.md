@@ -1,6 +1,6 @@
 ---
 name: requesting-code-review
-description: "Dispatches a code-reviewer subagent against the work under review, applies severity discipline to its verdict, and owns the fix-and-re-review loop until no Critical or Important issue remains. Use this whenever a change is about to be committed to main, opened as a pull request, handed back as complete, or declared done, and whenever the user asks for a branch, a diff, or their changes to be looked over before shipping. Invoked by `subagent-driven-development` for the feature-level review and by `debugging` after a fix. No change is exempt for being small, simple, obvious, or locally tested."
+description: "Dispatches a code reviewer subagent against the work under review, applies severity discipline to its verdict, and owns the fix-and-re-review loop until no Critical or Important issue remains. Use this whenever a change is about to be committed to main, opened as a pull request, handed back as complete, or declared done, and whenever the user asks for a branch, a diff, or their changes to be looked over before shipping. Invoked by `subagent-driven-development` for the feature-level review and by `debugging` after a fix. No change is exempt for being small, simple, obvious, or locally tested."
 ---
 
 # Requesting Code Review
@@ -44,7 +44,7 @@ If the diff is empty and no untracked files are listed, there is nothing to revi
 
 1. **Establish the range** per the section above. A precondition failure returns **Nothing to review** or **Range unknown** and spends no budget.
 
-2. **Resolve the subagent type and model** per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Search the enumerated types for a code review capability, preferring a language or framework specialist where the change is confined to one stack. Start at the Low-cost default tier; a single-file change with a clear spec belongs there. Escalate one tier at a time and only on evidence: a change spanning several files whose correctness depends on how they interact, or a reviewer whose findings show it did not follow the change across files.
+2. **Resolve the model** per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier; a single-file change with a clear spec belongs there. Escalate one tier at a time and only on evidence: a change spanning several files whose correctness depends on how they interact, or a reviewer whose findings show it did not follow the change across files.
 
 3. **Fill the template** in `code-reviewer.md` and dispatch. The template names its own placeholders; fill every one, and leave none unreplaced. Pass no session history: the reviewer reads the repository and the diff, and anything it needs from the conversation belongs in the template you fill.
 
@@ -95,7 +95,7 @@ git status --porcelain    # M src/index.ts, ?? src/repair.ts
 git diff --stat "$BASE_SHA"
 ```
 
-The diff is non-empty and `repair.ts` is untracked, so the reviewer is told to read it directly rather than expect it in the diff. Dispatch a code review specialist at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`.
+The diff is non-empty and `repair.ts` is untracked, so the reviewer is told to read it directly rather than expect it in the diff. Dispatch the reviewer at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`.
 
 **Dispatch 1** returns Issues Found:
 

@@ -7,7 +7,7 @@ description: "Turns an idea into an approved design through autonomous deliberat
 
 Hands-off design dialogue. The user provides the initial brief, then three subagents with deliberately different perspectives state independent positions, cross-examine each other, and converge on consensus. The user only sees the final design.
 
-For the rule that no implementation may begin until the user has approved a design, see `../../rules/common/workflow.md`. The iron-law rules on subagent dispatch (context isolation, git ban, worktree ban, privilege ban, and the ban on writing an identifier you have not confirmed the environment exposes) live in `../../rules/common/subagents.md`. The procedural dispatch rules (type selection, model selection, escalation) live in `../_shared/subagent-dispatch.md`. The design review step is delegated to the `design-review` skill.
+For the rule that no implementation may begin until the user has approved a design, see `../../rules/common/workflow.md`. The iron-law rules on subagent dispatch (context isolation, git ban, worktree ban, privilege ban, and the ban on writing an identifier you have not confirmed the environment exposes) live in `../../rules/common/subagents.md`. The procedural dispatch rules (model selection, escalation) live in `../_shared/subagent-dispatch.md`. The design review step is delegated to the `design-review` skill.
 
 ## Load Required Files First
 
@@ -28,7 +28,7 @@ Before running the procedure below, you **MUST** read both files using the Read 
 ## Procedure
 
 1. **Confirm the brief.** Restate what you understand the user wants to build, the scope as you see it, and any assumptions, then confirm via `AskUserQuestion`. Once confirmed, the user is hands-off until step 8.
-2. **Explore project context.** Read the area of the codebase relevant to the brief. Stay narrow: everything you read here is pasted into the opening prompt of every committee member, so unnecessary context dilutes focus and wastes capacity. Identify the project's primary language and framework now, because the Pragmatist's type depends on it. If the feature touches more than ~3 subsystems, or you cannot determine which code is relevant, surface what you have found and ask the user for guidance via `AskUserQuestion`. This is the only other point where you may question the user before the design is ready.
+2. **Explore project context.** Read the area of the codebase relevant to the brief. Stay narrow: everything you read here is pasted into the opening prompt of every committee member, so unnecessary context dilutes focus and wastes capacity. If the feature touches more than ~3 subsystems, or you cannot determine which code is relevant, surface what you have found and ask the user for guidance via `AskUserQuestion`. This is the only other point where you may question the user before the design is ready.
 3. **Identify decision groups.** List the key decisions: architecture, approach, data flow, error handling, testing strategy, integration. Group related decisions so each group is a coherent set, not individual micro-choices. Decision groups run one after another, because each group's prompt carries the consensus from the groups before it.
 4. **Round A - independent positions.** Dispatch the three members concurrently (one message, three `Agent` calls) using the templates in `committee-member-prompt.md`, following "Dispatching the Committee" below. Each receives identical context: the brief, the codebase context, the decisions in this group, and any consensus already recorded. Each returns a recommendation, reasoning, and concerns. Wait for all three to report before continuing.
 5. **Round B - cross-examination.** Send each member the other two members' positions and ask what, if anything, they would revise and why, using the cross-examination template. This is the step that makes this a deliberation rather than a poll: a position that survives contact with the other two is worth more than one given in isolation, and a member that concedes has told you the disagreement was shallow. Skip this round only when Round A came back unanimous with no substantive concerns from any member.
@@ -53,58 +53,15 @@ The full prompt templates live in `committee-member-prompt.md`.
 
 ## Dispatching the Committee
 
-### Selecting Member Types
-
-`../_shared/subagent-dispatch.md` requires the most specific available type, and `../../rules/common/subagents.md` forbids writing an identifier you have not confirmed the current environment exposes. Both apply here, and agent type names are the case where this bites hardest: many are supplied by plugins and are namespaced (`voltagent-qa-sec:architect-reviewer`, `voltagent-lang:typescript-pro`), so a bare name copied from any table may not resolve at all, and on a machine without that plugin no variant of it exists.
-
-Resolve the three types at dispatch time, every time:
-
-1. Enumerate the `subagent_type` values this environment actually exposes.
-2. For each role, search that enumeration for the capability in the "What to search for" column below.
-3. Take the most specific match, whatever its namespace.
-4. Where nothing matches, take the built-in fallback, which is present in every environment.
-
-| Role       | What to search for                                    | Built-in fallback |
-|------------|-------------------------------------------------------|-------------------|
-| Pragmatist | A developer type for the stack identified in step 2   | `general-purpose` |
-| Architect  | An architecture, system design, or design review type | `Plan`            |
-| Advocate   | A QA, testing, or quality review type                 | `general-purpose` |
-
-`Plan` is the Architect's fallback rather than `general-purpose` because it is built for weighing architectural trade-offs and is read-only by construction.
-
-The tables below are **worked examples of what a match looks like, not identifiers to paste**. They record what one environment happened to expose; yours may namespace them differently, name them differently, or not have them at all. Use them to recognise a match during step 2, then dispatch the identifier you actually enumerated.
-
-| Role      | Example match        | As enumerated in one environment      |
-|-----------|----------------------|---------------------------------------|
-| Architect | `architect-reviewer` | `voltagent-qa-sec:architect-reviewer` |
-| Advocate  | `qa-expert`          | `voltagent-qa-sec:qa-expert`          |
-
-| Stack for the Pragmatist | Example match        | As enumerated in one environment    |
-|--------------------------|----------------------|-------------------------------------|
-| TypeScript               | `typescript-pro`     | `voltagent-lang:typescript-pro`     |
-| Python                   | `python-pro`         | `voltagent-lang:python-pro`         |
-| Go                       | `golang-pro`         | `voltagent-lang:golang-pro`         |
-| Rust                     | `rust-engineer`      | `voltagent-lang:rust-engineer`      |
-| React frontend           | `react-specialist`   | `voltagent-lang:react-specialist`   |
-| PHP / Laravel            | `laravel-specialist` | `voltagent-lang:laravel-specialist` |
-| Java / Spring            | `java-architect`     | `voltagent-lang:java-architect`     |
-| C# / .NET                | `csharp-developer`   | `voltagent-lang:csharp-developer`   |
-| Ruby / Rails             | `rails-expert`       | `voltagent-lang:rails-expert`       |
-| Multi-language / other   | none                 | fall back to `general-purpose`      |
-
-The third column is the point of these tables: the bare name in the second column did not resolve in that environment. If a more specific type than the example exists for your stack, prefer it.
-
-When the Pragmatist falls back to `general-purpose`, tell it in the prompt to focus on the specific languages present in the codebase and to prioritise reuse of the existing patterns you identified in step 2, compensating for the missing stack expertise.
-
 ### Model Selection
 
 Resolve the model per `../_shared/subagent-dispatch.md`, reading the `model` enum on the `Agent` tool schema to get values this harness will accept. Committee deliberation is design judgement over a codebase, which is the stated signal for the **High-capability** tier, so start there rather than at the low-cost default. This is not pre-escalation: the tier table names design judgement explicitly, and a cheap model that produces three shallow positions costs more than it saves, because the whole design is built on top of them.
 
 ### Keeping Members Read-Only
 
-The committee reasons about code; it never changes it. Some of the types you will resolve to ship with `Write`, `Edit`, and `Bash`, and while subagents inherit the session's permission mode, an agent definition's own frontmatter can override it, and the router's degraded path may mean there is no plan mode to inherit.
+The committee reasons about code; it never changes it. `Plan` cannot write files, but it does carry `Bash`, and the router's degraded path may mean there is no plan mode backing it up.
 
-So every member prompt **MUST** carry the read-only instruction in `committee-member-prompt.md`. Do not rely on plan mode alone to enforce it.
+So every member prompt **MUST** carry the read-only instruction in `committee-member-prompt.md`. Do not rely on the agent type alone to enforce it.
 
 ### Naming Members and Running Round B
 
@@ -131,7 +88,7 @@ Concerns flagged by two or more members **MUST** be addressed in the design, eve
 
 ## Tiebreaking
 
-A tiebreak is for a decision that survived cross-examination still genuinely split, not for preference differences. Dispatch **one** tiebreaking agent, passing it all three positions and what Round B changed, using the tiebreaking template in `committee-member-prompt.md`. Prefer a type that did not sit on the committee, so the adjudicator is not weighing its own earlier position; where the environment offers nothing suitable, `general-purpose` with the full template is a better adjudicator than a re-used member type.
+A tiebreak is for a decision that survived cross-examination still genuinely split, not for preference differences. Dispatch **one** tiebreaking agent, passing it all three positions and what Round B changed, using the tiebreaking template in `committee-member-prompt.md`. It is a fresh dispatch, so it holds no position of its own to defend.
 
 **MUST NOT** run more than one tiebreaking round per decision. If the tiebreaker cannot converge, the decision is genuinely unresolved and belongs to the user.
 
@@ -147,7 +104,7 @@ User: "Add webhook delivery for order events. I don't want to be involved, come 
 1. **Confirm the brief**: outbound webhooks for order lifecycle events, customer-configurable endpoints, scope excludes the management UI. Confirmed via `AskUserQuestion`.
 2. **Explore**: read `src/orders/`, `src/queue/`, `src/config/`. Find an existing Redis-backed job queue with an at-least-once contract, HMAC signing already used for inbound partner callbacks, and table-driven tests throughout. Primary stack is TypeScript.
 3. **Decision groups**: (A) delivery mechanism and retry semantics; (B) endpoint configuration, signing, and failure handling. Two groups, run in that order.
-4. **Round A, group A**: resolve types by enumeration - Pragmatist to the TypeScript developer type available here, Architect to the architecture review type, Advocate to the QA type; model resolved to the High-capability value in the `Agent` enum. Dispatch three named members concurrently. Pragmatist says reuse the existing job queue. Architect proposes a separate delivery service so webhook backpressure cannot starve order jobs. Advocate agrees with the Architect but only because of the retry-storm risk.
+4. **Round A, group A**: model resolved to the High-capability value in the `Agent` enum. Dispatch three named members concurrently. Pragmatist says reuse the existing job queue. Architect proposes a separate delivery service so webhook backpressure cannot starve order jobs. Advocate agrees with the Architect but only because of the retry-storm risk.
 5. **Round B**: `SendMessage` each member the other two positions. The Pragmatist concedes the starvation point but counters that a separate service is unjustified before a second consumer exists, and proposes a dedicated queue on the existing infrastructure. The Architect accepts this as satisfying the isolation concern. The Advocate accepts it conditional on a dead-letter queue.
 6. **Synthesise**: converged on a dedicated webhook queue on existing Redis infrastructure, with a dead-letter queue. The isolation concern was raised by two members, so it is addressed explicitly, not just noted.
 7. **Group A recorded**, then groups repeat for group B, whose prompts carry group A's consensus and go to the same three named members.
@@ -175,7 +132,6 @@ You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-d
 | Synthesising before all three members have reported                    | Subagents run in the background. An unreturned position is not a position, and predicting one is fabrication.                                                                                                                             |
 | Skipping Round B because Round A produced a majority                   | A majority is not a deliberation. Skip Round B only on unanimity with no substantive concerns.                                                                                                                                            |
 | Re-dispatching fresh members each round when `SendMessage` works       | Loses their reasoning and pays for the brief and codebase context again. Re-dispatch is the degraded path, not the default.                                                                                                               |
-| Pasting a subagent type name from a table without enumerating          | Type names are environment-specific and often plugin-namespaced. Violates the identifier rule in `../../rules/common/subagents.md`.                                                                                                       |
 | Dispatching members at the low-cost default tier                       | Design judgement is the stated High-capability signal. The whole design rests on these three positions.                                                                                                                                   |
 | Omitting the read-only instruction because the session is in plan mode | Some member types carry `Write` and `Edit`, agent frontmatter can override inherited mode, and the router supports a path with no plan mode at all.                                                                                       |
 | Counting votes instead of weighing evidence                            | Three agents on one base model produce correlated answers. A cited file beats a 2-1 split on general principle.                                                                                                                           |
