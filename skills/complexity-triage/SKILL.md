@@ -92,7 +92,7 @@ Numeric approximation is not hedging, and the distinction is what the qualifier 
 
 A triage verdict is a prediction made before the code exists. Two things can falsify it once implementation starts, and both end the fast path.
 
-- **The reviewer reports `TRIAGE_INVALID`.** The combined reviewer dispatched by `fast-path-implementation` re-checks the classification against the actual diff and names the criterion that failed (see `../_shared/fast-path-reviewer-prompt.md`). This check is stronger than the one in this skill, because it reads code that exists rather than predicting code that does not, and it is run by an agent with no stake in the answer. It is a stop, not an advisory.
+- **The reviewer reports `TRIAGE_INVALID`.** The combined reviewer dispatched by `fast-path-implementation` re-checks the classification against the actual diff and names the criterion that failed (see `../_shared/code-reviewer-prompt.md`'s Triage Re-Check block). This check is stronger than the one in this skill, because it reads code that exists rather than predicting code that does not, and it is run by an agent with no stake in the answer. It is a stop, not an advisory.
 - **The orchestrator sees it directly.** If the work is plainly more complex than the table concluded, stop without waiting for a reviewer to say so.
 
 Either route ends the same way: reclassify as COMPLEX and hand back to `orchestrated-implementation` at its Task Decomposition step for re-decomposition. This skill is not re-run on the way through, for the reason in Preconditions: the same design against the same predictive evidence returns the same verdict, and the falsification is the stronger evidence now.
@@ -103,7 +103,7 @@ The sunk cost of the interrupted attempt is negligible, because nothing is commi
 
 This section is addressed to whichever skill invoked this one. It lives here rather than being restated in each caller because invoking this skill is what loads the file, so the caller holds the text at the moment it needs it.
 
-**SIMPLE.** The caller receives the classification and the completed evidence table, and hands off to `fast-path-implementation`. The table travels with the handoff, because `../_shared/fast-path-reviewer-prompt.md` asks for it by name so the reviewer can re-check the classification against the diff.
+**SIMPLE.** The caller receives the classification and the completed evidence table, and hands off to `fast-path-implementation`. The table travels with the handoff, because `../_shared/code-reviewer-prompt.md`'s Triage Re-Check block asks for it by name so the reviewer can re-check the classification against the diff.
 
 **COMPLEX.** The caller receives the classification and the table, and continues with its own task decomposition. The caller **MUST NOT** re-invoke this skill against the resulting tasks; see Preconditions for why.
 

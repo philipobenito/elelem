@@ -31,11 +31,7 @@ This mailbox is the concrete mechanism behind the peer isolation model in `../..
 
 A teammate reporting a task as done, whether by SendMessage to the lead or by moving the board's native `status` to `completed`, means "claimed done, pending lead verification". It is never itself authoritative; this follows directly from the guiding invariant in `../_shared/task-board.md` that the board is advisory and the lead is authoritative.
 
-On receiving a completion claim, the lead:
-
-1. Runs code review and then its own verification gate against the task, both scoped to the files the task declared ownership of.
-2. Only after that gate passes does the lead write the lead-only `verified` key, and, once the work is committed, `commit_sha`.
-3. Treats a claim that fails verification the same as a failed task: see "Failure Recovery" below, not as a completed one.
+The gate the lead actually runs on a completion claim, code review, then the five-step verification gate, and what a failed gate means for the task, is stated in full in `SKILL.md`'s "Per-Task Review and Verification"; this file does not restate it.
 
 If a `TaskCompleted` hook is wired up, it is a trigger, nothing more: it enqueues the lead's verification pass. It **MUST NOT** be treated as marking the task complete, and it **MUST NOT** commit anything on its own. Only the lead's own verification and the lead's own commit establish that a task is done.
 

@@ -158,7 +158,7 @@ A teammate reports one of four statuses. The lead's response to each:
 | `NEEDS_CONTEXT`      | Answer completely, per `../_shared/subagent-dispatch.md`, and let the teammate continue. Never rush it back to work with the question unanswered.                           |
 | `BLOCKED`            | Assess the blocker. Supply missing context, split the task, or escalate the model. If the design itself is wrong, stop and surface it per `../../rules/common/workflow.md`. |
 
-Escalating a teammate's model is not a re-dispatch. A teammate is spawned once, so escalation means shutting it down, re-queueing its task, and spawning a replacement at the higher tier against the same specification. See `./teammate-protocol.md`.
+Escalating a teammate's model is not a re-dispatch; see `./teammate-protocol.md`'s Failure Recovery for what it actually requires.
 
 A mid-task clarifying exchange between a teammate and the lead is lead-internal. It **MUST NOT** surface to the user as a second design approval, and **MUST NOT** expand scope beyond the one approval the design already has.
 
@@ -166,7 +166,9 @@ A mid-task clarifying exchange between a teammate and the lead is lead-internal.
 
 A teammate reporting done is a claim pending review and verification, nothing more. On each claim the lead runs two gates, in order.
 
-**Code review, advisory.** Dispatch a one-shot reviewer subagent against `../_shared/reviewer-prompt.md`, type and model per `../_shared/subagent-dispatch.md`, scoped to the working-tree diff of the task's declared `files`. This reviewer owns no files, holds no board state, is never assigned board work, and needs no shutdown. Its verdict never substitutes for the verification gate. On rejection, relay the findings over SendMessage to the same owning teammate, which still owns the files and still holds the context. Every fix re-enters at code review: unreviewed code must never reach the verification gate.
+**Code review, advisory.** Dispatch a one-shot reviewer subagent against `../_shared/code-reviewer-prompt.md`, type and model per `../_shared/subagent-dispatch.md`, scoped to the working-tree diff of the task's declared `files`. This call site fills the Scope block, naming the task's declared files, not the Triage Re-Check block. This reviewer owns no files, holds no board state, is never assigned board work, and needs no shutdown. Its verdict never substitutes for the verification gate. On rejection, relay the findings over SendMessage to the same owning teammate, which still owns the files and still holds the context. Every fix re-enters at code review: unreviewed code must never reach the verification gate.
+
+An Approved verdict carrying only Minor findings does not round-trip to the teammate: those findings are carried forward, unfixed, to the user checkpoint as deferred Minor issues, the same as any other Minor finding.
 
 When several claims arrive together, issue their reviewer dispatches in a single message, per the Parallel Dispatch section of `../_shared/subagent-dispatch.md`. Parallelism comes from the message, not the intent, and this is the single highest-leverage thing the lead can do to shorten every teammate's gate window at once.
 
@@ -318,7 +320,7 @@ build, and the output is cited in the completion report.
 ## Prompt Templates
 
 - `../_shared/implementer-prompt.md`: the brief a teammate works from
-- `../_shared/reviewer-prompt.md`: the per-task reviewer dispatch
+- `../_shared/code-reviewer-prompt.md`: the reviewer prompt; the per-task dispatch fills its Scope block
 
 ## Integration
 

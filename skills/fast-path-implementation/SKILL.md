@@ -25,31 +25,31 @@ Dispatch one implementer with every change as a single batch, using `../_shared/
 
 #### Adapting the Shared Prompt
 
-That prompt was written for the full path, where every task carries new behaviour, and roughly half of it enforces the TDD cycle: the Iron Law, the banned rationalisations, a self-review that ends by requiring untested production code to be deleted, and a closing warning that reports without RED to GREEN evidence will be rejected at the verification gate. None of that applies here, because `complexity-triage` criterion 2 means SIMPLE work introduces no new behaviour, and behaviour that does not exist has nothing for a test to cover.
+That prompt was written for the full path, where every task carries new behaviour: it requires invoking the `test-driven-development` skill for each one, and states its exception mechanism in its own Exceptions section. None of that applies here, because `complexity-triage` criterion 2 means SIMPLE work introduces no new behaviour, and behaviour that does not exist has nothing for a test to cover.
 
-Dispatched unadapted, the prompt sets the implementer against the path it is running on. It will write tests for a string replacement, which is the YAGNI violation the reviewer then has to catch; or report `DONE_WITH_CONCERNS` over evidence that was never going to exist; or spend its turns interrogating itself about an Iron Law it did not break. The prompt anticipates this and closes its exception list with "If the task does not explicitly carve out an exception, no exception applies", so the carve-out is the orchestrator's job and has to be written into the dispatch.
+Dispatched unadapted, the prompt sets the implementer against the path it is running on. It will invoke `test-driven-development` over a string replacement, which is the YAGNI violation the reviewer then has to catch, or report `DONE_WITH_CONCERNS` over evidence that was never going to exist. The carve-out is the orchestrator's job and has to be written into the dispatch.
 
 Two additions to the task description, every time:
 
-1. **Carve out the exception explicitly.** State that the work was triaged SIMPLE, that criterion 2 means it introduces no observable behaviour, that no new test is expected, and that the existing suite must stay green throughout. That is the prompt's own "pure refactors that change no observable behaviour" exception, named in the terms the prompt recognises.
+1. **Carve out the exception explicitly.** State that the work was triaged SIMPLE, that criterion 2 means no observable behaviour, so the implementer must NOT invoke `test-driven-development`; the existing suite must stay green throughout. That is the prompt's own exception, named in the terms it recognises.
 
 2. **Ask for an affirmative statement about behaviour.** Require the report to say, in place of RED to GREEN evidence, whether any change introduced observable behaviour, and to name it if so. The gate in step 3 turns on that sentence. An implementer reporting new behaviour has falsified the triage, and an implementer never asked has no reason to mention the absence of something.
 
 ### 2. Single Combined Review
 
-Dispatch one reviewer that checks spec compliance and code quality in a single pass, using `../_shared/fast-path-reviewer-prompt.md`. This is not a weaker review than the full path. It covers the same ground; the combination is possible because the small scope makes separation unnecessary overhead. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`.
+Dispatch one reviewer that checks spec compliance and code quality in a single pass, using `../_shared/code-reviewer-prompt.md`. This call site fills the Triage Re-Check block, not the Scope block. This is not a weaker review than the full path. It covers the same ground; the combination is possible because the small scope makes separation unnecessary overhead. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`.
 
 Paste the triage evidence table into the dispatch. The prompt asks for it by name, because re-checking the classification against the real diff is the reviewer's first job, and on a user-overridden verdict the failing rows are the specific thing it needs to weigh.
 
 The reviewer returns one of three outcomes:
 
-- **PASS**: proceed to the verification gate in step 3, which comes before the user checkpoint
-- **FAIL**: re-dispatch the implementer with the review issues as fix instructions, then re-review, within the budget below
+- **Approved**: proceed to the verification gate in step 3, which comes before the user checkpoint. An Approved verdict carrying only Minor findings still counts as Approved and does not consume the fix budget below.
+- **Issues Found**: re-dispatch the implementer with the review issues as fix instructions, then re-review, within the budget below. Only Critical and Important findings drive a fix dispatch; a Minor finding is deferred to the user checkpoint instead.
 - **TRIAGE_INVALID**: the reviewer judges the work more complex than the triage concluded. End the fast path per the Return Contract.
 
 #### The Fix Budget
 
-Fixes get two dispatches in total, counted across this review and the verification gate in step 3. When the second one fails, stop rather than dispatching a third.
+Fixes get two dispatches in total, counted across this review and the verification gate in step 3, and spent only on Critical and Important findings. When the second dispatch still returns Issues Found, stop rather than dispatching a third.
 
 That is not an arbitrary counter, and it is not the escalation ladder in `../_shared/subagent-dispatch.md` either. Escalating the model is the right response when a task outruns its tier, but this task was certified as fully specified with no room for interpretation. Work a reviewer rejects twice was not, whatever criterion 4's row said, so the fault is in the classification rather than in the implementer. A more capable model would produce a more convincing implementation of an under-specified spec, which is precisely what this path has no per-task checkpoints left to catch.
 
@@ -136,7 +136,7 @@ digraph fast_path {
     "Answer questions, provide context" [shape=box];
     "Implementer implements, self-reviews" [shape=box];
     "Implementer status?" [shape=diamond];
-    "Dispatch combined reviewer\n(../_shared/fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [shape=box];
+    "Dispatch combined reviewer\n(../_shared/code-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [shape=box];
     "Reviewer result?" [shape=diamond];
     "Fix dispatches remaining?" [shape=diamond];
     "Implementer fixes issues" [shape=box];
@@ -152,16 +152,16 @@ digraph fast_path {
     "Answer questions, provide context" -> "Dispatch implementer\n(single batch, TDD carve-out,\nLow-cost default tier)";
     "Implementer asks questions?" -> "Implementer implements, self-reviews" [label="no"];
     "Implementer implements, self-reviews" -> "Implementer status?";
-    "Implementer status?" -> "Dispatch combined reviewer\n(../_shared/fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [label="DONE / DONE_WITH_CONCERNS"];
+    "Implementer status?" -> "Dispatch combined reviewer\n(../_shared/code-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [label="DONE / DONE_WITH_CONCERNS"];
     "Implementer status?" -> "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="BLOCKED / NEEDS_CONTEXT\n(spec gap)"];
-    "Dispatch combined reviewer\n(../_shared/fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" -> "Reviewer result?";
-    "Reviewer result?" -> "Verification gate (orchestrator):\ngit diff + behaviour check + re-run verification\n(../../rules/common/verification.md)" [label="PASS"];
-    "Reviewer result?" -> "Fix dispatches remaining?" [label="FAIL"];
+    "Dispatch combined reviewer\n(../_shared/code-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" -> "Reviewer result?";
+    "Reviewer result?" -> "Verification gate (orchestrator):\ngit diff + behaviour check + re-run verification\n(../../rules/common/verification.md)" [label="Approved"];
+    "Reviewer result?" -> "Fix dispatches remaining?" [label="Issues Found"];
     "Reviewer result?" -> "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="TRIAGE_INVALID"];
     "Fix dispatches remaining?" -> "Implementer fixes issues" [label="yes"];
     "Fix dispatches remaining?" -> "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="no, review failure"];
     "Fix dispatches remaining?" -> "Stop and report to user\n(../../rules/common/workflow.md)" [label="no, verification failure"];
-    "Implementer fixes issues" -> "Dispatch combined reviewer\n(../_shared/fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [label="re-review"];
+    "Implementer fixes issues" -> "Dispatch combined reviewer\n(../_shared/code-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [label="re-review"];
     "Verification gate (orchestrator):\ngit diff + behaviour check + re-run verification\n(../../rules/common/verification.md)" -> "Gate result?";
     "Gate result?" -> "Fix dispatches remaining?" [label="fail"];
     "Gate result?" -> "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="new behaviour reported"];
@@ -192,7 +192,7 @@ Implementer:
 
 [Dispatch combined reviewer (Low-cost default tier), triage table pasted into the prompt]
 
-Combined reviewer: [PASS] Triage holds: git diff --stat shows 8 substantive lines
+Combined reviewer: Approved. Triage holds: git diff --stat shows 8 substantive lines
 against criterion 6's cap of 50. All 8 files correctly updated, no extra modifications,
 consistent with surrounding code style. No new tests, which is correct on this path.
 
@@ -228,21 +228,21 @@ Every thought below means stop:
 
 ## Common Mistakes
 
-| Mistake                                                                  | Why it is wrong                                                                                                                                                                                         |
-|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Dispatching `../_shared/implementer-prompt.md` without the TDD carve-out | The prompt threatens rejection for missing RED to GREEN evidence that criterion 2 guarantees will not exist. Unadapted, it produces invented tests or a false `DONE_WITH_CONCERNS`.                     |
-| Handing back to `orchestrated-implementation` at the top                 | Re-entry at step 2 re-runs triage, which feeds the same design through the same predictive evidence and returns SIMPLE again, reopening the path that just failed. Re-enter at Task Decomposition.      |
-| Discarding the implementer's partial work on handback without asking     | `../../rules/common/git.md` forbids `git restore` and `git checkout` against tracked files without explicit permission for that exact action. The cost is negligible; the decision is still the user's. |
-| Escalating the model after a review FAIL                                 | The tier was never the constraint. Criterion 4 said the spec left no room for interpretation and two rejections say it did. A better model implements the ambiguity more convincingly.                  |
-| Dispatching `requesting-code-review` after the checkpoint                | The combined reviewer already read the whole cumulative diff, because the whole design was one batch. A second reviewer reads the same diff again.                                                      |
-| Reading a report that is silent on behaviour as "no new behaviour"       | Step 1 asks for the statement outright so that its absence is a gap rather than an inference. Re-dispatch for it.                                                                                       |
-| Asking the commit preference here                                        | The caller owns it and asked it once for the session. An invocation reaching here without it should have gone to `orchestrated-implementation`.                                                         |
-| Skipping verification because nothing executable changed                 | "There was nothing to run" is a claim about the project that has to be checked. Check it, then cite what you ran in place of the suite.                                                                 |
+| Mistake                                                                  | Why it is wrong                                                                                                                                                                                                                                |
+|--------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Dispatching `../_shared/implementer-prompt.md` without the TDD carve-out | The prompt requires invoking `test-driven-development` for every new behaviour. Unadapted, the implementer invokes it over a string replacement with no behaviour to cover, producing invented tests, or reports a false `DONE_WITH_CONCERNS`. |
+| Handing back to `orchestrated-implementation` at the top                 | Re-entry at step 2 re-runs triage, which feeds the same design through the same predictive evidence and returns SIMPLE again, reopening the path that just failed. Re-enter at Task Decomposition.                                             |
+| Discarding the implementer's partial work on handback without asking     | `../../rules/common/git.md` forbids `git restore` and `git checkout` against tracked files without explicit permission for that exact action. The cost is negligible; the decision is still the user's.                                        |
+| Escalating the model after a review returns Issues Found                 | The tier was never the constraint. Criterion 4 said the spec left no room for interpretation and two rejections say it did. A better model implements the ambiguity more convincingly.                                                         |
+| Dispatching `requesting-code-review` after the checkpoint                | The combined reviewer already read the whole cumulative diff, because the whole design was one batch. A second reviewer reads the same diff again.                                                                                             |
+| Reading a report that is silent on behaviour as "no new behaviour"       | Step 1 asks for the statement outright so that its absence is a gap rather than an inference. Re-dispatch for it.                                                                                                                              |
+| Asking the commit preference here                                        | The caller owns it and asked it once for the session. An invocation reaching here without it should have gone to `orchestrated-implementation`.                                                                                                |
+| Skipping verification because nothing executable changed                 | "There was nothing to run" is a claim about the project that has to be checked. Check it, then cite what you ran in place of the suite.                                                                                                        |
 
 ## Prompt Templates
 
 - `../_shared/implementer-prompt.md`: the implementer prompt (shared with the full path, adapted per step 1)
-- `../_shared/fast-path-reviewer-prompt.md`: the combined reviewer prompt specific to the fast path
+- `../_shared/code-reviewer-prompt.md`: the reviewer prompt, shared with the other two call sites; this one fills its Triage Re-Check block
 
 ## Integration
 

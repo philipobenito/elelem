@@ -151,4 +151,4 @@ Every thought below means stop:
 
 ## Template
 
-The reviewer prompt template lives at `../_shared/code-reviewer-prompt.md`. It is the single source of truth for its own placeholders; do not restate them here.
+The reviewer prompt template lives at `../_shared/code-reviewer-prompt.md`. It is the single source of truth for its own placeholders; do not restate them here. The same template is shared by three call sites: this skill, the per-task review in `../orchestrated-implementation/SKILL.md`, and `../fast-path-implementation/SKILL.md`. This skill fills neither of the template's two optional blocks, Scope and Triage Re-Check; both stay omitted, heading included, for a dispatch made from here.
