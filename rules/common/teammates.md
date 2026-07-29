@@ -32,4 +32,4 @@ Teammates have no session resumption: a teammate that dies mid-task leaves behin
 
 ## Procedure
 
-The operational procedure for claiming tasks, running the mailbox protocol, and handling conflicts lives in `skills/team-driven-development/` and `skills/_shared/teammate-protocol.md`. Those are the procedure homes for this model; this file states the iron laws that bind regardless of which skill is orchestrating.
+The operational procedure for assigning tasks, running the mailbox protocol, and handling conflicts lives in `skills/orchestrated-implementation/SKILL.md` and `skills/orchestrated-implementation/teammate-protocol.md`. Those are the procedure homes for this model; this file states the iron laws that bind regardless of which skill is orchestrating.

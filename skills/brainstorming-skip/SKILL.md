@@ -1,6 +1,6 @@
 ---
 name: brainstorming-skip
-description: "Lightweight design capture for cases where structured brainstorming would be overkill. Reuses a design already discussed in context when present, otherwise asks the user for a brief design statement; presents it for explicit approval and hands off to create-tickets or subagent-driven-development. Only invoked from the brainstorming router when the user picks the skip option."
+description: "Lightweight design capture for cases where structured brainstorming would be overkill. Reuses a design already discussed in context when present, otherwise asks the user for a brief design statement; presents it for explicit approval and hands off to create-tickets or orchestrated-implementation. Only invoked from the brainstorming router when the user picks the skip option."
 ---
 
 # Brainstorming (Skip)
@@ -38,7 +38,7 @@ The escape hatch for the brainstorming router. The user already has a clear desi
 
 5. **Ask what happens next.** Use `AskUserQuestion` with two options: "Implement directly" and "Create tickets first".
 
-6. **Hand off via `Skill`.** Either `create-tickets`, or the orchestrator chosen per the "Choosing an Orchestration Skill" table in `../../rules/common/skills-policy.md` (`subagent-driven-development` by default, `team-driven-development` when the design qualifies for parallel execution). Nothing else.
+6. **Hand off via `Skill`.** Either `create-tickets` or `orchestrated-implementation`. Nothing else.
 
 ## What Skip Mode Does Not Do
 
@@ -69,7 +69,7 @@ Earlier in the conversation the user said "let's add a `--dry-run` flag to the d
 
 [AskUserQuestion: implement directly, or create tickets first? User picks implement directly.]
 
-[Skill: subagent-driven-development]
+[Skill: orchestrated-implementation]
 ```
 
 Note what is absent: no `--help` documentation, no output prefix. Both would be reasonable things to build, and neither was asked for.

@@ -60,13 +60,13 @@ In **Guided mode**, explain why reproduction matters: without it, you cannot ver
 
 Apply the scope discipline in `RULES.md`. The initial-scope allowlist and the explicit prohibitions on wider reading are the rules; this phase is where they bite.
 
-In **Autonomous mode**, dispatch two or three evidence subagents in parallel via `Agent` using the template at `evidence-prompt.md` in this skill directory:
+In **Autonomous mode**, dispatch two or three evidence subagents in parallel via `Agent` using the template at `../_shared/evidence-prompt.md`:
 
 - One reads the error site and its immediate context
 - One checks recent git history for affected files
 - One traces the specific code path from the error
 
-Use `evidence-prompt.md` rather than `investigator-prompt.md` here. No hypothesis exists yet, and the investigator template demands a verdict on one; an investigator dispatched at this phase can only invent a hypothesis or return INCONCLUSIVE by construction.
+Use `../_shared/evidence-prompt.md` rather than `../_shared/investigator-prompt.md` here. No hypothesis exists yet, and the investigator template demands a verdict on one; an investigator dispatched at this phase can only invent a hypothesis or return INCONCLUSIVE by construction.
 
 Per `../../rules/common/subagents.md`, give each subagent exactly the context it needs and nothing more.
 
@@ -93,7 +93,7 @@ Test the most likely hypothesis first:
 3. Record the result as evidence for or against
 4. If confirmed, proceed to Phase 6. If disproven, move to the next hypothesis.
 
-In **Autonomous mode**, test the top two or three hypotheses in parallel using investigator subagents (see `investigator-prompt.md`), each with a clear scope and a single question to answer. When more than one investigator runs at once, the Parallel Dispatch section of `../_shared/subagent-dispatch.md` binds: issue every dispatch in a single message, and read every investigator's report before drawing a conclusion from any one of them. Investigators write nothing, so overlapping reads are expected and need no partitioning; what does apply is the shared-blind-spot check, because two isolated investigators agreeing on a wrong hypothesis is not evidence that it is right.
+In **Autonomous mode**, test the top two or three hypotheses in parallel using investigator subagents (see `../_shared/investigator-prompt.md`), each with a clear scope and a single question to answer. When more than one investigator runs at once, the Parallel Dispatch section of `../_shared/subagent-dispatch.md` binds: issue every dispatch in a single message, and read every investigator's report before drawing a conclusion from any one of them. Investigators write nothing, so overlapping reads are expected and need no partitioning; what does apply is the shared-blind-spot check, because two isolated investigators agreeing on a wrong hypothesis is not evidence that it is right.
 
 Apply the Investigation Budget from `RULES.md`: three cycles maximum before you stop and refocus with the user. A parallel round is one cycle however many hypotheses it tests, because the budget limits how many times you re-frame the problem before asking for help, not how many hypotheses you hold at once.
 
@@ -120,7 +120,7 @@ Once the user has approved the root cause and the fix approach:
 
 ## Autonomous-Mode Subagent Dispatch
 
-Autonomous mode is the only mode in which subagents run. Phase 3 dispatches evidence gatherers via `evidence-prompt.md`; Phase 5 dispatches hypothesis testers via `investigator-prompt.md`. Both templates live in this skill directory.
+Autonomous mode is the only mode in which subagents run. Phase 3 dispatches evidence gatherers via `../_shared/evidence-prompt.md`; Phase 5 dispatches hypothesis testers via `../_shared/investigator-prompt.md`.
 
 Provide each subagent with: the bug description (expected vs actual), its single assignment (the evidence question at Phase 3, the hypothesis at Phase 5), and the scoped list of files or areas it may examine.
 

@@ -8,7 +8,7 @@
     "should_trigger": true
   },
   {
-    "query": "you skipped step 6. go back and put the ingest pipeline summary through design-review before handing off to subagent-driven-development",
+    "query": "you skipped step 6. go back and put the ingest pipeline summary through design-review before handing off to orchestrated-implementation",
     "should_trigger": true
   },
   {

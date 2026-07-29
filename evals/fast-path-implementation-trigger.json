@@ -24,7 +24,7 @@
     "should_trigger": true
   },
   {
-    "query": "team-driven-development triaged the config rename as SIMPLE before it spawned anyone. hand it off the same way sdd would",
+    "query": "orchestrated-implementation triaged the config rename as SIMPLE before it spawned any teammates. hand it off from there",
     "should_trigger": true
   },
   {

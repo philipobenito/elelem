@@ -19,5 +19,5 @@
   {"query": "can you update the README install section, the pnpm version we pin is out of date and the docker compose command has changed", "should_trigger": false},
   {"query": "run the full test suite and tell me if anything's broken before i cut the release", "should_trigger": false},
   {"query": "we approved the design for the notifications work last week and you've already built the email path. carry on with the in-app part", "should_trigger": false},
-  {"query": "what's the difference between subagent-driven-development and team-driven-development, when would i pick one over the other?", "should_trigger": false}
+  {"query": "what's the difference between orchestrated-implementation and fast-path-implementation, and what decides which one runs?", "should_trigger": false}
 ]

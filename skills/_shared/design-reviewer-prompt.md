@@ -8,11 +8,11 @@ Use this template when dispatching a design reviewer subagent.
 
 ## Selecting the Model
 
-Resolve the model per `../_shared/subagent-dispatch.md`. Start at the Low-cost default tier. Design judgement is that file's stated signal for the High-capability tier, so escalation as far as that tier is available for this dispatch, one tier at a time and only on evidence. Do not pre-escalate on the assumption that a design will be hard.
+Resolve the model per `subagent-dispatch.md`. Start at the Low-cost default tier. Design judgement is that file's stated signal for the High-capability tier, so escalation as far as that tier is available for this dispatch, one tier at a time and only on evidence. Do not pre-escalate on the assumption that a design will be hard.
 
 ## The Prompt
 
-```
+```yaml
 Agent (Plan):
   description: "Review design summary"
   prompt: |
@@ -80,4 +80,4 @@ Agent (Plan):
 
 **Reviewer returns:** Status, Issues (each with its resolution line), Recommendations
 
-The "What to Check" table is duplicated in `SKILL.md`, which needs its own copy so the orchestrator can categorise what comes back. Keep the two in sync when editing either file.
+The "What to Check" table is duplicated in `../design-review/SKILL.md`, which needs its own copy so the orchestrator can categorise what comes back. Keep the two in sync when editing either file.

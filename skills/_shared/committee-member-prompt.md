@@ -1,6 +1,6 @@
 # Committee Member Prompt Templates
 
-Templates for the deliberation rounds in `SKILL.md`. Round A collects three independent positions; Round B has each member cross-examine the other two. Model selection and the read-only requirement are defined in `SKILL.md`'s "Dispatching the Committee" and are not restated here.
+Templates for the deliberation rounds in `../brainstorming-committee/SKILL.md`. Round A collects three independent positions; Round B has each member cross-examine the other two. Model selection and the read-only requirement are defined in `../brainstorming-committee/SKILL.md`'s "Dispatching the Committee" and are not restated here.
 
 ## How to Dispatch
 

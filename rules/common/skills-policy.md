@@ -41,35 +41,30 @@ When more than one skill could apply, you **MUST** invoke them in this order:
 
 1. **Entry skills first**: `brainstorming` (always, before any code edit), `debugging` (when the task is "something is broken"), `work-on-ticket` (when the user references a ticket). These determine *what* you are doing.
 2. **Process skills second**: `complexity-triage`, `verification-before-completion`. These determine *how* to approach the work.
-3. **Implementation skills third**: `subagent-driven-development`, `fast-path-implementation`, `test-driven-development`, `team-driven-development` (preferred), and domain-specific skills. These guide execution.
+3. **Implementation skills third**: `orchestrated-implementation`, `fast-path-implementation`, `test-driven-development`, and domain-specific skills. These guide execution.
 4. **Review skills fourth**: `requesting-code-review`, `receiving-code-review`. These run before completion claims.
 
 Examples:
 
 - "Let's build X" -> `brainstorming` first (the router asks the user which mode); the user picks a mode; the mode skill produces a design; an implementation skill takes over.
 - "Fix this bug" -> `debugging` first (reproduce, find root cause, get user approval on the fix approach); then `test-driven-development` for the regression test; then the fix; then `requesting-code-review`; then `verification-before-completion`.
-- "Work on #42" -> `work-on-ticket` first; it recovers the design from the parent epic and hands off to `team-driven-development` or `subagent-driven-development`.
+- "Work on #42" -> `work-on-ticket` first; it recovers the design from the parent epic and hands off to `orchestrated-implementation`.
 - "Is this done?" -> `verification-before-completion` first, nothing else until the gate has been run.
 
-### Choosing an Orchestration Skill
+### The Orchestration Skill
 
-Two implementation skills orchestrate work across subagents. Use this table to pick between them; the full operational detail for the second lives in `skills/team-driven-development/SKILL.md` and `skills/_shared/teammate-protocol.md`, not here.
+`orchestrated-implementation` is the only orchestration skill. It implements an approved design across persistent teammates working a shared task board, with the lead holding assignment, code review, verification, commits and every user checkpoint. Its full operational detail lives in `skills/orchestrated-implementation/`, not here.
 
-| Situation                                                                                                                                                                                                                   | Skill                                                                                               |
-|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| Coupled or strictly ordered work, or the default sequential case                                                                                                                                                            | `subagent-driven-development`                                                                       |
-| A sustained feature whose tasks are mostly independent (disjoint file sets) with no shared mutable test/build state, where persistent peers over a shared task board add value, and the Agent Teams capability is available | `team-driven-development` (degrades to `subagent-driven-development` when the capability is absent) |
+Coupled and strictly ordered work goes there too. Ordering is expressed as `blockedBy` edges between tasks inside the decomposition, rather than as a reason to route the work elsewhere.
 
-Prefer `team-driven-development`, but when in doubt, default to `subagent-driven-development`; it is the safe sequential fallback for both rows.
-
-These two are the only orchestration options. You **MUST NOT** substitute a bare concurrent fan-out of implementer subagents for either of them, however independent the tasks look: a fan-out with no task board carries no complexity triage, no per-task review, no user checkpoint, and no final feature-level review, so it silently bypasses the mandatory gates in `testing.md` and `code-review.md`. The mechanics of running agents concurrently live in `skills/_shared/subagent-dispatch.md` and are available to any skill that needs them; they are not an orchestration skill in their own right.
+You **MUST NOT** substitute a bare concurrent fan-out of implementer subagents for it, however independent the tasks look: a fan-out with no task board carries no complexity triage, no exclusive file ownership, no per-task review, no user checkpoint, and no final feature-level review, so it silently bypasses the mandatory gates in `testing.md` and `code-review.md`. What distinguishes the orchestration skill from a fan-out is the board, the exclusive ownership it enforces, and the gates the lead holds. The mechanics of running agents concurrently live in `skills/_shared/subagent-dispatch.md` and are available to any skill that needs them; they are not an orchestration skill in their own right.
 
 Specific mandatory pairings:
 
 - **Before any code edit, no matter how small**: `brainstorming`. The router will enter plan mode and ask the user how to approach the design. The router includes a "Skip brainstorming" option for cases where structured brainstorming would be overkill, that option exists so the router can be a hard requirement without becoming a usability tax. You **MUST NOT** rationalise your way out of invoking the router by deciding the work is "obvious", "small", or "just an X". The user picks the mode; you do not pick on their behalf.
 - **Before writing implementation code for a feature or non-trivial change**: `test-driven-development`. This does not apply to one-line bug fixes (those go through `debugging` first), typo corrections, or edits to non-code files.
 - **Before any debugging or fix work**: `debugging`. The hard gate in `debugging.md` (reproduce + root cause) applies whether or not the skill is invoked, and the skill is the procedure that produces the evidence the rule requires.
-- **Before claiming work is complete**: `requesting-code-review` followed by `verification-before-completion`. In orchestrated work via `subagent-driven-development`, the per-task reviewer covers the per-task review and `subagent-driven-development` invokes `requesting-code-review` itself at the end of the feature against the cumulative diff, you do not invoke it again.
+- **Before claiming work is complete**: `requesting-code-review` followed by `verification-before-completion`. In orchestrated work via `orchestrated-implementation`, the per-task reviewer covers the per-task review and that skill invokes `requesting-code-review` itself at the end of the feature against the cumulative diff, you do not invoke it again.
 - **Before asserting that something passes, works, or is ready**: `verification-before-completion`.
 
 ## Instruction Priority

@@ -1,6 +1,6 @@
 ---
 name: complexity-triage
-description: Classifies one approved design as SIMPLE or COMPLEX so an orchestrator knows whether the fast path is open. Invoked by `subagent-driven-development` and `team-driven-development` before task decomposition, and required by `fast-path-implementation` as its precondition. Reads the affected code to gather evidence against six binary criteria. Defaults to COMPLEX; SIMPLE must be earned with specific observations.
+description: Classifies one approved design as SIMPLE or COMPLEX so an orchestrator knows whether the fast path is open. Invoked by `orchestrated-implementation` before task decomposition, and required by `fast-path-implementation` as its precondition. Reads the affected code to gather evidence against six binary criteria. Defaults to COMPLEX; SIMPLE must be earned with specific observations.
 ---
 
 # Complexity Triage
@@ -11,7 +11,7 @@ The strictness is calibrated to what SIMPLE unlocks. `fast-path-implementation` 
 
 ## Preconditions
 
-An approved design, from the `brainstorming` router via any of its modes, from `work-on-ticket`, or from a committed specification. This skill runs inside the orchestrator (`subagent-driven-development` step 2, or the equivalent step in `team-driven-development`), not before it.
+An approved design, from the `brainstorming` router via any of its modes, from `work-on-ticket`, or from a committed specification. This skill runs inside `orchestrated-implementation`, at its Triage and Path Selection step, not before it.
 
 Triage runs **once, against the whole design**, never per task. Criterion 1 asks whether the entire change set is one uniform batch, so a design holding two different kinds of edit fails it by construction. Once the verdict is COMPLEX, decomposition is the response to that verdict rather than an invitation to re-ask the question of each resulting task.
 
@@ -92,10 +92,10 @@ Numeric approximation is not hedging, and the distinction is what the qualifier 
 
 A triage verdict is a prediction made before the code exists. Two things can falsify it once implementation starts, and both end the fast path.
 
-- **The reviewer reports `TRIAGE_INVALID`.** The combined reviewer dispatched by `fast-path-implementation` re-checks the classification against the actual diff and names the criterion that failed (see `../fast-path-implementation/fast-path-reviewer-prompt.md`). This check is stronger than the one in this skill, because it reads code that exists rather than predicting code that does not, and it is run by an agent with no stake in the answer. It is a stop, not an advisory.
+- **The reviewer reports `TRIAGE_INVALID`.** The combined reviewer dispatched by `fast-path-implementation` re-checks the classification against the actual diff and names the criterion that failed (see `../_shared/fast-path-reviewer-prompt.md`). This check is stronger than the one in this skill, because it reads code that exists rather than predicting code that does not, and it is run by an agent with no stake in the answer. It is a stop, not an advisory.
 - **The orchestrator sees it directly.** If the work is plainly more complex than the table concluded, stop without waiting for a reviewer to say so.
 
-Either route ends the same way: reclassify as COMPLEX and hand back to `subagent-driven-development` at its Task Decomposition step for re-decomposition. This skill is not re-run on the way through, for the reason in Preconditions: the same design against the same predictive evidence returns the same verdict, and the falsification is the stronger evidence now.
+Either route ends the same way: reclassify as COMPLEX and hand back to `orchestrated-implementation` at its Task Decomposition step for re-decomposition. This skill is not re-run on the way through, for the reason in Preconditions: the same design against the same predictive evidence returns the same verdict, and the falsification is the stronger evidence now.
 
 The sunk cost of the interrupted attempt is negligible, because nothing is committed before the fast path's checkpoint, and it is far cheaper than pushing complex work through a review shaped for mechanical edits. Negligible is not nothing, though: the implementer's edits are still sitting uncommitted in the working tree, and discarding them is a destructive git operation the user has to authorise. `../fast-path-implementation/SKILL.md` settles that with the user before handing back.
 
@@ -103,7 +103,7 @@ The sunk cost of the interrupted attempt is negligible, because nothing is commi
 
 This section is addressed to whichever skill invoked this one. It lives here rather than being restated in each caller because invoking this skill is what loads the file, so the caller holds the text at the moment it needs it.
 
-**SIMPLE.** The caller receives the classification and the completed evidence table, and hands off to `fast-path-implementation`. The table travels with the handoff, because `fast-path-reviewer-prompt.md` asks for it by name so the reviewer can re-check the classification against the diff.
+**SIMPLE.** The caller receives the classification and the completed evidence table, and hands off to `fast-path-implementation`. The table travels with the handoff, because `../_shared/fast-path-reviewer-prompt.md` asks for it by name so the reviewer can re-check the classification against the diff.
 
 **COMPLEX.** The caller receives the classification and the table, and continues with its own task decomposition. The caller **MUST NOT** re-invoke this skill against the resulting tasks; see Preconditions for why.
 

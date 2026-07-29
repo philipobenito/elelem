@@ -1,6 +1,6 @@
 ---
 name: requesting-code-review
-description: "Dispatches a code reviewer subagent against the work under review, applies severity discipline to its verdict, and owns the fix-and-re-review loop until no Critical or Important issue remains. Use this whenever a change is about to be committed to main, opened as a pull request, handed back as complete, or declared done, and whenever the user asks for a branch, a diff, or their changes to be looked over before shipping. Invoked by `subagent-driven-development` for the feature-level review and by `debugging` after a fix. No change is exempt for being small, simple, obvious, or locally tested."
+description: "Dispatches a code reviewer subagent against the work under review, applies severity discipline to its verdict, and owns the fix-and-re-review loop until no Critical or Important issue remains. Use this whenever a change is about to be committed to main, opened as a pull request, handed back as complete, or declared done, and whenever the user asks for a branch, a diff, or their changes to be looked over before shipping. Invoked by `orchestrated-implementation` for the feature-level review and by `debugging` after a fix. No change is exempt for being small, simple, obvious, or locally tested."
 ---
 
 # Requesting Code Review
@@ -29,7 +29,7 @@ Never fall back to `HEAD~1`. It is right only when the work is exactly one commi
 
 ### Include the Working Tree
 
-Work reaching this skill is frequently uncommitted. `debugging` reviews at Phase 7 step 3 and commits only after its Completion Gate. `subagent-driven-development` offers "Ask me each time" as a commit preference, and a user may decline. A `BASE..HEAD` range excludes the working tree, so in both cases the reviewer would receive the previous commit and none of the work under review.
+Work reaching this skill is frequently uncommitted. `debugging` reviews at Phase 7 step 3 and commits only after its Completion Gate. `orchestrated-implementation` offers "Ask me each time" as a commit preference, and a user may decline. A `BASE..HEAD` range excludes the working tree, so in both cases the reviewer would receive the previous commit and none of the work under review.
 
 Diffing against the base alone rather than across a range solves this without a branch. `git diff <base>` compares the base to the working tree, so it covers committed and uncommitted changes together, and it is identical to `BASE..HEAD` when the tree is clean. Untracked files are the one thing it cannot show, which is what `git status --porcelain` is for.
 
@@ -46,7 +46,7 @@ If the diff is empty and no untracked files are listed, there is nothing to revi
 
 2. **Resolve the model** per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier; a single-file change with a clear spec belongs there. Escalate one tier at a time and only on evidence: a change spanning several files whose correctness depends on how they interact, or a reviewer whose findings show it did not follow the change across files.
 
-3. **Fill the template** in `code-reviewer.md` and dispatch. The template names its own placeholders; fill every one, and leave none unreplaced. Pass no session history: the reviewer reads the repository and the diff, and anything it needs from the conversation belongs in the template you fill.
+3. **Fill the template** in `../_shared/code-reviewer-prompt.md` and dispatch. The template names its own placeholders; fill every one, and leave none unreplaced. Pass no session history: the reviewer reads the repository and the diff, and anything it needs from the conversation belongs in the template you fill.
 
 4. **Read the status.**
    - **Approved**: go to step 7.
@@ -151,4 +151,4 @@ Every thought below means stop:
 
 ## Template
 
-The reviewer prompt template lives at `code-reviewer.md` in this skill directory. It is the single source of truth for its own placeholders; do not restate them here.
+The reviewer prompt template lives at `../_shared/code-reviewer-prompt.md`. It is the single source of truth for its own placeholders; do not restate them here.

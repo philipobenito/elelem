@@ -1,6 +1,6 @@
 ---
 name: brainstorming-committee
-description: "Turns an idea into an approved design through autonomous deliberation by three named subagents with different perspectives. They state independent positions, cross-examine each other's reasoning, and converge on consensus without user involvement until the final design is ready for review. Use when the user wants to be hands-off, says 'committee mode', 'you decide', 'don't ask me questions', or 'come back when it's done'. Then runs design-review and hands off to create-tickets or subagent-driven-development."
+description: "Turns an idea into an approved design through autonomous deliberation by three named subagents with different perspectives. They state independent positions, cross-examine each other's reasoning, and converge on consensus without user involvement until the final design is ready for review. Use when the user wants to be hands-off, says 'committee mode', 'you decide', 'don't ask me questions', or 'come back when it's done'. Then runs design-review and hands off to create-tickets or orchestrated-implementation."
 ---
 
 # Brainstorming (Committee)
@@ -11,9 +11,9 @@ For the rule that no implementation may begin until the user has approved a desi
 
 ## Load Required Files First
 
-This skill depends on two sibling/shared files that are **not** always in context:
+This skill depends on two shared files that are **not** always in context:
 
-- `committee-member-prompt.md` (sibling) - the prompt templates filled in during the deliberation rounds
+- `../_shared/committee-member-prompt.md` - the prompt templates filled in during the deliberation rounds
 - `../_shared/subagent-dispatch.md` - procedural rules for dispatching the committee members
 
 Before running the procedure below, you **MUST** read both files using the Read tool if you have not already read them in this session.
@@ -30,7 +30,7 @@ Before running the procedure below, you **MUST** read both files using the Read 
 1. **Confirm the brief.** Restate what you understand the user wants to build, the scope as you see it, and any assumptions, then confirm via `AskUserQuestion`. Once confirmed, the user is hands-off until step 8.
 2. **Explore project context.** Read the area of the codebase relevant to the brief. Stay narrow: everything you read here is pasted into the opening prompt of every committee member, so unnecessary context dilutes focus and wastes capacity. If the feature touches more than ~3 subsystems, or you cannot determine which code is relevant, surface what you have found and ask the user for guidance via `AskUserQuestion`. This is the only other point where you may question the user before the design is ready.
 3. **Identify decision groups.** List the key decisions: architecture, approach, data flow, error handling, testing strategy, integration. Group related decisions so each group is a coherent set, not individual micro-choices. Decision groups run one after another, because each group's prompt carries the consensus from the groups before it.
-4. **Round A - independent positions.** Dispatch the three members concurrently (one message, three `Agent` calls) using the templates in `committee-member-prompt.md`, following "Dispatching the Committee" below. Each receives identical context: the brief, the codebase context, the decisions in this group, and any consensus already recorded. Each returns a recommendation, reasoning, and concerns. Wait for all three to report before continuing.
+4. **Round A - independent positions.** Dispatch the three members concurrently (one message, three `Agent` calls) using the templates in `../_shared/committee-member-prompt.md`, following "Dispatching the Committee" below. Each receives identical context: the brief, the codebase context, the decisions in this group, and any consensus already recorded. Each returns a recommendation, reasoning, and concerns. Wait for all three to report before continuing.
 5. **Round B - cross-examination.** Send each member the other two members' positions and ask what, if anything, they would revise and why, using the cross-examination template. This is the step that makes this a deliberation rather than a poll: a position that survives contact with the other two is worth more than one given in isolation, and a member that concedes has told you the disagreement was shallow. Skip this round only when Round A came back unanimous with no substantive concerns from any member.
 6. **Synthesise consensus** using the table below, against the Round B positions where Round B ran. Record the consensus before starting the next decision group.
 7. **Assemble the design summary.** Combine every consensus into a single coherent summary covering goal, architecture, components, interfaces, data flow, error handling, testing strategy, and integration points. Scale each section to its complexity. Follow existing patterns; do not propose unrelated refactoring.
@@ -39,7 +39,7 @@ Before running the procedure below, you **MUST** read both files using the Read 
 
    A decision required return takes the same route for the same reason, and this is the mode where it belongs there rather than with the user: the review found a question the design never answered, the user picked a mode on the promise of not being asked questions, and three deliberating members are better placed to answer it than a reviewer working alone would have been. Run the targeted round, then invoke `design-review` again against the revised summary. Escalate to the user only where the round cannot settle it, which per `../../rules/common/workflow.md` is a stopping condition rather than a failure of the mode. Outstanding issues, by contrast, means the review budget is spent, so the decision goes to the user rather than to another dispatch.
 10. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval. Once the user approves, call `ExitPlanMode` carrying the approved summary. Approval came from the question you just asked, so this call releases the session rather than seeking approval again, and it has to happen before the hand-off: every downstream skill starts by writing something, and plan mode does not lapse on its own.
-11. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and the orchestration skills; when the user picks implementation, select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table: default to `subagent-driven-development`; use `team-driven-development` when the design qualifies for parallel execution (at least three independent components that can be built simultaneously with no shared state). Invoke the chosen skill via `Skill`.
+11. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and `orchestrated-implementation`. Invoke the chosen one via `Skill`.
 
 ## The Three Perspectives
 
@@ -49,7 +49,7 @@ Before running the procedure below, you **MUST** read both files using the Read 
 | Architect  | Patterns, separation of concerns, well-defined interfaces, testability       |
 | Advocate   | Correctness, edge cases, robustness under failure, hard-to-misuse interfaces |
 
-The full prompt templates live in `committee-member-prompt.md`.
+The full prompt templates live in `../_shared/committee-member-prompt.md`.
 
 ## Dispatching the Committee
 
@@ -61,7 +61,7 @@ Resolve the model per `../_shared/subagent-dispatch.md`, reading the `model` enu
 
 The committee reasons about code; it never changes it. `Plan` cannot write files, but it does carry `Bash`, and the router's degraded path may mean there is no plan mode backing it up.
 
-So every member prompt **MUST** carry the read-only instruction in `committee-member-prompt.md`. Do not rely on the agent type alone to enforce it.
+So every member prompt **MUST** carry the read-only instruction in `../_shared/committee-member-prompt.md`. Do not rely on the agent type alone to enforce it.
 
 ### Naming Members and Running Round B
 
@@ -88,7 +88,7 @@ Concerns flagged by two or more members **MUST** be addressed in the design, eve
 
 ## Tiebreaking
 
-A tiebreak is for a decision that survived cross-examination still genuinely split, not for preference differences. Dispatch **one** tiebreaking agent, passing it all three positions and what Round B changed, using the tiebreaking template in `committee-member-prompt.md`. It is a fresh dispatch, so it holds no position of its own to defend.
+A tiebreak is for a decision that survived cross-examination still genuinely split, not for preference differences. Dispatch **one** tiebreaking agent, passing it all three positions and what Round B changed, using the tiebreaking template in `../_shared/committee-member-prompt.md`. It is a fresh dispatch, so it holds no position of its own to defend.
 
 **MUST NOT** run more than one tiebreaking round per decision. If the tiebreaker cannot converge, the decision is genuinely unresolved and belongs to the user.
 
@@ -115,7 +115,7 @@ User: "Add webhook delivery for order events. I don't want to be involved, come 
 
 ## Completion Gate
 
-You **MUST NOT** invoke `create-tickets` or any orchestration skill (`subagent-driven-development`, `team-driven-development`) until all of these are true:
+You **MUST NOT** invoke `create-tickets` or `orchestrated-implementation` until all of these are true:
 
 - Every decision group has a recorded consensus
 - The design summary was assembled from those consensuses into a single text block

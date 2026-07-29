@@ -1,6 +1,6 @@
 ---
 name: work-on-ticket
-description: Picks up a ticket from the project's ticketing system, fetches its parent epic, recovers the embedded design context, presents the scope to the user for confirmation, and hands off to subagent-driven-development with the recovered design as the approved input. The re-entry point for work planned in a previous session via brainstorming and create-tickets.
+description: Picks up a ticket from the project's ticketing system, fetches its parent epic, recovers the embedded design context, presents the scope to the user for confirmation, and hands off to orchestrated-implementation with the recovered design as the approved input. The re-entry point for work planned in a previous session via brainstorming and create-tickets.
 ---
 
 # Work on Ticket
@@ -9,7 +9,7 @@ description: Picks up a ticket from the project's ticketing system, fetches its 
 
 This skill depends on the rules in `skills/_shared/tickets.md`. Those rules are **not** always in context; they live next to the ticket skills and are loaded only when a ticket skill is invoked. Before running the procedure below, you **MUST** read `skills/_shared/tickets.md` using the Read tool if you have not already read it in this session.
 
-The detection of which ticketing system is in use lives in `skills/_shared/ticketing-detection.md`, loaded at step 1. The downstream implementation workflow lives in the orchestration skills, `subagent-driven-development` and `team-driven-development`. This skill bridges the gap across session boundaries between a ticket that was created in a prior session and the implementation workflow that delivers it.
+The detection of which ticketing system is in use lives in `skills/_shared/ticketing-detection.md`, loaded at step 1. The downstream implementation workflow lives in `orchestrated-implementation`. This skill bridges the gap across session boundaries between a ticket that was created in a prior session and the implementation workflow that delivers it.
 
 **Precondition**: the user has referenced a specific ticket to work on (for example, "work on #42", "pick up PROJ-123", "implement issue 7"). Without a specific reference, this skill does not apply; if the user is asking what to work on next, that is a triage question, not this skill.
 
@@ -67,11 +67,11 @@ You **MUST** complete these steps in order. Do not skip a step and do not reorde
 
    If the user selects "Adjust scope" or "Need more context", address the feedback and re-present with `AskUserQuestion` again. Only proceed to step 8 after "Looks good, proceed".
 
-8. **Hand off to an orchestration skill.** Select the orchestrator per `../../rules/common/skills-policy.md`'s "Choosing an Orchestration Skill" table: `subagent-driven-development` by default, or `team-driven-development` when the recovered design qualifies for parallel execution (a sustained feature of mostly-independent, file-disjoint tasks with no shared mutable test/build state) and Agent Teams is available. Use `Skill` to invoke the chosen skill. This **MUST** be an actual skill invocation, not a conceptual handoff; if you skip the invocation, the downstream skill's full instructions will not be loaded and implementation quality will suffer.
+8. **Hand off to `orchestrated-implementation`.** Use `Skill` to invoke it. This **MUST** be an actual skill invocation, not a conceptual handoff; if you skip the invocation, the downstream skill's full instructions will not be loaded and implementation quality will suffer.
 
    ```
    Skill:
-     skill: "subagent-driven-development"   # or team-driven-development per the routing table
+     skill: "orchestrated-implementation"
    ```
 
    Before invoking, construct the approved design input by combining:
@@ -129,7 +129,7 @@ If `resolve_epic_context` cannot resolve a parent reference (the ticket is missi
 
 ## Handling Multiple Tickets
 
-If the user wants to work on multiple tickets, work on them one at a time in dependency order per `../../rules/common/workflow.md`. Complete one ticket through the full `subagent-driven-development` cycle (including reviews) before starting the next. If the user wants genuinely parallel work, use `../team-driven-development/SKILL.md` (which runs tasks across Agent Teams teammates, degrading to sequential `subagent-driven-development` when the capability is unavailable) rather than separate sessions.
+If the user wants to work on multiple tickets, work on them one at a time in dependency order per `../../rules/common/workflow.md`. Complete one ticket through the full `orchestrated-implementation` cycle (including reviews) before starting the next. Parallelism belongs inside a ticket rather than across tickets: that skill already runs every ready task concurrently, so a second session buys nothing and puts two leads in one working tree.
 
 ## Edge Cases
 

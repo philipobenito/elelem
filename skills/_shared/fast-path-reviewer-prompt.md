@@ -6,7 +6,7 @@ Use this template when dispatching a combined reviewer for fast-path (SIMPLE) wo
 
 **Only used when complexity triage classified the work as SIMPLE.**
 
-```
+```yaml
 Agent (general-purpose):
   description: "Combined review for fast-path implementation"
   prompt: |

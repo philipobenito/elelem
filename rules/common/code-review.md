@@ -6,7 +6,7 @@ These rules apply to every code review interaction: requesting a review, receivi
 
 You **MUST** request a code review before any of the following:
 
-- Handing a task back as complete in orchestrated work (see `subagents.md` and the `subagent-driven-development` skill)
+- Handing a task back as complete in orchestrated work (see `subagents.md` and the `orchestrated-implementation` skill)
 - Merging to main or opening a pull request
 - Declaring a major feature complete
 

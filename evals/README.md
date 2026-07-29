@@ -43,7 +43,7 @@ It splits the set 60/40 into train and held-out test, runs each query three time
 | `brainstorming-skip-trigger.json`       | `brainstorming-skip`       | `brainstorming` itself, `work-on-ticket`, `create-tickets`, unrelated uses of the word "skip"                             |
 | `brainstorming-standard-trigger.json`   | `brainstorming-standard`   | `brainstorming` itself, the other three mode skills, unrelated uses of the word "standard"                                |
 | `design-review-trigger.json`            | `design-review`            | `requesting-code-review`, visual and UI design critique, ADR review, `brainstorming` itself                               |
-| `fast-path-implementation-trigger.json` | `fast-path-implementation` | `complexity-triage`, `subagent-driven-development`, "fast path" as a code-level term, a user asserting a change is simple |
+| `fast-path-implementation-trigger.json` | `fast-path-implementation` | `complexity-triage`, `orchestrated-implementation`, "fast path" as a code-level term, a user asserting a change is simple |
 | `requesting-code-review-trigger.json`   | `requesting-code-review`   | `receiving-code-review`, reviewing somebody else's PR, `design-review`, `debugging`, reading unfamiliar code              |
 | `receiving-code-review-trigger.json`    | `receiving-code-review`    | `requesting-code-review`, `debugging` a red PR, code review as a process question, "review" and "feedback" outside code   |
 

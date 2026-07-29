@@ -48,7 +48,7 @@ Report every substantive fix when you return. The user approved text that no lon
 
 1. **Confirm the summary is consolidated.** If the caller has not produced a single self-contained block, stop and return **Not consolidated** per the Return Contract. Do not consolidate it yourself: the caller holds the conversation the summary has to be built from.
 
-2. **Dispatch the reviewer** with `Agent`, following `design-reviewer-prompt.md`. Paste the full summary into the prompt and pass no session history.
+2. **Dispatch the reviewer** with `Agent`, following `../_shared/design-reviewer-prompt.md`. Paste the full summary into the prompt and pass no session history.
 
    Resolve the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier. This skill's task signal is design judgement, which that file's tier table maps to High-capability, so escalation as far as that tier is available here. It is still one tier at a time and still only on evidence, per the no-pre-escalation rule: a dispatch that returned nothing but editorial noise, a dispatch that missed something you can see in the summary yourself, or a design whose architecture turns on several interacting components.
 
@@ -95,7 +95,7 @@ Nothing bounds how many times that can happen, and nothing needs to. Every round
 | Scope        | Focused enough for a single plan, not covering multiple independent subsystems |
 | YAGNI        | Unrequested features, over-engineering, unnecessary complexity                 |
 
-This table exists here so step 3 can categorise what comes back. The reviewer's own copy, along with the calibration that stops it flagging stylistic preferences and the rules bounding what it may read, lives in `design-reviewer-prompt.md`. Keep the two copies of this table in sync when editing either file.
+This table exists here so step 3 can categorise what comes back. The reviewer's own copy, along with the calibration that stops it flagging stylistic preferences and the rules bounding what it may read, lives in `../_shared/design-reviewer-prompt.md`. Keep the two copies of this table in sync when editing either file.
 
 ## Worked Example: An Open Decision
 

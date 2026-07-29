@@ -4,7 +4,7 @@ Use this template when dispatching a reviewer subagent on the full path.
 
 **Purpose:** Verify the implementation matches the spec AND meets quality standards in a single pass.
 
-```
+```yaml
 Agent (general-purpose):
   description: "Review Task N: [task name]"
   prompt: |

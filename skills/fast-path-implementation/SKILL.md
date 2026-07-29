@@ -1,6 +1,6 @@
 ---
 name: fast-path-implementation
-description: Implements a batch of uniformly simple changes as one implementer dispatch, one combined review, and one user checkpoint. Invoked only by `subagent-driven-development` or `team-driven-development`, and only once `complexity-triage` has returned SIMPLE with its evidence table. Not a user-facing shortcut, a request to skip ceremony on a small change goes to the orchestrator, which runs triage first.
+description: Implements a batch of uniformly simple changes as one implementer dispatch, one combined review, and one user checkpoint. Invoked only by `orchestrated-implementation`, and only once `complexity-triage` has returned SIMPLE with its evidence table. Not a user-facing shortcut, a request to skip ceremony on a small change goes to the orchestrator, which runs triage first.
 ---
 
 # Fast Path Implementation
@@ -13,7 +13,7 @@ Before running the procedure below, you **MUST** read `../_shared/subagent-dispa
 
 You **MUST NOT** enter this skill without two things: a SIMPLE classification from `complexity-triage` that has been presented to the user, and a caller that has already asked the commit-preference question.
 
-Both belong to the orchestrator rather than to this skill. `complexity-triage` runs inside `subagent-driven-development` step 2, or the equivalent step in `team-driven-development`, never before it; the commit preference is asked once at the start of the orchestrating session and holds for its duration. So an invocation arriving here without them has not skipped a step in this skill, it has skipped the skill that owns those steps. Hand the design to `subagent-driven-development` and stop. That skill runs triage and reaches this one on its own if the verdict is SIMPLE, and if the verdict is COMPLEX, this skill was never the destination.
+Both belong to the orchestrator rather than to this skill. `complexity-triage` runs inside `orchestrated-implementation`'s Triage and Path Selection step, never before it; the commit preference is asked once at the start of the orchestrating session and holds for its duration. So an invocation arriving here without them has not skipped a step in this skill, it has skipped the skill that owns those steps. Hand the design to `orchestrated-implementation` and stop. That skill runs triage and reaches this one on its own if the verdict is SIMPLE, and if the verdict is COMPLEX, this skill was never the destination.
 
 The one exception is a user who overrides a COMPLEX verdict, which the Return Contract in `../complexity-triage/SKILL.md` permits because the user outranks the skill. In that case the evidence table arrives with its failing rows intact and you pass it on unaltered, so the reviewer below can weigh the overridden criterion against the real diff.
 
@@ -21,7 +21,7 @@ The one exception is a user who overrides a COMPLEX verdict, which the Return Co
 
 ### 1. Single Implementation Dispatch
 
-Dispatch one implementer with every change as a single batch, using `../subagent-driven-development/implementer-prompt.md` with a task description covering the full scope of changes. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`. If the work is simple enough for this path, it is simple enough for the cheapest model.
+Dispatch one implementer with every change as a single batch, using `../_shared/implementer-prompt.md` with a task description covering the full scope of changes. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`. If the work is simple enough for this path, it is simple enough for the cheapest model.
 
 #### Adapting the Shared Prompt
 
@@ -37,7 +37,7 @@ Two additions to the task description, every time:
 
 ### 2. Single Combined Review
 
-Dispatch one reviewer that checks spec compliance and code quality in a single pass, using `./fast-path-reviewer-prompt.md`. This is not a weaker review than the full path. It covers the same ground; the combination is possible because the small scope makes separation unnecessary overhead. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`.
+Dispatch one reviewer that checks spec compliance and code quality in a single pass, using `../_shared/fast-path-reviewer-prompt.md`. This is not a weaker review than the full path. It covers the same ground; the combination is possible because the small scope makes separation unnecessary overhead. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`.
 
 Paste the triage evidence table into the dispatch. The prompt asks for it by name, because re-checking the classification against the real diff is the reviewer's first job, and on a user-overridden verdict the failing rows are the specific thing it needs to weigh.
 
@@ -57,7 +57,7 @@ Where the budget runs out decides the exit. A review that will not pass is `TRIA
 
 ### 3. Verification Gate
 
-After the reviewer approves and **before** the user checkpoint, run the verification gate against the implementer's work yourself. This is the same gate as the per-task pipeline in `../subagent-driven-development/SKILL.md` and is required by `../../rules/common/verification.md`. Even on the fast path, "the reviewer said it was fine" is not a substitute for running the verification yourself.
+After the reviewer approves and **before** the user checkpoint, run the verification gate against the implementer's work yourself. This is the same gate as the per-task pipeline in `../orchestrated-implementation/SKILL.md` and is required by `../../rules/common/verification.md`. Even on the fast path, "the reviewer said it was fine" is not a substitute for running the verification yourself.
 
 1. **Inspect the diff yourself.** Run `git status` and `git diff`. Confirm the files changed match the spec and nothing else changed.
 
@@ -84,7 +84,7 @@ Present the changes to the user:
 
 #### Why There Is No Feature-Level Review
 
-`../subagent-driven-development/SKILL.md` closes with a feature-level review through `requesting-code-review` and a final `verification-before-completion` pass. It needs them because its per-task reviewers each saw one task, so nobody had read the feature whole, and inconsistent naming, drifting interfaces and integration gaps only appear across task boundaries.
+`../orchestrated-implementation/SKILL.md` closes with a feature-level review through `requesting-code-review` and a final `verification-before-completion` pass. It needs them because its per-task reviewers each saw one task, so nobody had read the feature whole, and inconsistent naming, drifting interfaces and integration gaps only appear across task boundaries.
 
 That gap does not exist here. Triage runs once against the entire design, this path implements it as a single batch, and the combined reviewer reads the whole cumulative diff in one pass. A feature-level review would be the same reviewer reading the same diff a second time.
 
@@ -92,7 +92,7 @@ The obligations are discharged rather than waived. The combined review in step 2
 
 ## Handling Implementer Status
 
-Implementers report one of the four statuses defined in `../subagent-driven-development/implementer-prompt.md`. Two of them read differently here, because the classification makes a claim about the work that the status contradicts.
+Implementers report one of the four statuses defined in `../_shared/implementer-prompt.md`. Two of them read differently here, because the classification makes a claim about the work that the status contradicts.
 
 | Status               | Response                                                                                                                                                                                                                        |
 |----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -103,7 +103,7 @@ Implementers report one of the four statuses defined in `../subagent-driven-deve
 
 On the full path, `NEEDS_CONTEXT` and `BLOCKED` mean supply more context, escalate the model, or split the task, and `../_shared/subagent-dispatch.md` lists exactly those responses. Here the same words carry a narrower meaning. Criterion 4 certified that the correct change at each location was fully specified with no room for interpretation, so an implementer that cannot proceed from the specification has falsified that criterion by trying. Supplying the missing decision would settle the case in front of you and leave the classification wrong, and the classification is what removed the per-task checkpoints that would have caught the next one.
 
-A question asked before work starts is not a status and is not covered by this. `implementer-prompt.md` invites those explicitly, and `../_shared/subagent-dispatch.md` requires answering them completely before the implementer proceeds. What separates them is whether the implementer stopped: a clarifying question is answered and the dispatch continues, a `NEEDS_CONTEXT` report is an attempt that ended.
+A question asked before work starts is not a status and is not covered by this. `../_shared/implementer-prompt.md` invites those explicitly, and `../_shared/subagent-dispatch.md` requires answering them completely before the implementer proceeds. What separates them is whether the implementer stopped: a clarifying question is answered and the dispatch continues, a `NEEDS_CONTEXT` report is an attempt that ended.
 
 ## Return Contract
 
@@ -113,7 +113,7 @@ This section is addressed to whichever skill invoked this one. It lives here rat
 
 **Commit declined.** The user chose "Skip commit" or "Adjust first" at the checkpoint. The work sits in the tree, reviewed and verified and uncommitted, and the caller receives that state along with whatever the user said. It does nothing to the tree. What makes this different from the same answer on the full path is that there is no next task to move on to, so the caller's next act is the user's to choose and it asks rather than assumes.
 
-**TRIAGE_INVALID.** The classification has been falsified: by the reviewer, by the implementer's report of new behaviour, by a `BLOCKED` or `NEEDS_CONTEXT` status, by a review that would not pass inside the fix budget, or by the orchestrator seeing it directly. The caller receives the criterion that failed and the evidence for it, then re-enters `../subagent-driven-development/SKILL.md` at **Task Decomposition** with the classification fixed at COMPLEX.
+**TRIAGE_INVALID.** The classification has been falsified: by the reviewer, by the implementer's report of new behaviour, by a `BLOCKED` or `NEEDS_CONTEXT` status, by a review that would not pass inside the fix budget, or by the orchestrator seeing it directly. The caller receives the criterion that failed and the evidence for it, then re-enters `../orchestrated-implementation/SKILL.md` at **Task Decomposition** with the classification fixed at COMPLEX.
 
 Two of that skill's earlier steps are skipped on re-entry, and skipping them is deliberate:
 
@@ -136,13 +136,13 @@ digraph fast_path {
     "Answer questions, provide context" [shape=box];
     "Implementer implements, self-reviews" [shape=box];
     "Implementer status?" [shape=diamond];
-    "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [shape=box];
+    "Dispatch combined reviewer\n(../_shared/fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [shape=box];
     "Reviewer result?" [shape=diamond];
     "Fix dispatches remaining?" [shape=diamond];
     "Implementer fixes issues" [shape=box];
     "Verification gate (orchestrator):\ngit diff + behaviour check + re-run verification\n(../../rules/common/verification.md)" [shape=box, style=bold];
     "Gate result?" [shape=diamond];
-    "Hand back to subagent-driven-development\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [shape=box, style=bold];
+    "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [shape=box, style=bold];
     "Stop and report to user\n(../../rules/common/workflow.md)" [shape=box, style=bold];
     "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [shape=box, style=bold];
 
@@ -152,19 +152,19 @@ digraph fast_path {
     "Answer questions, provide context" -> "Dispatch implementer\n(single batch, TDD carve-out,\nLow-cost default tier)";
     "Implementer asks questions?" -> "Implementer implements, self-reviews" [label="no"];
     "Implementer implements, self-reviews" -> "Implementer status?";
-    "Implementer status?" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [label="DONE / DONE_WITH_CONCERNS"];
-    "Implementer status?" -> "Hand back to subagent-driven-development\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="BLOCKED / NEEDS_CONTEXT\n(spec gap)"];
-    "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" -> "Reviewer result?";
+    "Implementer status?" -> "Dispatch combined reviewer\n(../_shared/fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [label="DONE / DONE_WITH_CONCERNS"];
+    "Implementer status?" -> "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="BLOCKED / NEEDS_CONTEXT\n(spec gap)"];
+    "Dispatch combined reviewer\n(../_shared/fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" -> "Reviewer result?";
     "Reviewer result?" -> "Verification gate (orchestrator):\ngit diff + behaviour check + re-run verification\n(../../rules/common/verification.md)" [label="PASS"];
     "Reviewer result?" -> "Fix dispatches remaining?" [label="FAIL"];
-    "Reviewer result?" -> "Hand back to subagent-driven-development\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="TRIAGE_INVALID"];
+    "Reviewer result?" -> "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="TRIAGE_INVALID"];
     "Fix dispatches remaining?" -> "Implementer fixes issues" [label="yes"];
-    "Fix dispatches remaining?" -> "Hand back to subagent-driven-development\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="no, review failure"];
+    "Fix dispatches remaining?" -> "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="no, review failure"];
     "Fix dispatches remaining?" -> "Stop and report to user\n(../../rules/common/workflow.md)" [label="no, verification failure"];
-    "Implementer fixes issues" -> "Dispatch combined reviewer\n(./fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [label="re-review"];
+    "Implementer fixes issues" -> "Dispatch combined reviewer\n(../_shared/fast-path-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [label="re-review"];
     "Verification gate (orchestrator):\ngit diff + behaviour check + re-run verification\n(../../rules/common/verification.md)" -> "Gate result?";
     "Gate result?" -> "Fix dispatches remaining?" [label="fail"];
-    "Gate result?" -> "Hand back to subagent-driven-development\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="new behaviour reported"];
+    "Gate result?" -> "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="new behaviour reported"];
     "Gate result?" -> "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [label="pass"];
 }
 ```
@@ -228,24 +228,23 @@ Every thought below means stop:
 
 ## Common Mistakes
 
-| Mistake                                                              | Why it is wrong                                                                                                                                                                                         |
-|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Dispatching `implementer-prompt.md` without the TDD carve-out        | The prompt threatens rejection for missing RED to GREEN evidence that criterion 2 guarantees will not exist. Unadapted, it produces invented tests or a false `DONE_WITH_CONCERNS`.                     |
-| Handing back to `subagent-driven-development` at the top             | Re-entry at step 2 re-runs triage, which feeds the same design through the same predictive evidence and returns SIMPLE again, reopening the path that just failed. Re-enter at Task Decomposition.      |
-| Discarding the implementer's partial work on handback without asking | `../../rules/common/git.md` forbids `git restore` and `git checkout` against tracked files without explicit permission for that exact action. The cost is negligible; the decision is still the user's. |
-| Escalating the model after a review FAIL                             | The tier was never the constraint. Criterion 4 said the spec left no room for interpretation and two rejections say it did. A better model implements the ambiguity more convincingly.                  |
-| Dispatching `requesting-code-review` after the checkpoint            | The combined reviewer already read the whole cumulative diff, because the whole design was one batch. A second reviewer reads the same diff again.                                                      |
-| Reading a report that is silent on behaviour as "no new behaviour"   | Step 1 asks for the statement outright so that its absence is a gap rather than an inference. Re-dispatch for it.                                                                                       |
-| Asking the commit preference here                                    | The caller owns it and asked it once for the session. An invocation reaching here without it should have gone to `subagent-driven-development`.                                                         |
-| Skipping verification because nothing executable changed             | "There was nothing to run" is a claim about the project that has to be checked. Check it, then cite what you ran in place of the suite.                                                                 |
+| Mistake                                                                  | Why it is wrong                                                                                                                                                                                         |
+|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Dispatching `../_shared/implementer-prompt.md` without the TDD carve-out | The prompt threatens rejection for missing RED to GREEN evidence that criterion 2 guarantees will not exist. Unadapted, it produces invented tests or a false `DONE_WITH_CONCERNS`.                     |
+| Handing back to `orchestrated-implementation` at the top                 | Re-entry at step 2 re-runs triage, which feeds the same design through the same predictive evidence and returns SIMPLE again, reopening the path that just failed. Re-enter at Task Decomposition.      |
+| Discarding the implementer's partial work on handback without asking     | `../../rules/common/git.md` forbids `git restore` and `git checkout` against tracked files without explicit permission for that exact action. The cost is negligible; the decision is still the user's. |
+| Escalating the model after a review FAIL                                 | The tier was never the constraint. Criterion 4 said the spec left no room for interpretation and two rejections say it did. A better model implements the ambiguity more convincingly.                  |
+| Dispatching `requesting-code-review` after the checkpoint                | The combined reviewer already read the whole cumulative diff, because the whole design was one batch. A second reviewer reads the same diff again.                                                      |
+| Reading a report that is silent on behaviour as "no new behaviour"       | Step 1 asks for the statement outright so that its absence is a gap rather than an inference. Re-dispatch for it.                                                                                       |
+| Asking the commit preference here                                        | The caller owns it and asked it once for the session. An invocation reaching here without it should have gone to `orchestrated-implementation`.                                                         |
+| Skipping verification because nothing executable changed                 | "There was nothing to run" is a claim about the project that has to be checked. Check it, then cite what you ran in place of the suite.                                                                 |
 
 ## Prompt Templates
 
-- `../subagent-driven-development/implementer-prompt.md`: the implementer prompt (shared with the full path, adapted per step 1)
-- `./fast-path-reviewer-prompt.md`: the combined reviewer prompt specific to the fast path
+- `../_shared/implementer-prompt.md`: the implementer prompt (shared with the full path, adapted per step 1)
+- `../_shared/fast-path-reviewer-prompt.md`: the combined reviewer prompt specific to the fast path
 
 ## Integration
 
 - **complexity-triage**: the precondition. Returns SIMPLE with the evidence table this skill passes to its reviewer.
-- **subagent-driven-development**: the caller, and the destination for a `TRIAGE_INVALID` handback at its Task Decomposition step.
-- **team-driven-development**: the other caller. It hands off here exactly as `subagent-driven-development` does, before any teammate is spawned.
+- **orchestrated-implementation**: the caller, and the destination for a `TRIAGE_INVALID` handback at its Task Decomposition step.

@@ -4,29 +4,29 @@ Use this template when dispatching a code reviewer subagent.
 
 **Purpose:** Verify a change is production-ready: it does what was asked, it does not break what exists, and it is built well enough to change again.
 
-**Dispatch after:** The review range has been established per `SKILL.md`, and the diff is non-empty.
+**Dispatch after:** The review range has been established per `../requesting-code-review/SKILL.md`, and the diff is non-empty.
 
 ## Placeholders
 
 This file is the single source of truth for its own placeholders. Fill every one; leave none unreplaced in the dispatched prompt.
 
-| Placeholder                | What goes in it                                                                                              |
-|----------------------------|--------------------------------------------------------------------------------------------------------------|
-| `[WHAT_WAS_IMPLEMENTED]`   | One line naming what the change builds.                                                                      |
-| `[DESCRIPTION]`            | A short paragraph: what it builds, and the design decisions that matter for review.                          |
-| `[PLAN_REFERENCE]`         | The approved design, ticket, or plan the work delivers against. Paste the acceptance criteria, do not link.  |
-| `[BASE_SHA]`               | The base commit established per `SKILL.md`.                                                                  |
-| `[REVIEW_TARGET]`          | `the working tree, which contains uncommitted changes` or `commit <sha>`.                                    |
-| `[UNTRACKED_FILES]`        | Paths from `git status --porcelain` that the diff cannot show, or `none`.                                    |
-| `[PREVIOUS_ROUND]`         | On a re-dispatch: your previous findings and what changed in response. Omit the section on the first review. |
+| Placeholder              | What goes in it                                                                                              |
+|--------------------------|--------------------------------------------------------------------------------------------------------------|
+| `[WHAT_WAS_IMPLEMENTED]` | One line naming what the change builds.                                                                      |
+| `[DESCRIPTION]`          | A short paragraph: what it builds, and the design decisions that matter for review.                          |
+| `[PLAN_REFERENCE]`       | The approved design, ticket, or plan the work delivers against. Paste the acceptance criteria, do not link.  |
+| `[BASE_SHA]`             | The base commit established per `../requesting-code-review/SKILL.md`.                                        |
+| `[REVIEW_TARGET]`        | `the working tree, which contains uncommitted changes` or `commit <sha>`.                                    |
+| `[UNTRACKED_FILES]`      | Paths from `git status --porcelain` that the diff cannot show, or `none`.                                    |
+| `[PREVIOUS_ROUND]`       | On a re-dispatch: your previous findings and what changed in response. Omit the section on the first review. |
 
 ## Selecting the Model
 
-Resolve the model per `../_shared/subagent-dispatch.md`. Start at the Low-cost default tier: a change confined to a few files with clear acceptance criteria belongs there. Escalate one tier at a time and only on evidence, such as a change whose correctness depends on how several files interact, or a previous dispatch whose findings show it did not follow the change across file boundaries. Do not pre-escalate because the diff is long; line count is not the signal.
+Resolve the model per `subagent-dispatch.md`. Start at the Low-cost default tier: a change confined to a few files with clear acceptance criteria belongs there. Escalate one tier at a time and only on evidence, such as a change whose correctness depends on how several files interact, or a previous dispatch whose findings show it did not follow the change across file boundaries. Do not pre-escalate because the diff is long; line count is not the signal.
 
 ## The Prompt
 
-```
+```yaml
 Agent (general-purpose):
   description: "Code review: [WHAT_WAS_IMPLEMENTED]"
   prompt: |
@@ -153,11 +153,11 @@ Agent (general-purpose):
 
 **Reviewer returns:** Status, Strengths, Issues grouped by severity, Recommendations
 
-The severity table above is duplicated in `../_shared/code-review.md`, which needs its own copy so the orchestrator can assign tiers to feedback that arrives without them. Keep the two in sync when editing either file.
+The severity table above is duplicated in `code-review.md`, which needs its own copy so the orchestrator can assign tiers to feedback that arrives without them. Keep the two in sync when editing either file.
 
 ## Example Output
 
-```
+```markdown
 ## Code Review
 
 **Status:** Issues Found
