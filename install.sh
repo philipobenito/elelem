@@ -33,6 +33,28 @@ _skill_resolve_dst() {
   printf '%s/%s\n' "$out" "${src#$SKILLS_SOURCE/}"
 }
 
+# Returns every .md basename (without extension) found directly in
+# rules/common/. Common rules always install in full, so this is the sole
+# source of truth for what "all common rules" means; the interactive body
+# and the test suite both read it through this function rather than
+# re-globbing $RULES_SOURCE/common themselves.
+# Usage: common_rule_basenames RESULT_VAR
+#   RESULT_VAR - name of a caller array variable to populate with basenames
+common_rule_basenames() {
+  local result_var="$1"
+
+  [[ "$result_var" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { say_err "common_rule_basenames: invalid result variable name: $result_var"; exit 1; }
+
+  local _crb_names=()
+  local _f
+  for _f in "$RULES_SOURCE/common/"*.md; do
+    [[ -f "$_f" ]] || continue
+    _crb_names+=("$(basename "$_f" .md)")
+  done
+
+  eval "${result_var}=(\"\${_crb_names[@]+\${_crb_names[@]}}\")"
+}
+
 # Runs the deterministic install sequence for already-resolved selections:
 # creates the target directories, installs the selected common rules,
 # language packs, and skills, then prunes stale manifest entries and writes
@@ -140,26 +162,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   manifest_file="$SCRIPT_DIR/.elelem-manifest-claude"
   manifest_entries=()
 
-  echo
-  say_step "Common instruction files to install:"
-  common_items=()
-  common_defaults=()
-  for _f in "$RULES_SOURCE/common/"*.md; do
-    [[ -f "$_f" ]] || continue
-    _base="$(basename "$_f" .md)"
-    common_items+=("$_base")
-    common_defaults+=(1)
-  done
-
-  multiselect common_selected common_items common_defaults
-
-  if (( ${#common_selected[@]} == 0 )); then
-    say_warn "no common rules selected."
-    confirm_common_items=("Continue with no common rules")
-    confirm_common_defaults=(0)
-    multiselect confirm_common_selected confirm_common_items confirm_common_defaults
-    (( ${#confirm_common_selected[@]} > 0 )) || { say_info "Aborted."; exit 0; }
-  fi
+  common_rule_basenames common_selected
 
   lang_dirs=()
   for dir in "$RULES_SOURCE"/*/; do
@@ -186,15 +189,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   skills_selected=()
   if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
-    echo
-    say_step "Skills (target: $skills_target):"
-    skills_items=("Install skills")
-    skills_defaults=(1)
-    multiselect skills_selected skills_items skills_defaults
-
-    if (( ${#skills_selected[@]} == 0 )); then
-      say_info "Skipped skills install."
-    fi
+    skills_selected=("Install skills")
   else
     echo
     say_info "No skills found in $SKILLS_SOURCE (skipping skills install)."

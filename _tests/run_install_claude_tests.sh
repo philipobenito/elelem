@@ -77,6 +77,29 @@ test_skill_resolve_dst_preserves_nested_files() {
   fi
 }
 
+test_common_rule_basenames_returns_all_common_md_files() {
+  local name="common_rule_basenames_returns_all_common_md_files"
+  local result=()
+
+  common_rule_basenames result
+
+  local expected=()
+  local _f
+  while IFS= read -r _f; do
+    expected+=("$(basename "$_f" .md)")
+  done < <(find "$RULES_SOURCE/common" -maxdepth 1 -type f -name '*.md' | sort)
+
+  local sorted_result sorted_expected
+  sorted_result="$(printf '%s\n' "${result[@]+"${result[@]}"}" | sort)"
+  sorted_expected="$(printf '%s\n' "${expected[@]+"${expected[@]}"}" | sort)"
+
+  if [[ -n "$sorted_expected" ]] && [[ "$sorted_result" == "$sorted_expected" ]]; then
+    _pass "$name"
+  else
+    _fail "$name" "expected [$sorted_expected], got [$sorted_result]"
+  fi
+}
+
 test_full_install_to_tmp_target() {
   local name="full_install_to_tmp_target"
   local base rules_target skills_target manifest_file
@@ -186,6 +209,7 @@ test_install_dot_sh_exists
 test_install_dot_sh_executable
 test_skill_resolve_dst_preserves_subdirectory_structure
 test_skill_resolve_dst_preserves_nested_files
+test_common_rule_basenames_returns_all_common_md_files
 test_full_install_to_tmp_target
 test_reinstall_prunes_stale_file_but_preserves_user_created_file
 

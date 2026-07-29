@@ -19,7 +19,7 @@ This repository previously supported OpenCode and Codex alongside Claude Code. T
 
 ## Claude Code
 
-The installer prompts for scope (user `~/.claude/` or project `<project>/.claude/`) and selections for common rules, language packs, and skills. It installs:
+The installer prompts for scope (user `~/.claude/` or project `<project>/.claude/`) and language pack selections. It installs:
 
 - Rules under `~/.claude/rules/` or `<project>/.claude/rules/`
 - Skills under `~/.claude/skills/` or `<project>/.claude/skills/`
@@ -116,9 +116,8 @@ paths:
 
 - British English (see `rules/common/language.md`)
 - No emojis, no em/en-dashes in prose
-- `MUST` / `MUST NOT` / `SHOULD` / `MAY` used in the RFC 2119 sense
 - Keep rules concise. If a rule needs a long explanation, it is probably two rules
-- Cross-references use relative paths from the citing file
+- See `CLAUDE.md` for RFC 2119 keyword usage and cross-reference conventions
 
 ## Verification
 
