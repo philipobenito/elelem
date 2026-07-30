@@ -2,7 +2,7 @@
 
 These rules apply to every subagent dispatch made from inside a skill. They are the procedural detail behind the iron laws in `../../rules/common/subagents.md`. The iron laws (context isolation, the git ban, the worktree ban, the privilege ban) live in the always-on rule file and bind whether or not a skill is running. The rules below govern *how* a dispatch is constructed and managed once a skill has decided to dispatch.
 
-Skills that dispatch subagents (`orchestrated-implementation`, `fast-path-implementation`, `brainstorming-committee`, `debugging`, `design-review`, `requesting-code-review`) **MUST** read this file before performing a dispatch.
+Skills that dispatch subagents (`orchestrated-implementation`, `fast-path-implementation`, `brainstorming-committee`, `debugging`, `design-review`, `requesting-code-review`, `skill-review`) **MUST** read this file before performing a dispatch.
 
 ## Agent Type
 
@@ -15,6 +15,7 @@ Per `../../rules/common/subagents.md`, agent type is a lookup. Dispatch template
 | Debugging evidence gatherers and hypothesis investigators | `general-purpose` |
 | Design reviewer                                           | `Plan`            |
 | Committee members and the committee tiebreaker            | `Plan`            |
+| Skill reviewer lenses                                     | `Plan`            |
 
 Both types carry `Bash`, so a read-only boundary that matters **MUST** be stated in the dispatched prompt as well.
 
