@@ -79,14 +79,9 @@ User: "I want to add structured logging across the API service."
 
 ## Completion Gate
 
-You **MUST NOT** invoke `create-tickets` or `orchestrated-implementation` until all of these are true:
+The design-step completion gate in `../../rules/common/workflow.md` applies in full, and additionally:
 
 - The design summary was consolidated into a single text block
-- `design-review` returned Approved against the text you are holding
-- The user gave explicit final approval against the reviewed summary
-- Plan mode has been released via `ExitPlanMode`, or was never entered because the router reported it unavailable
-
-If any one of these is false, the gate has not been crossed, and you **MUST NOT** hand off.
 
 ## Common Mistakes
 
@@ -99,7 +94,6 @@ If any one of these is false, the gate has not been crossed, and you **MUST NOT*
 | Skipping the consolidation step and dispatching review against the conversation | `design-review` requires a single summary block. Conversation history is not a design.                                                                                                                                                              |
 | Treating "looks fine" as final approval                                         | Explicit approval is required. Ask directly.                                                                                                                                                                                                        |
 | Inventing requirements the user did not state                                   | YAGNI. The design covers what was asked for, not what you would also build.                                                                                                                                                                         |
-| Handing off to a downstream skill while still in plan mode                      | Every downstream skill starts by writing something, and plan mode does not lapse on its own. The hand-off fails somewhere the design cannot explain.                                                                                                |
 | Invoking an implementation skill before the gate is crossed                     | Violates the `../../rules/common/workflow.md` design-before-implementation rule.                                                                                                                                                                    |
 | Re-invoking `design-review` after it returns outstanding issues                 | By then it has spent three dispatches applying fixes and re-reviewing. A fresh invocation buys another three and hides the fact that a human now needs to decide. Re-reviewing a summary the user has since revised is different: that is new text. |
 | Applying reviewer fixes and re-dispatching yourself                             | `design-review` runs that loop internally. Doing it from here duplicates the cycle and doubles the effective budget.                                                                                                                                |

@@ -87,14 +87,9 @@ User: "I need to add an audit log for admin actions. I've never worked on this c
 
 ## Completion Gate
 
-You **MUST NOT** invoke `create-tickets` or `orchestrated-implementation` until all of these are true:
+The design-step completion gate in `../../rules/common/workflow.md` applies in full, and additionally:
 
 - The design summary was consolidated into a single text block
-- `design-review` returned Approved against the text you are holding
-- The user gave explicit final approval against the reviewed summary
-- Plan mode has been released via `ExitPlanMode`, or was never entered because the router reported it unavailable
-
-If any one of these is false, the gate has not been crossed, and you **MUST NOT** hand off.
 
 ## Common Mistakes
 
@@ -112,4 +107,3 @@ If any one of these is false, the gate has not been crossed, and you **MUST NOT*
 | Treating the walkthrough as documentation                         | It lives in the conversation. It is not written to disk and is not a deliverable.                                                                                                                                            |
 | Leaving the objection in step 3 hanging                           | Standard mode can hand an objection to the user because they can rebut it. This user cannot, so an unanswered objection reads as "the design is bad". Settle it against a file, or say plainly that only they can settle it. |
 | Arguing against your own proposal with generic risks              | A hedge is not an objection. If it would not change the design were it true, it teaches this user nothing and spends the trust the walkthrough just built.                                                                   |
-| Handing off to a downstream skill while still in plan mode        | Every downstream skill starts by writing something, and plan mode does not lapse on its own. The hand-off fails somewhere the design cannot explain.                                                                         |

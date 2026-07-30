@@ -32,6 +32,18 @@ You **MUST NOT** bypass the router by:
 - "Obvious" implementations where you skipped the router because the work felt small
 - A plan you put in the conversation without entering plan mode through the router
 
+### The Design Step Completion Gate
+
+A design mode that runs `design-review` (`brainstorming-standard`, `brainstorming-guided`, `brainstorming-committee`) **MUST NOT** invoke `create-tickets`, `orchestrated-implementation`, or any other implementation skill until all of these are true:
+
+- `design-review` returned Approved against the text you are holding
+- The user gave explicit final approval against the reviewed summary
+- Plan mode has been released via `ExitPlanMode`, or was never entered because the router reported it unavailable
+
+If any one of these is false, the gate has not been crossed, and you **MUST NOT** hand off. Plan mode does not lapse on its own and every downstream skill starts by writing something, so a hand-off made while still in plan mode fails somewhere the design cannot explain.
+
+Each mode adds its own conditions on top of these, in that mode's own `SKILL.md`. `brainstorming-skip` does not run `design-review` and has its own gate rather than a delta on this one.
+
 ### Bug Fixes
 
 Bug fixes also require an approved design, even if the design is a single sentence. At minimum, present the failing-test reproduction approach and which function or module will change, and get explicit approval before writing the fix.
