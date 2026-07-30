@@ -43,6 +43,12 @@ You **MUST NOT** mock:
 - Pure functions or data classes
 - Internal collaborators that you own and can drive with real data
 
+## Meaningful Assertions
+
+A test **MUST** exist to catch a genuine regression in the behaviour it names, not to notice that something, anything, changed. Before writing an assertion, ask what real defect it would catch; if you cannot name one, the assertion is incidental and **MUST** be narrowed or dropped.
+
+You **MUST** assert on the specific behaviour a test's name promises, not on incidental structure that only happens to hold true today. A test **MUST NOT** fail because unrelated code or data changed in a way that has nothing to do with the scenario it claims to cover. For example, a test that is not about counting **MUST NOT** assert the total size of a collection, since an unrelated addition elsewhere would break it for no genuine reason; assert the presence or absence of the specific items the scenario cares about instead, and reserve count or length assertions for tests whose stated behaviour is genuinely about the count. Similarly, a test that checks one field's behaviour **MUST NOT** assert deep equality against a full object or snapshot, since adding an unrelated field to that object would break it; assert the specific field or property the scenario is about instead, and reserve whole-object or snapshot comparisons for tests whose stated behaviour is genuinely about the object's complete shape.
+
 ## Test-Driven Development
 
 ### The Iron Law
