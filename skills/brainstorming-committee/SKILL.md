@@ -20,8 +20,8 @@ Before running the procedure below, you **MUST** read both files using the Read 
 
 ## Preconditions
 
-- You **MUST** be in plan mode before invoking this skill. Use `EnterPlanMode` if you are not; both it and `ExitPlanMode` are deferred tools in some sessions, so load them with `ToolSearch` (`select:EnterPlanMode,ExitPlanMode`) first if a direct call fails.
-- If the `brainstorming` router has told you plan mode could not be entered, do not stop: the router's degraded path is sanctioned. Proceed, and treat the read-only instruction in "Keeping Members Read-Only" as load-bearing rather than belt-and-braces, because plan mode is no longer backing it up.
+- You **MUST** be in plan mode before invoking this skill. Enter it per the Plan Mode Mechanics in `../../rules/common/workflow.md`.
+- Where plan mode could not be entered, proceed rather than stopping, and treat the read-only instruction in "Keeping Members Read-Only" as load-bearing rather than belt-and-braces, because plan mode is no longer backing it up. That is this mode's degraded path, and the loss bites harder here than in the other modes because this one dispatches subagents.
 - This skill is invoked either directly or by the `brainstorming` router after the user selects committee mode.
 - Use this skill only when there are at least two meaningful design decisions to make. For trivial requests (a single config change, a one-line fix), `brainstorming-standard` is the right tool.
 
@@ -39,19 +39,19 @@ Before running the procedure below, you **MUST** read both files using the Read 
 
    Use this decision table. A reviewer edit **affects** a committee-deliberated decision when it changes a constraint, a trade-off, or an interface boundary the committee explicitly decided, rather than adding detail consistent with what it decided. Where you cannot tell which it is, run the round: an unnecessary round costs one dispatch, and a missed one lets a reviewer overrule a decision three members deliberated.
 
-   | `design-review` return type                                                             | Action                                                                                                                                                                                                                                                           | Re-invoke `design-review`?                   |
-   |-----------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
-   | Approved, no substantive reviewer edit affecting a committee-deliberated decision       | Keep summary as-is and continue to step 10.                                                                                                                                                                                                                      | No                                           |
-   | Approved, **with** substantive reviewer edit affecting a committee-deliberated decision | Run a targeted committee round on that decision, update the summary with the result.                                                                                                                                                                             | Yes, against the updated summary             |
-   | Decision required                                                                       | Run a targeted committee round to answer the missing decision, update the summary. If the round cannot settle it, escalate to the user as a stopping condition per `../../rules/common/workflow.md`.                                                             | Yes if the round settles it; No if escalated |
-   | Issues outstanding                                                                      | Escalate to the user (review budget is spent).                                                                                                                                                                                                                   | No                                           |
-   | Not consolidated                                                                        | Nothing was reviewed and no budget was spent. Consolidate the summary into a single self-contained block per step 7. A second Not consolidated means step 7 cannot fix it, so escalate to the user as a stopping condition per `../../rules/common/workflow.md`. | Yes once; No if escalated                    |
+| `design-review` return type                                                             | Action                                                                                                                                                                                                                                                           | Re-invoke `design-review`?                   |
+|-----------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
+| Approved, no substantive reviewer edit affecting a committee-deliberated decision       | Keep summary as-is and continue to step 10.                                                                                                                                                                                                                      | No                                           |
+| Approved, **with** substantive reviewer edit affecting a committee-deliberated decision | Run a targeted committee round on that decision, update the summary with the result.                                                                                                                                                                             | Yes, against the updated summary             |
+| Decision required                                                                       | Run a targeted committee round to answer the missing decision, update the summary. If the round cannot settle it, escalate to the user as a stopping condition per `../../rules/common/workflow.md`.                                                             | Yes if the round settles it; No if escalated |
+| Issues outstanding                                                                      | Escalate to the user (review budget is spent).                                                                                                                                                                                                                   | No                                           |
+| Not consolidated                                                                        | Nothing was reviewed and no budget was spent. Consolidate the summary into a single self-contained block per step 7. A second Not consolidated means step 7 cannot fix it, so escalate to the user as a stopping condition per `../../rules/common/workflow.md`. | Yes once; No if escalated                    |
 10. **Get explicit final approval.** Present the reviewed summary and ask directly. "Looks fine" is not approval.
 
     If the user's response revises the summary rather than approving it, take the revision: the user overrules the committee, and a targeted round is for reconciling a reviewer with the committee, not a user with it. Update the summary and return to step 9, because the revision is text no reviewer has seen.
 
     Once the user approves, call `ExitPlanMode` carrying the approved summary. Approval came from the question you just asked, so this call releases the session rather than seeking approval again, and it has to happen before the hand-off, for the reason `../../rules/common/workflow.md` gives.
-11. **Decide the next step.** Use `AskUserQuestion` to ask whether to create tickets or start implementation. The permitted downstream skills are `create-tickets` and `orchestrated-implementation`. Invoke the chosen one via `Skill`.
+11. **Decide the next step.** Hand off per the design-step completion gate in `../../rules/common/workflow.md`, which states the question to ask, the permitted set, and what to do with an answer outside it.
 
 ## The Three Perspectives
 
@@ -108,8 +108,8 @@ A tiebreak is for a decision that survived cross-examination still genuinely spl
 
 ## Working in Existing Codebases
 
-- Follow existing patterns. Where existing code has problems that affect the work, include targeted improvements in the design.
-- **MUST NOT** propose unrelated refactoring. Committee members are instructed to stay within scope; the synthesiser must reject any recommendation that exceeds it.
+- Follow existing patterns.
+- The boundary test in the YAGNI section of `../../rules/common/coding-style.md` decides what belongs in the design. Committee members are instructed to stay within scope; the synthesiser must reject any recommendation that exceeds it.
 
 ## Worked Example
 
@@ -132,7 +132,7 @@ User: "Add webhook delivery for order events. I don't want to be involved, come 
 The design-step completion gate in `../../rules/common/workflow.md` applies in full, and additionally:
 
 - Every decision group has a recorded consensus
-- The design summary was assembled from those consensuses into a single text block
+- The summary was assembled from those consensuses rather than written independently of them
 
 ## Common Mistakes
 
@@ -146,5 +146,5 @@ The design-step completion gate in `../../rules/common/workflow.md` applies in f
 | Passing session history to committee members                           | Violates context isolation from `../../rules/common/subagents.md`. Pass the brief, the codebase context, the decisions, and prior consensus only.                                                                                         |
 | Showing the user the full deliberation transcripts                     | The user wants the design, not the process. Surface only the result, splits, and flagged risks.                                                                                                                                           |
 | Skipping `design-review` because the committee already deliberated     | The committee deliberates, it does not review. `design-review` is a separate, holistic check.                                                                                                                                             |
-| Re-invoking `design-review` after it returns outstanding issues        | By then it has spent three dispatches applying fixes and re-reviewing. A fresh invocation buys another three and hides the fact that a human now needs to decide. A targeted round after an Approved is different: that reviews new text. |
+| Re-invoking `design-review` after it returns Issues outstanding        | By then it has spent three dispatches applying fixes and re-reviewing. A fresh invocation buys another three and hides the fact that a human now needs to decide. A targeted round after an Approved is different: that reviews new text. |
 | Letting the synthesiser quietly drop a concern flagged by two members  | Two members flagging a concern is signal. Address it in the design or the round did not really converge.                                                                                                                                  |

@@ -20,9 +20,9 @@ This skill is the procedural entry point for the design step required by `../../
 
 ## Procedure
 
-1. **Enter plan mode.** `EnterPlanMode` is a deferred tool in some sessions, meaning a direct call fails until its schema is loaded. If it is not already available, load it with `ToolSearch` (`select:EnterPlanMode`) first, then call it. Plan mode's read-only safety is what enforces the design-before-implementation rule from `../../rules/common/workflow.md` for the rest of the session, whichever mode is chosen, which is why it comes before the mode question rather than after.
+1. **Enter plan mode** per the Plan Mode Mechanics in `../../rules/common/workflow.md`. Plan mode's read-only safety is what enforces the design-before-implementation rule for the rest of the session, whichever mode is chosen, which is why it comes before the mode question rather than after.
 
-   If plan mode genuinely cannot be entered in this environment, do not stop the design step. Tell the user plan mode is unavailable, ask the mode question anyway, and tell the chosen mode skill that its plan-mode precondition is unmet so it does not assume otherwise. The router is the only sanctioned route to an approved design, so halting here leaves no legal path to any code edit at all.
+   Where plan mode cannot be entered, ask the mode question anyway and tell the chosen mode skill that its plan-mode precondition is unmet, so it does not assume otherwise.
 
 2. **Ask the user which mode.** Use `AskUserQuestion` exactly as specified below, never plain text: freeform answers defeat the routing. The point of the question is that *you* never choose on the user's behalf, so if the user has already named a mode in their own message, they have chosen. Naming a mode in that message means referring to one of the four explicitly, by option label or by skill name; anything else, including phrasing that only signals how involved the user wants to be, is unnamed. Free text typed into the question's own "Other" box is read differently, for the mode it implies. Confirm a named mode in one line and hand off. Absent that, ask. Never proceed on a mode you inferred from the shape of the work.
 

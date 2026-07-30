@@ -77,4 +77,6 @@ The right amount of complexity is what the task actually requires. No speculativ
 
 If you notice an unrelated issue while working on a task, log it separately (as a ticket, a note, or surface it to your human partner), but **MUST NOT** fix it inside the current change. One task, one change.
 
+The boundary between an improvement that belongs in the work and one that does not is whether the work can be completed correctly without it. Fold in only what the task cannot be built correctly against the existing code without. Anything the task could ship without touching is unrelated, however much better fixing it would make the result.
+
 YAGNI is referenced from `testing.md` (where it applies during the GREEN step of TDD) and `code-review.md` (where it applies when a reviewer suggests "implementing properly" something that nothing currently uses).

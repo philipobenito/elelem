@@ -9,7 +9,7 @@ The escape hatch for the brainstorming router. The user already has a clear desi
 
 ## Preconditions
 
-- **Plan mode.** The router enters it before handing off. If you arrived without it, call `EnterPlanMode`. Both it and `ExitPlanMode` are deferred tools in some sessions, meaning a direct call fails until the schema is loaded, so load them with `ToolSearch` (`select:EnterPlanMode,ExitPlanMode`) first.
+- **Plan mode.** Enter it per the Plan Mode Mechanics in `../../rules/common/workflow.md`.
 - **If the router reports that plan mode could not be entered**, take the degraded path in step 4 rather than stopping. Plan mode is how approval is usually captured, not what makes approval real. Skip is the only mode whose approval rests on a single tool call, so treating that call as the requirement would leave the user with no legal route to any code edit at all.
 - **The router picks the mode, not you.** This skill runs as a hand-off after the user explicitly chose skip. Deciding on their behalf that work is small enough for skip is the one judgement `../../rules/common/workflow.md` reserves for them.
 - **Skip assumes certainty.** If the user is uncertain or asking for help with the design, send them back to the router for standard or guided mode.
