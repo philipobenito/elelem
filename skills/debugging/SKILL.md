@@ -76,7 +76,7 @@ Apply the Refocus Rule in `RULES.md`. When you gather the evidence yourself, the
 
 ### Phase 4: Form Hypotheses
 
-Based on the evidence, form two to four ranked hypotheses. Each hypothesis **MUST** include:
+Based on the evidence, form two to four ranked hypotheses. Rank by the specificity and recency of the evidence supporting each, breaking ties by ease of testing. Each hypothesis **MUST** include:
 
 - **What**: the specific claim about the root cause
 - **Evidence**: the specific observations that support it
@@ -124,7 +124,7 @@ Autonomous mode is the only mode in which subagents run. Phase 3 dispatches evid
 
 Provide each subagent with: the bug description (expected vs actual), its single assignment (the evidence question at Phase 3, the hypothesis at Phase 5), and the scoped list of files or areas it may examine.
 
-Start at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`, unless the investigation requires integration reasoning, in which case escalate to Standard escalation.
+Start at the Low-cost default tier and escalate on the triggers stated in `../_shared/subagent-dispatch.md`, resolving every model identifier per that file.
 
 Reconcile the returned reports yourself in the orchestrator context. Evidence reports feed Phase 4. Investigator verdicts route as follows: CONFIRMED advances you to Phase 6, ELIMINATED moves you to the next hypothesis, INCONCLUSIVE needs either a better-scoped re-dispatch or a refocus with the user.
 

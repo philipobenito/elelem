@@ -34,7 +34,7 @@ Expand scope only after forming a hypothesis and only in the direction the hypot
 
 ## The Refocus Rule
 
-If you have read five files without forming a clear hypothesis, you **MUST** stop gathering evidence. Present what you know, what you have ruled out, and what remains uncertain. Ask the human partner which direction to pursue.
+If you have read five files without forming a clear hypothesis, you **MUST** stop gathering evidence. A hypothesis is clear when you can state its What, its Evidence and its Predicted observation distinctly, as Phase 4 of `SKILL.md` requires; clarity is whether those three can be stated, not how confident you are in them. Present what you know, what you have ruled out, and what remains uncertain. Ask the human partner which direction to pursue.
 
 Delegating the reading does not exempt you from the rule. Where the evidence gathering is delegated to subagents, the equivalent trigger is the round: if one parallel sweep returns without yielding a clear hypothesis, you **MUST** stop and refocus rather than dispatch a second sweep. Counting the subagents' file reads one for one would make any parallel sweep illegal on arrival, which is not the intent. What the rule limits is reading without direction, and a second sweep launched after a directionless first one is exactly that.
 
@@ -69,7 +69,7 @@ The fix **MUST** change only what is necessary to address the root cause. You **
 - Fix unrelated issues you spotted during the investigation
 - "Improve" things that are not broken
 
-If the fix touches more than two or three locations, stop and verify that you are fixing one root cause, not patching the same symptom in several places. One bug is one fix.
+If the fix touches more than three locations, stop and verify that you are fixing one root cause, not patching the same symptom in several places. One bug is one fix.
 
 If it genuinely is one root cause but the fix it needs cannot be contained (several separate changes, a redesign, or a new interface), the work has stopped being a bug fix and this skill stops with it. Per `../../rules/common/workflow.md`, hand back to the `brainstorming` router with the root cause, the reproduction approach, and the affected modules. The alternative failure modes are both worse than escalating: shrinking the fix to fit leaves the root cause in place, and applying it anyway ships a redesign under a bug-fix approval the user never gave.
 
