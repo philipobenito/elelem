@@ -1,6 +1,6 @@
 ---
 name: design-review
-description: "Reviews a consolidated design summary for completeness, consistency, clarity, scope, and YAGNI by dispatching a fresh reviewer subagent against the summary text alone. Invoked by `brainstorming-standard`, `brainstorming-guided`, and `brainstorming-committee` once the design is consolidated and before final user approval; `brainstorming-skip` deliberately does not use it. Returns an approved summary, the open decisions the design never made, or an escalation once its three-dispatch budget is spent."
+description: "Reviews a consolidated design summary for completeness, consistency, clarity, scope, and YAGNI by dispatching a fresh reviewer subagent against the summary text alone. Invoked by `brainstorming-standard`, `brainstorming-guided`, and `brainstorming-committee` once the design is consolidated and before final user approval; `brainstorming-skip` deliberately does not use it. Returns an approved summary, the open decisions the design never made, or an escalation once its three-dispatch budget is spent. Not a standalone entry point; a design summary handed straight to Claude for review belongs to the design mode that owns it."
 ---
 
 # Design Review
@@ -50,7 +50,7 @@ Report every substantive fix when you return. The user approved text that no lon
 
 2. **Dispatch the reviewer** with `Agent`, following `../_shared/design-reviewer-prompt.md`. Paste the full summary into the prompt and pass no session history.
 
-   Resolve the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier. This skill's task signal is design judgement, which that file's tier table maps to High-capability, so escalation as far as that tier is available here. It is still one tier at a time and still only on evidence, per the no-pre-escalation rule: a dispatch that returned nothing but editorial noise, a dispatch that missed something you can see in the summary yourself, or a design whose architecture turns on several interacting components.
+   Resolve the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier. This skill's task signal is design judgement, which that file's tier table maps to High-capability, so escalation as far as that tier is available here. It is still one tier at a time and still only on evidence, per the no-pre-escalation rule: a dispatch that returned nothing but editorial noise, a dispatch that missed something you can see in the summary yourself, or a complexity signal that file's tier table already names.
 
 3. **Read the reviewer's status.**
    - **Approved**: go to step 7.
@@ -67,7 +67,7 @@ Report every substantive fix when you return. The user approved text that no lon
 
 ### When the Dispatch Fails
 
-A dispatch that returns no usable status, reports BLOCKED, or errors has reviewed nothing, so it spends no budget. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md`. If the retry also fails, the review cannot be performed here: return **Issues outstanding** with the dispatch failure as the outstanding item, so the decision reaches a human rather than a third attempt.
+A dispatch that returns no usable status, reports BLOCKED, or errors has reviewed nothing, so it spends no budget. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md`. If the retry returns a usable status, take it back to step 3. If the retry also fails, the review cannot be performed here: return **Issues outstanding** with the dispatch failure as the outstanding item, so the decision reaches a human rather than a third attempt.
 
 ## Return Contract
 
@@ -91,7 +91,7 @@ Nothing bounds how many times that can happen, and nothing needs to. Every round
 |--------------|--------------------------------------------------------------------------------|
 | Completeness | Gaps, undefined behaviour, missing components, unanswered questions            |
 | Consistency  | Contradictions between sections, conflicting requirements                      |
-| Clarity      | Requirements ambiguous enough that someone could build the wrong thing         |
+| Clarity      | Requirements ambiguous enough to cause someone to build the wrong thing        |
 | Scope        | Focused enough for a single plan, not covering multiple independent subsystems |
 | YAGNI        | Unrequested features, over-engineering, unnecessary complexity                 |
 
