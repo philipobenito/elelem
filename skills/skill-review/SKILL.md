@@ -38,6 +38,8 @@ Each criterion is binary and starts at FAIL. PASS is earned by a specific cited 
 | C7 | Every sentence changes what the model does, so deleting it would change behaviour                                                        | prose economy |
 | C8 | Every referenced path resolves, every loaded file is used and is loaded before the step needing it, and non-resident content is deferred | load model    |
 
+**The severity floor.** A finding fails a criterion only when it carries a named failing scenario. Anything without one is Advisory: it is reported, and it does not touch the verdict. The floor is defined once, in the Calibration section of `../_shared/skill-reviewer-prompt.md`, where every lens applies it at source; hold the merged list to the same bar when you reconcile at step 4 and demote what does not clear it. Without a floor, C5 and C7 can always yield one more finding on a branchy document, so a skill that is genuinely good never passes and the verdict stops carrying information.
+
 NOT SOUND is a work list, not a condemnation. Most skills worth auditing fail at least one criterion, and a rubric that flatters is worth nothing to the person holding it.
 
 ## What This Skill May Change
@@ -51,6 +53,10 @@ The reviewers find issues; this skill applies the ones the user accepts. That ma
 **The escape hatch.** If the fixes the user accepted would restructure the procedure rather than repair it, adding or removing steps, changing the control flow, or replacing the skill's approach, stop before editing and route to `brainstorming` instead. That work needs a design, and this skill has not produced one.
 
 Applying accepted fixes without going through the `brainstorming` router is deliberate, and it follows the precedent `../../rules/common/workflow.md` already sets for `debugging` Phase 6. The fix is a consequence of evidence this skill has gathered and put in front of the user, the user approved each fix individually at step 7, and the only router mode that could apply would be skip. The escape hatch above is the line past which that argument stops holding.
+
+## Applying Every Finding Is Not Automatically Correct
+
+A fix is an edit to a procedure, and most fixes close a gap by adding an arm: another branch, another table row, another "otherwise". Every arm is new surface, so the fix that closes one finding is where the next two come from, and a fix can cost more than the finding it closed. Prefer a fix that deletes or consolidates over one that adds an arm. Where only an added arm will do, say so when you present the finding at step 7, so the user is accepting it with that cost visible rather than accepting a list.
 
 ## Procedure
 
@@ -71,20 +77,26 @@ Applying accepted fixes without going through the `brainstorming` router is deli
    - **Neighbours.** The name and description of every skill discoverable alongside the target, for C2.
    - **Stated conventions.** If the target repository has a `CLAUDE.md` or `AGENTS.md`, read what it states about skills or markdown. Pass on only what it actually states. A convention your own installation holds is not a convention the target adopted.
 
-3. **Dispatch six reviewers in one message**, following `../_shared/skill-reviewer-prompt.md`. Each receives the full text of the skill, the mechanical inventory from step 2, and its own lens brief. Pass no session history and no author explanation.
+3. **Dispatch the six lenses, and keep dispatching each one until it goes dry**, following `../_shared/skill-reviewer-prompt.md`. Every dispatch receives the full text of the skill, the mechanical inventory from step 2, and its own lens brief, and nothing else: no session history, no author explanation, and nothing an earlier round returned.
 
-   Issue all six `Agent` calls in the same message. Per the parallel dispatch rule in `../_shared/subagent-dispatch.md`, a dispatch issued in a later turn runs sequentially however it was described.
+   One dispatch returns a lens's most salient findings rather than a census of them, so a lens that reported five defects has not necessarily run out of them. Re-dispatch it against the same unchanged text with the same prompt. The prompt stays identical on purpose: telling a lens what an earlier round found anchors it onto that list, and since the text has not changed, an unanchored reading is a fresh sample rather than a repeat.
+
+   **Rounds.** Round 1 dispatches all six lenses. Each later round re-dispatches only the lenses that were not dry in the round before it. Issue every `Agent` call belonging to one round in the same message: per the parallel dispatch rule in `../_shared/subagent-dispatch.md`, a dispatch issued in a later turn runs sequentially however it was described. Reconcile a round through step 4 before deciding who is re-dispatched, because dryness is a judgement about the merged list rather than about one report.
+
+   **Dry** means the round returned no finding that clears the severity floor and that you have not already recorded. The deduplication is yours and not the lens's, which cannot know what its predecessors said: two reports of one defect in different words are one finding.
+
+   **The bound is three rounds per lens.** A lens still returning new findings in its third round is not dispatched a fourth time. Its criteria carry the verdicts its last round returned, its outstanding findings are reported like any others, and the report records the bound as reached with that lens still producing. A lens that cannot be exhausted in three readings of unchanged text is evidence the skill needs restructuring rather than repair, which is the escape hatch in step 8 and not a fourth round.
 
    Resolve the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier. Reviewing a procedure for reachability and ambiguity is design judgement, which that file's tier table maps to High-capability, so escalation as far as that tier is available, one tier at a time and only on evidence.
 
-4. **Reconcile before concluding.** Read all six reports before acting on any of them, and check for the two failures `../_shared/subagent-dispatch.md` names:
+4. **Reconcile before concluding.** Read every report in the round before acting on any of them, and check for the two failures `../_shared/subagent-dispatch.md` names:
 
    - **Overlap.** Two lenses often find the same defect from different angles. Merge them into one finding rather than reporting it twice, and keep it under the lower-numbered criterion.
    - **Systematic error.** Six agents reading the same text can share a blind spot, and convergence is as often that as it is proof. Convergence on a finding you can see is wrong in the text is your signal to re-dispatch that lens, not to report it.
 
    Also check for the failure specific to this skill: a finding that faults the target for a convention its repository never stated. Drop it and say you did.
 
-5. **Assemble the criteria table.** Each criterion carries the verdict its owning lens returned, with that lens's citation. This step is assembly, not adjudication. If you disagree with a verdict, re-dispatch that lens with the evidence you are relying on; overwriting it puts your own unreviewed judgement into the table under a reviewer's name.
+5. **Assemble the criteria table** once every lens is dry or bounded. Each criterion carries the verdict its owning lens returned in its last round, with that lens's citation. This step is assembly, not adjudication. If you disagree with a verdict, re-dispatch that lens with the evidence you are relying on; overwriting it puts your own unreviewed judgement into the table under a reviewer's name.
 
 6. **Present the verdict, the table, and the findings** in the format below. Every finding carries a proposed fix.
 
@@ -92,19 +104,24 @@ Applying accepted fixes without going through the `brainstorming` router is deli
 
 8. **Apply the accepted fixes** to files inside the skill directory. Check the escape hatch first.
 
-9. **Verify.** Re-run the mechanical pass over the edited skill and confirm every referenced path still resolves. Re-dispatch only the lenses whose criteria the fixes were meant to flip, once. If a criterion the fixes targeted still fails, report it as still failing rather than dispatching again.
+9. **Verify with a delta review.** Re-run the mechanical pass over the edited skill and confirm every referenced path still resolves. Then dispatch one delta reviewer, following the delta-review variant in `../_shared/skill-reviewer-prompt.md`. It reads the whole edited skill for context and is told which passages changed, and it judges the edits rather than the file: whether each one did what it set out to do, whether it broke anything adjacent, and whether it contradicts anything else in the skill. A fresh full round would resample text the rounds in step 3 have already exhausted, while the edits are the only part nobody has read yet.
+
+   The delta review runs once. Present what it finds, take accept or reject as at step 7, apply what the user accepts, and report those fixes as applied without reviewing them again. If a criterion the fixes targeted still fails, report it as still failing rather than dispatching its lens again.
 
 10. **Report the final table**, what was applied, what the user rejected, and anything the escape hatch stopped. Commit nothing.
 
 ### When a Dispatch Fails
 
-A lens that returns no usable verdict, reports BLOCKED, or errors has reviewed nothing. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md`. If the retry also fails, the criteria that lens owns stay at FAIL with "not reviewed, dispatch failed" as their evidence, and the verdict is NOT SOUND. Report the dispatch failure as the reason. A criterion nobody reviewed has not passed.
+A lens that returns no usable verdict, reports BLOCKED, or errors has reviewed nothing. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md`. A retry replaces the dispatch that failed and does not consume one of that lens's three rounds. If the retry also fails, the criteria that lens owns stay at FAIL with "not reviewed, dispatch failed" as their evidence, and the verdict is NOT SOUND. Report the dispatch failure as the reason. A criterion nobody reviewed has not passed.
+
+A delta review that fails the same way is retried once on the same terms. If the retry fails, report the edits as applied but unverified rather than treating step 9 as passed.
 
 ## Reporting Format
 
 ```text
 SKILL REVIEW: <skill-name>
 VERDICT: SOUND | NOT SOUND (<n> of 8 criteria failed)
+ROUNDS:  <lens>=<n> dry, <lens>=3 bound reached, ...
 
 | #  | Criterion       | Verdict | Evidence                          |
 |----|-----------------|---------|-----------------------------------|
@@ -112,23 +129,24 @@ VERDICT: SOUND | NOT SOUND (<n> of 8 criteria failed)
 
 FINDINGS
 C4  <file>:<line>  <what is wrong>
-    Why it matters: <what goes wrong when the skill runs>
-    Proposed fix:   <the specific edit>
+    Failing scenario: <the input or run state, then the wrong outcome>
+    Proposed fix:     <the specific edit>
 
 ADVISORY (fails no criterion, does not block)
     <observation>
 ```
 
-Findings are grouped under the criterion they fail, in criterion order. Advisory observations are reported separately and never block the verdict, because a criterion is the only thing that can.
+Findings are grouped under the criterion they fail, in criterion order. Advisory observations are reported separately and never block the verdict, because a criterion is the only thing that can. The ROUNDS line carries one entry per lens, so a lens that stopped at the bound rather than at dryness is visible in the verdict rather than buried in the findings.
 
 ## Completion Gate
 
 You **MUST NOT** report a verdict unless all of these are true:
 
-- All six lenses returned in this invocation, or a failed dispatch is recorded against the criteria it owns.
+- Every lens either returned a dry round or reached the three-round bound, or a failed dispatch is recorded against the criteria it owns.
 - Every criterion carries a verdict and a citation from its owning lens.
 - No criterion is marked PASS because no reviewer mentioned it.
-- Every accepted fix is applied, and the mechanical pass has been re-run against the edited files.
+- No finding fails a criterion without a named failing scenario.
+- Every accepted fix is applied, the mechanical pass has been re-run against the edited files, and the delta review has run against the edits.
 - Every rejected finding is reported as rejected rather than dropped.
 
 If any one is false, the gate has not been crossed.
@@ -140,6 +158,8 @@ Every thought below means stop:
 - "The description looks fine to me." You have read the skill. That is the condition under which its ambiguity becomes invisible, and it is why the lenses get fresh context.
 - "This sentence reads nicely, keep it." C7 asks whether deleting it changes behaviour, not whether it is well written.
 - "The reviewer missed the point, I will correct its verdict." Step 5 is assembly. Re-dispatch with your evidence instead.
+- "That lens has reported, one reading is enough." One dispatch samples a lens's findings; it does not exhaust them. Step 3 stops on a dry round, not on a round.
+- "This is clearly a defect, I just cannot say what goes wrong." Then it is Advisory. The floor is a named failing scenario, not your confidence.
 - "Only one criterion failed, that is basically SOUND." SOUND is all eight.
 - You are rewriting the skill rather than applying the fixes the user accepted. Step 8 has a boundary and the escape hatch is how you leave it.
 
