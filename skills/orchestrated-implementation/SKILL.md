@@ -1,6 +1,6 @@
 ---
 name: orchestrated-implementation
-description: Implements an approved design by decomposing it into file-disjoint tasks on a shared task board and running the ready ones in parallel across persistent teammates, with the lead keeping sole authority over assignment, code review, verification, commits, and every user checkpoint. Use this once a design is approved and it is time to build it: the user points at a committed specification, at a design settled earlier in the conversation, or at one `work-on-ticket` recovered from a ticket, and asks to implement, build, or start on it. Go here rather than back through the `brainstorming` router when the design already exists; without an approved design from one of those three sources, return to `brainstorming`. Delegates uniformly simple work to `fast-path-implementation` via `complexity-triage`. Stops and reports when a required capability is unavailable.
+description: Implements an approved design by decomposing it into file-disjoint tasks on a shared task board and running the ready ones in parallel, one teammate per task, with the lead keeping sole authority over assignment, code review, verification, commits, and every user checkpoint. Use this once a design is approved and it is time to build it: the user points at a committed specification, at a design settled earlier in the conversation, or at one `work-on-ticket` recovered from a ticket, and asks to implement, build, or start on it. Go here rather than back through the `brainstorming` router when the design already exists; without an approved design from one of those three sources, return to `brainstorming`. Delegates uniformly simple work to `fast-path-implementation` via `complexity-triage`. Stops and reports when a required capability is unavailable.
 ---
 
 # Orchestrated Implementation
@@ -25,7 +25,7 @@ Coupled and strictly ordered work runs here too. Order is expressed as `blockedB
 6. Spawn teammates up to the ready count and assign their tasks
 7. On each completion claim, run code review, then the verification gate
 8. Drain verified tasks through the user checkpoint, one at a time, in board order
-9. Shut every teammate down, run the final feature-level review, report completion
+9. Confirm every teammate is shut down, run the final feature-level review, report completion
 
 ## Capability Gate
 
@@ -117,9 +117,9 @@ Run every task that can safely run. A **scheduling moment** is any point at whic
 min(tasks that are ready, teammates the harness will let you have)
 ```
 
-A task is **ready** when every `blockedBy` edge is verified rather than merely marked `completed`, its `files` set is disjoint from every task in flight, and no teammate is working it. A ready task goes to a teammate that holds no task, and a new teammate is spawned when no such teammate exists, so the second term is spawn capacity, discovered at spawn time, rather than the number of teammates already free. Reading it as the latter would cap the run at zero before the first spawn.
+A task is **ready** when every `blockedBy` edge is verified rather than merely marked `completed`, its `files` set is disjoint from every task in flight, and no teammate is working it. Every ready task gets its own teammate, spawned for it, so the second term is spawn capacity, discovered at spawn time.
 
-A teammate holds its task until that task's `verified` key is written, so one awaiting the gate is neither working nor available. Total live teammates equals those working a task plus those in their gate window, and can exceed the ready count. That is a correct state, not a clamp violation.
+A teammate holds its task until that task's `verified` key is written, so one awaiting the gate is live without working a ready task. Total live teammates equals those working a task plus those in their gate window, and can exceed the ready count. That is a correct state, not a clamp violation.
 
 Take that number as soon as it is available. It is a ceiling on live teammates rather than a target to approach gradually: the count rises on its own as `blockedBy` edges clear and the ready set grows, because foundations-first ordering means few tasks are ready at the start.
 
@@ -137,9 +137,9 @@ The per-task reviewer is a one-shot subagent, not an implementer teammate, and n
 
 Type and model come from `./teammate-protocol.md`, which resolves both per `../_shared/subagent-dispatch.md`. Agent type matters more than usual here, because a teammate that cannot use `SendMessage` cannot be assigned a task, ask a question, or report a claim.
 
-Teammates persist. A teammate whose task has been verified is reassigned the next ready task rather than respawned, and a new teammate is spawned only when a ready task has no teammate free to take it.
+One teammate, one task. A teammate is spawned for a single task and shut down once that task's `verified` key is written; it is never reassigned. Holding it that long, and no longer, keeps a fix round-trip from either gate on the agent that owns the files while bounding the context any one agent accumulates.
 
-Assignment is lead-assign only. The lead sets the task's `owner` and records the current `HEAD` as that task's `base_sha`, which is the commit its diff is measured against per `../_shared/task-board.md`, and which the final feature-level review reads from the first task to establish the feature's range. Assignment is the only producer of that key, so a task assigned without it cannot be reviewed against anything. Record it on the first assignment only and never rewrite it on a re-assignment: a task re-queued after a stall or an adjustment still measures from where it originally started, and moving the first task's value forward would silently truncate the range the final review runs over. The lead then sends the body of `../_shared/implementer-prompt.md` over SendMessage as the assignment, filling in the task's `files` set and the lead's own name per that file's Delivery section. A teammate taking its second task gets only the new task's details. Self-claiming is forbidden, and the assignment says so explicitly, per `./teammate-protocol.md`.
+Assignment is lead-assign only. The lead sets the task's `owner` and records the current `HEAD` as that task's `base_sha`, which is the commit its diff is measured against per `../_shared/task-board.md`, and which the final feature-level review reads from the first task to establish the feature's range. Assignment is the only producer of that key, so a task assigned without it cannot be reviewed against anything. Record it on the first assignment only and never rewrite it when the task is re-queued: a task re-queued after a stall or an adjustment still measures from where it originally started, and moving the first task's value forward would silently truncate the range the final review runs over. The lead then sends the body of `../_shared/implementer-prompt.md` over SendMessage as the assignment, filling in the task's `files` set and the lead's own name per that file's Delivery section. Self-claiming is forbidden, and the assignment says so explicitly, per `./teammate-protocol.md`.
 
 State the count at each spawn round as a fact rather than a question: how many teammates are starting, and how many tasks are ready.
 
@@ -182,7 +182,7 @@ Fixes get two round-trips per entry into this loop, counted across both gates to
 
 If the second round-trip still fails either gate, the run stops rather than the loop alone: shut every live teammate down, leave `verified` and `commit_sha` intact on the tasks that earned them, and report per the Stop Report in Failure Handling. The final feature-level review does not run, because the feature is not complete. Letting the loop run on instead stalls every dependent task silently, since a task that never verifies never commits.
 
-Only after the gate passes does the lead write the lead-only `verified` key, and `commit_sha` once committed. Review state is not a board field: it is the seam between `status: completed` and `verified`. A completed-but-unverified task still owes both gates.
+Only after the gate passes does the lead write the lead-only `verified` key, and `commit_sha` once committed. Writing `verified` is the same step that shuts that task's teammate down, per Spawn and Assign above. Review state is not a board field: it is the seam between `status: completed` and `verified`. A completed-but-unverified task still owes both gates.
 
 ```dot
 digraph per_task {
@@ -199,7 +199,7 @@ digraph per_task {
     "Tree drifted since the review?" [shape=diamond];
     "Verification gate, scoped to the task's files" [shape=box, style=bold];
     "Gate passes?" [shape=diamond];
-    "Write the verified key" [shape=box, style=bold];
+    "Write the verified key; shut the teammate down" [shape=box, style=bold];
     "Dependencies committed?" [shape=diamond];
     "Wait in the checkpoint queue" [shape=box];
     "User checkpoint" [shape=box, style=bold];
@@ -223,8 +223,8 @@ digraph per_task {
     "Tree drifted since the review?" -> "Verification gate, scoped to the task's files" [label="no"];
     "Verification gate, scoped to the task's files" -> "Gate passes?";
     "Gate passes?" -> "Two fix round-trips spent?" [label="no"];
-    "Gate passes?" -> "Write the verified key" [label="yes"];
-    "Write the verified key" -> "Dependencies committed?";
+    "Gate passes?" -> "Write the verified key; shut the teammate down" [label="yes"];
+    "Write the verified key; shut the teammate down" -> "Dependencies committed?";
     "Dependencies committed?" -> "Wait in the checkpoint queue" [label="no, still pending"];
     "Dependencies committed?" -> "Hold dependents; drain the rest, then stop" [label="no, a dependency was skipped"];
     "Wait in the checkpoint queue" -> "Dependencies committed?";
@@ -243,7 +243,7 @@ Implementation runs in parallel. Verified tasks drain through the user checkpoin
 
 A task commits only once its `verified` key is written and every `blockedBy` dependency has already been committed. A task that finishes early with an uncommitted dependency waits.
 
-The drain does not gate implementation. A teammate is freed by `verified`, which is written before the checkpoint, so teammates keep working while a checkpoint waits on the user.
+The drain does not gate implementation. `verified` is written before the checkpoint and is what unblocks dependents and releases the task's `files`, so the rest of the run keeps working while a checkpoint waits on the user.
 
 For each drained task, present:
 
@@ -258,7 +258,7 @@ Step 4 is scoped because several teammates are writing one tree, so an unscoped 
 Then commit, or ask first if the user chose to be asked, with options "Commit", "Adjust first" and "Skip commit". Commits are scoped to the task's `files` for the same reason the diff is.
 
 - **Commit.** The task is done; drain the next one.
-- **Adjust first.** Ask what to change, clear the task's `verified` key, and send the adjustment to the teammate that owned the task if it holds no other task, or re-queue the task if it does. The work re-enters at code review like any other fix and both gates run again, on a fresh budget of two round-trips: a user-initiated adjustment is a new instruction, not a failed fix. Name every task transitively `blockedBy` this one, following `blocks` edges to closure, because clearing `verified` un-readies them. Any such task in flight is recalled by the reclaim sequence in `./teammate-protocol.md`'s Failure Recovery, and never by re-queueing under a live owner. Any that is verified and uncommitted has its own `verified` cleared and re-enters at code review once the adjustment lands. Any that has already committed is out of scope: a change it needs is a new finding for the final review, not a recall. Leaving an affected task to run finishes it against a spec that no longer holds, and its own gates cannot detect that, since nothing in its `files` changed.
+- **Adjust first.** Ask what to change, clear the task's `verified` key, and re-queue the task with the adjustment: the teammate that owned it was shut down when `verified` was written, so a fresh one takes it. The work re-enters at code review like any other fix and both gates run again, on a fresh budget of two round-trips: a user-initiated adjustment is a new instruction, not a failed fix. Name every task transitively `blockedBy` this one, following `blocks` edges to closure, because clearing `verified` un-readies them. Any such task in flight is recalled by the reclaim sequence in `./teammate-protocol.md`'s Failure Recovery, and never by re-queueing under a live owner. Any that is verified and uncommitted has its own `verified` cleared and re-enters at code review once the adjustment lands. Any that has already committed is out of scope: a change it needs is a new finding for the final review, not a recall. Leaving an affected task to run finishes it against a spec that no longer holds, and its own gates cannot detect that, since nothing in its `files` changed.
 - **Skip commit.** The task stays verified and uncommitted, so every task transitively `blockedBy` it is held out of the drain permanently. Name those tasks at the moment the user chooses and take them out of the ready set: they are not assigned from here on, and any already in flight is stopped by the reclaim sequence in `./teammate-protocol.md`, with its partial edits reported. That is not the lead lowering concurrency on its own initiative, which Concurrency forbids; it is a dependency that will now never commit. Tasks not behind the skipped one keep draining; once they have, shut every teammate down and stop, reporting per the Stop Report below.
 
 Routine progress generates no questions: the commit preference is asked once, and a drained task is asked about only under "ask me each time". Where a question does arise it is stated at the step that raises it, at Triage and Path Selection when a capability is missing, and wherever an always-on rule requires the user's approval, such as reverting a teammate's partial edit per `../../rules/common/teammates.md`.
@@ -292,11 +292,11 @@ Every stop in this skill reports the same five things, whatever stopped it:
 
 Never report a task as complete on its board `status`. `completed` is a teammate's claim, and only `verified` plus a commit means done, so a stop report phrased in board vocabulary invites the user, or a later session, to build on a half-finished edit.
 
-Shutting teammates down is a lead action and belongs to whichever stop invoked it. Idle Handling in `./teammate-protocol.md` governs only what happens on a `TeammateIdle` signal and never holds a teammate alive against a stop stated here.
+Shutting a teammate down is always a lead action: at its task's `verified` key on the normal path, and at whichever stop invoked it otherwise. Idle Handling in `./teammate-protocol.md` governs only what happens on a `TeammateIdle` signal and never holds a teammate alive against a stop stated here.
 
 ## Final Feature-Level Review
 
-Once every task has drained, shut every teammate down first, per `./teammate-protocol.md`, so the review runs against a settled tree with no in-flight writers. Run the reconciliation sweep from that file before claiming anything is complete: board status lags reality.
+Once every task has drained, confirm every teammate is shut down first, so the review runs against a settled tree with no in-flight writers. Run the reconciliation sweep in `./teammate-protocol.md` before claiming anything is complete: board status lags reality.
 
 1. **Invoke `requesting-code-review`** for the feature as a whole. It establishes its own range from the `base_sha` recorded for the first task, dispatches the reviewer, and owns the fix-and-re-review loop until no Critical or Important issue remains. Do not run that loop here. This is the production-readiness review `../../rules/common/code-review.md` requires; the per-task reviews do not replace it, because each saw one task and integration gaps only appear across task boundaries.
 2. **Branch on its Return Contract.** Approved brings deferred Minor issues back with it: log them in the completion report. Issues outstanding stops the review loop: never invoke `requesting-code-review` again for a better verdict on unchanged code. Put the outstanding issues to the user and ask whether to close them. On their approval, re-queue the affected work, spawn a teammate for it since every teammate was shut down above, run both gates again, drain the task through the Checkpoint Queue and commit it under the session's commit preference, then invoke `requesting-code-review` afresh against the changed code. The drain is not optional here: `commit_sha` is only ever written at the drain, so a fix that skips it is reported complete while sitting uncommitted in the tree. Only "Commit" is offered at that drain; if the user declines, the run stops there, the fresh review does not run, and the report says the feature is not complete and names the outstanding findings. Where a finding falls inside one task's `files` set, re-queue that task; where it spans several, create one task owning the union of the affected files and re-run the Pre-Flight Ownership Check before assigning it. One such cycle only: if the fresh invocation also returns Issues outstanding, stop and put it to the user with what has committed so far. If the user declines to close the issues at all, stop as well: report what committed, carry the outstanding Critical and Important findings forward verbatim, and state plainly that the feature is not being reported complete. Nothing to review or Range unknown means a precondition failed and the mandatory review has not happened: re-establish the range from the first task's `base_sha`, taking it from the out-of-board record if the board was purged, and invoke the skill again. If the base still cannot be established from either, stop and report per the Stop Report, stating plainly that the mandatory feature-level review did not run. Never invent a range: a review that returns Approved over a diff nobody chose is indistinguishable from one that reviewed the feature.
@@ -312,13 +312,13 @@ Design approved: five tasks. Commit preference: ask me each time. Triage: COMPLE
 
 Ready set is task 1 alone (tasks 2 to 5 all blockedBy it). "Starting 1 teammate; 1 task ready."
 
-Task 1 verified and committed. Tasks 2, 3 and 4 unblock together, task 5 blockedBy 4. "Starting 2 more teammates; 3 tasks ready." Three live, one per ready task.
+Task 1 verified, its teammate shut down, the task committed. Tasks 2, 3 and 4 unblock together, task 5 blockedBy 4. "Starting 3 teammates; 3 tasks ready." One per ready task.
 
-Task 3 claims done first, then task 2. Both reviewers dispatched in one message. Task 3's reviewer rejects: a missing acceptance criterion. Findings relayed to the teammate that still owns task 3's files. It fixes, re-reports, re-review passes.
+Task 3 claims done first, then task 2. Both reviewers dispatched in one message. Task 3's reviewer rejects: a missing acceptance criterion. Findings relayed to the teammate that still owns task 3's files, which is live because nothing has verified the task yet. It fixes, re-reports, re-review passes.
 
 Task 2 verified first, so task 2 drains first: it is earlier in board order. Checkpoint shows task 2's scoped diff, its evidence, and "1 verified task queued". User commits. Task 3 drains next, then task 4.
 
-Task 5's teammate goes quiet: two scheduling moments pass with no message from it and no change under task 5's files. The lead confirms the task state with TaskGet, issues TaskStop against that teammate, then reclaims the task, sets owner back to "lead", inspects the partial edit scoped to task 5's files, and re-queues it. A free teammate picks it up against the same spec.
+Task 5's teammate goes quiet: two scheduling moments pass with no message from it and no change under task 5's files. The lead confirms the task state with TaskGet, issues TaskStop against that teammate, then reclaims the task, sets owner back to "lead", inspects the partial edit scoped to task 5's files, and re-queues it. A freshly spawned teammate picks it up against the same spec.
 
 All five drained. Every teammate shut down. Reconciliation sweep confirms the board matches the tree. requesting-code-review returns Approved with two Minor issues deferred. verification-before-completion runs the full suite, the linter and the build, and the output is cited in the completion report.
 ```
@@ -327,7 +327,7 @@ All five drained. Every teammate shut down. Reconciliation sweep confirms the bo
 
 | Mistake                                                                          | Why it is wrong                                                                                                       |
 |----------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| Assigning a teammate its next task before its current task is verified           | The teammate could drift the diff the reviewer already approved, and the fix round-trip loses the agent that owns it. |
+| Shutting a teammate down before its task's `verified` key is written             | The fix round-trip from either gate then lands on a fresh agent that neither owns the files nor holds the context.    |
 | Lowering concurrency instead of adding a `blockedBy` edge                        | A constraint expressed as a ceiling is invisible to the board and disappears the moment the ceiling is raised.        |
 | Spawning before the pre-flight ownership check passes                            | The check is the only thing standing between the run and concurrent writers on one file.                              |
 | Dispatching the implementer brief with its ownership and reporting block removed | A teammate with no declared `files` and no reporting channel edits other tasks' files and reports where nobody reads. |
