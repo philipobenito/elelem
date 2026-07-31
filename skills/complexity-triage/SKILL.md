@@ -1,6 +1,6 @@
 ---
 name: complexity-triage
-description: Classifies one approved design as SIMPLE or COMPLEX so an orchestrator knows whether the fast path is open. Invoked by `orchestrated-implementation` before task decomposition, and required by `fast-path-implementation` as its precondition. Reads the affected code to gather evidence against six binary criteria. Defaults to COMPLEX; SIMPLE must be earned with specific observations.
+description: Classifies one approved design as SIMPLE or COMPLEX so an orchestrator knows whether the fast path is open. Invoked by `orchestrated-implementation` before task decomposition, and required by `fast-path-implementation` as its precondition. Reads the affected code to gather evidence against six binary criteria. Defaults to COMPLEX; SIMPLE must be earned with specific observations. Not a standalone entry point; a request to assess a design's complexity outside `orchestrated-implementation` goes to that skill first.
 ---
 
 # Complexity Triage
@@ -11,7 +11,7 @@ The strictness is calibrated to what SIMPLE unlocks. `fast-path-implementation` 
 
 ## Preconditions
 
-An approved design, from the `brainstorming` router via any of its modes, from `work-on-ticket`, or from a committed specification. This skill runs inside `orchestrated-implementation`, at its Triage and Path Selection step, not before it.
+An approved design, from the `brainstorming` router via any of its modes, from `work-on-ticket`, or from a committed specification. This skill runs inside `orchestrated-implementation`, at its Triage and Path Selection step, not before it. If you have arrived here directly rather than from that step, hand the request to `orchestrated-implementation` and stop before reading any code.
 
 Triage runs **once, against the whole design**, never per task. Criterion 1 asks whether the entire change set is one uniform batch, so a design holding two different kinds of edit fails it by construction. Once the verdict is COMPLEX, decomposition is the response to that verdict rather than an invitation to re-ask the question of each resulting task.
 
@@ -19,7 +19,7 @@ Triage runs **once, against the whole design**, never per task. Criterion 1 asks
 
 1. **List the change set.** From the design, name every file to be created or modified and what changes in each. If the design does not name files, derive the list in step 2.
 
-2. **Read the affected code.** A classification made from the design text alone is a prediction about code you have not opened. Criterion 6 cannot be answered without seeing the lines that will change, and a `brainstorming-skip` design carries no file-level detail at all, so on that route this step is the only source of evidence there is.
+2. **Read the affected code.** A classification made from the design text alone is a prediction about code you have not opened. Criterion 6 cannot be answered without seeing the lines that will change, and a `brainstorming-skip` design carries no file-level detail at all, so on that route this step is the only source of evidence there is. Derive that set by searching the whole repository for every term and identifier the design names, and treat what the search returns as the change set, so the breadth of the search is not itself deciding the verdict.
 
    The reading is bounded by its own purpose: enough to fill every evidence cell, no further. If you find yourself tracing call graphs or reasoning about runtime behaviour rather than counting and comparing edits, stop. That difficulty is the verdict. Work that takes investigation to classify is COMPLEX, so record it and move on.
 
@@ -33,16 +33,22 @@ Triage runs **once, against the whole design**, never per task. Criterion 1 asks
 
 **ALL** criteria must be true for the classification to be SIMPLE. A single failure means COMPLEX, no exceptions.
 
+This table is restated in `../_shared/code-reviewer-prompt.md`'s Triage Re-Check block, because the reviewer dispatched with that prompt cannot read this file. Keep the two in sync when editing either.
+
 | # | Criterion                    | Definition                                                                             | Fails if                                                                                                     |
 |---|------------------------------|----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
 | 1 | **Uniform change type**      | Every change is the same kind of edit applied across locations                         | Changes mix different concerns (e.g. docs + feature code, config + new logic)                                |
 | 2 | **No new logic**             | Zero new functions, classes, conditionals, loops, error handling, or business rules    | Any new control flow or callable unit is introduced                                                          |
 | 3 | **No new interfaces**        | No new exports, API endpoints, contracts, events, or public surface area               | Any new public-facing surface is created                                                                     |
 | 4 | **Deterministic from spec**  | The correct change at each location is fully specified with no room for interpretation | Any change requires a design decision, judgement call, or contextual understanding beyond the immediate edit |
-| 5 | **Independently verifiable** | Each change can be verified by reading it in isolation                                 | Correctness of one change depends on another change in a different file                                      |
-| 6 | **Small total delta**        | 50 lines or fewer of substantive change across all files, counted rather than felt     | The count exceeds 50, lands between 40 and 50, or cannot be produced at all                                  |
+| 5 | **Independently verifiable** | Each change can be verified by reading it in isolation                                 | Correctness of one change depends on another change elsewhere in the change set                              |
+| 6 | **Small total delta**        | 39 lines or fewer of substantive change across all files, counted rather than felt     | The count is 40 or more, or cannot be produced at all                                                        |
 
-Criterion 6 rejects the 40 to 50 band deliberately. Estimation error at the boundary is larger than the margin, so a count that close is not deciding the verdict, the estimate is. Push it back to the full path and lose nothing.
+Criterion 1 asks about purpose as well as shape. Two mechanically identical edits serving unrelated purposes, such as two independent one-line fixes bundled into one design, are not one uniform batch, because the batch is what a single review is asked to judge whole.
+
+The passing threshold is 39 rather than a round 50 because criterion 6 rejects the 40 to 50 band deliberately. Estimation error at a boundary that close is larger than the margin it decides, so a count in that band reports the estimate rather than the verdict. Push it back to the full path and lose nothing.
+
+Count each changed line once rather than once per diff side: a one-line string replacement is 1 line, not 2, though `git diff --stat` reports it as 2. Where a contiguous run of changed lines is replaced by a run of a different size, count the larger of the two sides, and sum those counts across every such run in every file, so two separated runs in one file count separately rather than as one. Whitespace-only and comment-only lines are not substantive and do not count towards the total.
 
 Criterion 2 has a consequence worth stating outright: SIMPLE work changes no observable behaviour. It follows that there is no new behaviour for a test to cover, which is why the failing-test-first requirement in `../../rules/common/testing.md` produces no test work on this path. The reverse holds as a signal: an implementer reporting new behaviour on the fast path has demonstrated the triage was wrong, whatever the table said.
 
@@ -93,7 +99,7 @@ Numeric approximation is not hedging, and the distinction is what the qualifier 
 A triage verdict is a prediction made before the code exists. Two things can falsify it once implementation starts, and both end the fast path.
 
 - **The reviewer reports `TRIAGE_INVALID`.** The combined reviewer dispatched by `fast-path-implementation` re-checks the classification against the actual diff and names the criterion that failed (see `../_shared/code-reviewer-prompt.md`'s Triage Re-Check block). This check is stronger than the one in this skill, because it reads code that exists rather than predicting code that does not, and it is run by an agent with no stake in the answer. It is a stop, not an advisory.
-- **The orchestrator sees it directly.** If the work is plainly more complex than the table concluded, stop without waiting for a reviewer to say so.
+- **The orchestrator sees it directly.** If the orchestrator observes one of the six criteria violated in the code as written rather than predicted, stop without waiting for a reviewer to say so.
 
 Either route ends the same way: reclassify as COMPLEX and hand back to `orchestrated-implementation` at its Task Decomposition step for re-decomposition. This skill is not re-run on the way through, for the reason in Preconditions: the same design against the same predictive evidence returns the same verdict, and the falsification is the stronger evidence now.
 
@@ -109,7 +115,7 @@ This section is addressed to whichever skill invoked this one. It lives here rat
 
 **User override.** The user outranks this skill (see Instruction Priority in `../../rules/common/skills-policy.md`), so a user who directs a different path gets it. Overriding SIMPLE to COMPLEX needs no justification, since it moves to the more careful path. Overriding COMPLEX to SIMPLE is the direction carrying risk, so the table travels **with its failing rows intact** rather than being rewritten to agree with the user. The fast-path reviewer then sees exactly which criterion was set aside and can report `TRIAGE_INVALID` against it. The caller records the override when handing off.
 
-**Presenting is not a blocking question.** Present the table and continue rather than stopping for approval. The user's window to redirect stays open because nothing is committed before the fast path's own checkpoint, and pausing on every design would tax every caller for a verdict that is usually uncontroversial.
+**Presenting is not a blocking question.** Present the table and continue rather than stopping for approval. The user's window to redirect stays open because nothing is committed while the table is being presented, and pausing on every design would tax every caller for a verdict that is usually uncontroversial. An override is recognised whenever the user states one, from the presentation up to the caller's hand-off, rather than at a single moment the procedure pauses to collect it. That hand-off is to `fast-path-implementation` on SIMPLE and to task decomposition on COMPLEX. An override arriving after it is new instruction for the caller to handle rather than a redirection of this verdict, because neither destination carries an arm that consumes one.
 
 ## Worked Example: SIMPLE
 
@@ -150,7 +156,7 @@ Classification: COMPLEX
 Justification: Criterion 5 fails; the declaration and the read must land together, so no single change can be verified on its own.
 ```
 
-This is the case the skill exists for. The work is small, mechanical, and fully specified, and it still belongs on the full path because a coupled pair of changes is exactly what a single batched review is worst at catching. Five passes is not a score, and there is no partial credit.
+This is the case the skill exists for. The work is small, mechanical, and fully specified, and it still belongs on the full path because a coupled pair of changes is exactly what a single batched review is worst at catching.
 
 ## Red Flags
 
@@ -158,7 +164,7 @@ Every thought below means stop:
 
 - "This is mostly uniform" or any other qualifier attached to a verdict rather than a measurement
 - You want SIMPLE because the full path feels like a lot of ceremony for this change
-- You are defaulting to SIMPLE. COMPLEX is the default; SIMPLE must be earned.
+- You are defaulting to SIMPLE.
 
 ## Common Mistakes
 
@@ -166,7 +172,7 @@ Every thought below means stop:
 |-------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Classifying from the design text without opening a file     | Criterion 6 needs a count, and a skip-mode design carries no file detail at all. A verdict reachable without reading code is a guess dressed as a table. |
 | Re-running triage on each task after a COMPLEX verdict      | The verdict covers the whole change set. Criterion 1 already asked whether it is one uniform batch; decomposition answers that, it does not re-open it.  |
-| Rounding a 48-line estimate down to pass criterion 6        | The estimate's error bar is wider than the margin, so the count is not what decided the verdict. The band exists to keep guesswork out of the boundary.  |
+| Rounding a 48-line estimate down to pass criterion 6        | The count lands inside the rejected 40 to 50 band; see criterion 6.                                                                                      |
 | Treating the reviewer's `TRIAGE_INVALID` as advisory        | The reviewer read the diff; this skill only predicted it. The stronger evidence wins, and it arrives before anything is committed.                       |
 | Rewriting a failing row to agree with a user's SIMPLE call  | The override is the user's to make, but erasing the failure hides it from the reviewer who could still catch it. Carry the row; record the override.     |
 | Presenting the table after the implementer is already going | The user's chance to redirect is worth nothing once the work is under way. Presentation is a step in the procedure, not a report afterwards.             |

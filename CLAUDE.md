@@ -25,9 +25,10 @@ Every file in this repository is in context under exactly one condition. Nothing
 Content has exactly one canonical home. Finding the same content in two or more places is one of three things, and only one of them is acceptable:
 
 - **Uncontracted** duplication, the same content in two or more homes with nothing linking them, is a defect. Fix it: pick the canonical home and make every other occurrence a reference to it.
-- **Contracted** duplication, the same content in exactly two homes with an explicit sync note on BOTH sides pointing at the other, is legitimate only where the second copy is pasted into an isolated agent that cannot read the first. Two such pairs exist and MUST be kept:
+- **Contracted** duplication, the same content in exactly two homes with an explicit sync note on BOTH sides pointing at the other, is legitimate only where the second copy is pasted into an isolated agent that cannot read the first. Three such pairs exist and MUST be kept:
   - The severity table, in `skills/_shared/code-review.md` and `skills/_shared/code-reviewer-prompt.md`
   - The design-review category table, in `skills/design-review/SKILL.md` and `skills/_shared/design-reviewer-prompt.md`
+  - The complexity-triage criteria table, in `skills/complexity-triage/SKILL.md` and `skills/_shared/code-reviewer-prompt.md`
 - **Load-bearing structure**, two files sharing a shape (a heading layout, a table skeleton) but carrying different content, is not duplication at all and needs no reconciling.
 
 ## Where New Content Belongs
