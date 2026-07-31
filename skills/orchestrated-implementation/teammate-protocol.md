@@ -1,24 +1,25 @@
 # Teammate Protocol
 
-This file is the procedural detail behind the teammate iron laws in `../../rules/common/teammates.md`. Those laws (peer isolation, no concurrent writers, exclusive per-task file ownership, git ownership, board-lag reconciliation, dead-teammate handling) bind whether or not this file is loaded; nothing here restates or supersedes them. Read `../../rules/common/teammates.md` before reading this file, and read `../../rules/common/subagents.md` Part A for the universal laws (worktree ban, privilege ban, git ownership, model identifiers) that apply to teammates in full.
+This file is the procedural detail behind the teammate iron laws in `../../rules/common/teammates.md`, and the universal laws in Part A of `../../rules/common/subagents.md` apply to teammates in full. Both files are always in context and need no read, and nothing here restates or supersedes them.
 
 **Agent type and model selection are not redefined here.** A teammate's type and model come from `../_shared/subagent-dispatch.md` exactly as a one-shot subagent's do: the agent type table, and the Model Selection procedure (tier table, resolution procedure, escalation triggers) in full. The only difference is that a teammate is spawned once and kept alive across multiple tasks rather than dispatched fresh per task.
 
-What this file covers instead is what is specific to the persistent-peer model: how the lead assigns work, how the lead and teammates talk to each other over the run, what a completion claim from a teammate actually means, how the lead handles an idle teammate, and how the lead recovers when a teammate fails. The pre-flight ownership check that proves file-disjointness before any teammate starts lives in `SKILL.md`, beside Spawn and Assign, because it is a one-off lead action at a fixed point in the schedule rather than a standing contract between lead and teammate.
-
 ## Lead-Assigned Tasks, Never Self-Claim
 
-The lead assigns each task to a specific teammate by setting the task's `owner` field, per the schema in `../_shared/task-board.md`. A teammate **MUST NOT** take a task whose `owner` is not its own name, and **MUST NOT** select its own next task from the board.
+The lead assigns each task to a specific teammate by setting the task's `owner` field. The teammate's side of that, which tasks it may take and that it may not write the field at all, is stated in the schema in `../_shared/task-board.md`. What this file adds is that a teammate **MUST NOT** select its own next task from the board.
 
-Self-claim is forbidden above all because it bypasses the lead's pre-flight disjointness computation and `blockedBy` serialisation: a self-claiming teammate could pick up a task that was deliberately serialised behind an in-progress task because they share files, producing exactly the concurrent-writer tree corruption that the "no concurrent writers to one file, ever" law in `../../rules/common/teammates.md` exists to prevent. This is a tree-corruption risk, not merely a duplicate-work risk, and it is the primary reason the rule exists. It is compounded by two further reasons: self-claim races two teammates onto the board at once, since both can observe the same unowned task as available and both can start on it; and because board `status` lags behind reality (per the board-lag reconciliation law), a teammate cannot safely infer from `status: pending` alone that a task is actually free. All scheduling intelligence, including which task a teammate picks up next, stays with the lead. A teammate that finishes a task or goes idle waits for the lead's next assignment; it does not scan the board and choose for itself.
+Self-claim is forbidden above all because it bypasses the lead's pre-flight disjointness computation and `blockedBy` serialisation: a self-claiming teammate could pick up a task that was deliberately serialised behind an in-progress task because they share files, producing exactly the concurrent-writer tree corruption that the "no concurrent writers to one file, ever" law in `../../rules/common/teammates.md` exists to prevent. It is compounded by two further reasons: self-claim races two teammates onto the board at once, since both can observe the same unowned task as available and both can start on it; and because board `status` lags behind reality (per the board-lag reconciliation law), a teammate cannot safely infer from `status: pending` alone that a task is actually free. All scheduling intelligence, including which task a teammate picks up next, stays with the lead.
 
 The teammate's own tooling argues the other way, so the lead states the ban explicitly in every assignment. `TaskUpdate`'s description invites a teammate to claim a task by setting `owner` to its own name, to mark its assigned tasks resolved when it finishes them, and to call `TaskList` afterwards to find its next task. All three are forbidden here. Per Instruction Priority in `../../rules/common/skills-policy.md`, repository rules outrank default system behaviour, and a tool description is default system behaviour.
+
+The same three bans are stated to the teammate itself in the Ownership and Reporting section of `../_shared/implementer-prompt.md`, because a dispatched teammate cannot read this file. The two copies move together: an edit to either is incomplete until the other matches it.
 
 ## The Mailbox (SendMessage)
 
 Teammates and the lead coordinate over the life of the run through SendMessage, not through the board alone and not through plain text output.
 
-- Address a specific teammate by its name. Address the lead by the name it is running under, which the lead states in the assignment; `main` is not a valid destination for an agent that is itself the main conversation, and a send to it is rejected.
+- Address a specific teammate by its name. Teammates address the lead by the name the lead states in the assignment, and the lead **MUST** state one: where the lead is the main conversation that name is `main`, and where the lead is itself a spawned agent it is that agent's own name. A lead that omits it, or gives a name nothing answers to, never receives a completion claim; the run then reads as a run of stalled teammates.
+- The lead cannot use `main` as a destination for itself. That value addresses the main conversation from a background agent, so it is a destination teammates use and the lead does not.
 - A send that fails has delivered nothing. Treat it as an undelivered message and retry against the correct name rather than assuming it arrived.
 - The lead uses SendMessage to hand a teammate its assignment, and to answer any question a teammate raises mid-task.
 - A teammate uses SendMessage to reach the lead when it has a question it cannot resolve from the task's own `description`, and again when it believes a task is finished.
@@ -31,7 +32,7 @@ This mailbox is the concrete mechanism behind the peer isolation model in `../..
 
 A teammate reporting a task as done, whether by SendMessage to the lead or by moving the board's native `status` to `completed`, means "claimed done, pending lead verification". It is never itself authoritative; this follows directly from the guiding invariant in `../_shared/task-board.md` that the board is advisory and the lead is authoritative.
 
-The gate the lead actually runs on a completion claim, code review, then the five-step verification gate, and what a failed gate means for the task, is stated in full in `SKILL.md`'s "Per-Task Review and Verification"; this file does not restate it.
+The gate the lead actually runs on a completion claim, code review, then the five-step verification gate, and what a failed gate means for the task, is stated in full in `./SKILL.md`'s "Per-Task Review and Verification".
 
 If a `TaskCompleted` hook is wired up, it is a trigger, nothing more: it enqueues the lead's verification pass. It **MUST NOT** be treated as marking the task complete, and it **MUST NOT** commit anything on its own. Only the lead's own verification and the lead's own commit establish that a task is done.
 
@@ -43,20 +44,24 @@ A teammate holds one task at a time. It is freed when that task's `verified` key
 
 When a teammate goes idle (a `TeammateIdle` signal), the lead:
 
-1. Confirms, via `TaskGet`, the true state of the board rather than relying on cached state.
-2. Assigns the next task that is both dependency-eligible (its `blockedBy` tasks are verified, not merely marked `completed`) and does not conflict on files with any task currently in flight on another teammate.
-3. If no such task exists and the board is drained, begins shutdown for that teammate rather than leaving it idle indefinitely.
+1. Checks whether that teammate still holds a task whose `verified` key is unwritten. If it does, takes no action: it is in its gate window rather than free, and giving it anything now drifts the diff the reviewer is holding.
+2. Otherwise confirms, via `TaskGet`, the true state of the board rather than relying on cached state.
+3. Assigns the next task that is ready, as `./SKILL.md`'s Concurrency section defines ready.
+4. If no such task exists and every task has been verified **and** drained through the user checkpoint, begins shutdown for that teammate rather than leaving it idle indefinitely.
+5. If no such task exists but any task is unverified, or any verified task has not yet drained, holds the teammate idle rather than shutting it down. Shutting down while checkpoints are still outstanding strands the "Adjust first" arm, which needs a live teammate to send the adjustment to. `TeammateIdle` has already fired for this teammate and will not fire again, so the lead's own write of a `verified` key is what reconsiders it: every such write can clear a `blockedBy` edge, and a held teammate is offered the newly ready task then.
 
-Every teammate is shut down before the lead runs the final feature-level review; the review runs against a settled working tree with no in-flight peer writers.
+These arms govern the response to a `TeammateIdle` signal only. A stop stated in `./SKILL.md` is a lead action and overrides them.
+
+When teammates are shut down is `./SKILL.md`'s to state.
 
 ## Failure Recovery
 
 Teammates have no session resumption (per the dead-teammate law in `../../rules/common/teammates.md`), so every recovery path below re-queues the affected task to be picked up again rather than assuming a teammate can be resumed mid-task. Re-queueing sets `owner` back to the `"lead"` sentinel, which is what takes a departed teammate's name off the record.
 
-- **Teammate dies mid-task.** Handled per the dead-teammate law in `../../rules/common/teammates.md`. Operationally, the lead scopes its git diff inspection to the task's declared `files` set when assessing the partial edit, then re-queues the task once the tree is resolved.
-- **Teammate stalls after claiming.** The lead detects this from the teammate-advisory `claim` heartbeat going stale past a timeout. It reclaims the task from that teammate and re-queues it for reassignment.
-- **Teammate never goes idle.** The lead applies a timeout, issues `TaskStop`, and re-queues the task once the teammate has stopped.
+- **Teammate dies mid-task.** Handled per the dead-teammate law in `../../rules/common/teammates.md`.
+- **Teammate stalls after claiming.** The detector is progress, not silence. A healthy teammate sends nothing between its assignment and its completion claim, so silence alone would condemn every working teammate; and `claim` is a heartbeat a teammate **MAY** write and nothing obliges it to, so an absent one proves nothing either. A teammate is stalled when two consecutive scheduling moments pass, as `./SKILL.md`'s Concurrency section defines them, during which it has sent nothing, its task's `files` show no change in the working tree, **and** it is not awaiting the lead's response to a completion claim for that task. The last conjunct matters as much as the others: a teammate awaiting its own review and verification gate is silent and idle on disk by definition, and stopping it there would destroy the clean fix round-trip the gate window exists to preserve. It is a state, not a one-off event. The lead answers a claim by relaying review findings, relaying a gate failure, or sending a user adjustment, and the teammate is working again from that moment, so the detector re-arms; read as "has ever claimed", it would disarm permanently the first time a task entered a fix round-trip. Only a teammate holding a task whose `verified` key is unwritten is a candidate at all. Writing `verified` frees the teammate, and a free teammate is Idle Handling's to manage, not this detector's: silence and an unchanging tree are its normal condition. The lead can evaluate all three at any moment: the mailbox is its own, and `git status` scoped to those `files` is the same command the verification gate runs. Where the teammate does write `claim`, a stale one corroborates a stall and nothing more.
+- **Teammate never goes idle.** Detected the same way. Both this and the stall above start the same way: confirm the task's true state with `TaskGet`, then issue `TaskStop` against that teammate. Re-queueing while the teammate that believes it owns those files is still live is the concurrent-writer state the iron laws forbid.
 - **A teammate needs a more capable model.** The escalation ladder in `../_shared/subagent-dispatch.md` is written for a fresh dispatch, and a live teammate is not one. Escalating means shutting that teammate down, re-queueing its task, and spawning a replacement at the higher tier against the same specification. There is no way to raise a running teammate's model in place.
-- **A spawn is refused.** The run continues with the teammates that are live; see `SKILL.md`'s Failure Handling.
+- **A spawn is refused.** The run continues with the teammates that are live; see `./SKILL.md`'s Failure Handling.
 
-In every case above, the resolution is the same shape: stop trusting the unverified state, re-queue against the original task specification, and let a fresh teammate pick the task up under the lead's normal verification gate. None of these paths proceed on unverified work, and none of them invent a new task specification to route around the failure.
+In every case above, the resolution is the same shape: stop trusting the unverified state, inspect the partial edit with a git diff scoped to the task's declared `files`, re-queue against the original task specification, and let a fresh teammate pick the task up under both of the lead's gates, code review and then verification. The inspection is not optional; without it the replacement starts on a tree already carrying an unverified half-edit inside its own `files` set. Never invent a new task specification to route around a failure.
