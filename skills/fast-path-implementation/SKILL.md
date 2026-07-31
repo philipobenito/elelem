@@ -5,7 +5,7 @@ description: Implements a batch of uniformly simple changes as one implementer d
 
 # Fast Path Implementation
 
-When `complexity-triage` has classified the work as SIMPLE with full evidence, implementation collapses to two subagent dispatches plus a user checkpoint. This skill covers that shortened process. The iron-law rules on subagent dispatch (context isolation, git ownership, worktree ban, privilege ban) live in `../../rules/common/subagents.md`. The procedural rules (model selection, escalation) live in `../_shared/subagent-dispatch.md` and apply throughout.
+When `complexity-triage` has classified the work as SIMPLE with full evidence, implementation collapses to two subagent dispatches plus a user checkpoint. The iron-law rules on subagent dispatch (context isolation, git ownership, worktree ban, privilege ban) live in `../../rules/common/subagents.md`. The procedural rules (model selection, escalation) live in `../_shared/subagent-dispatch.md` and apply throughout.
 
 Before running the procedure below, you **MUST** read `../_shared/subagent-dispatch.md` using the Read tool if you have not already read it in this session.
 
@@ -53,7 +53,7 @@ Fixes get two dispatches in total, counted across this review and the verificati
 
 That is not an arbitrary counter, and it is not the escalation ladder in `../_shared/subagent-dispatch.md` either. Escalating the model is the right response when a task outruns its tier, but this task was certified as fully specified with no room for interpretation. Work a reviewer rejects twice was not, whatever criterion 4's row said, so the fault is in the classification rather than in the implementer. A more capable model would produce a more convincing implementation of an under-specified spec, which is precisely what this path has no per-task checkpoints left to catch.
 
-Where the budget runs out decides the exit. A review that will not pass is `TRIAGE_INVALID`, because criterion 4 has been falsified by demonstration. A verification failure that will not clear is a stopping condition under `../../rules/common/workflow.md`, because a failing suite is a fact about the code rather than a verdict on the classification. Both are covered in the Return Contract.
+Where the budget runs out decides the exit. A review that will not pass is `TRIAGE_INVALID`, because criterion 4 has been falsified by demonstration. A verification failure that will not clear is a stopping condition under `../../rules/common/workflow.md`, because a failing suite is a fact about the code rather than a verdict on the classification.
 
 ### 3. Verification Gate
 
@@ -61,7 +61,7 @@ After the reviewer approves and **before** the user checkpoint, run the verifica
 
 1. **Inspect the diff yourself.** Run `git status` and `git diff`. Confirm the files changed match the spec and nothing else changed.
 
-2. **Read the implementer's report for new behaviour.** Step 1 required the report to state this outright, so read for the statement rather than inferring from its absence. A report claiming new behaviour has shown the triage was wrong regardless of what the table said, which is a `TRIAGE_INVALID` condition: end the fast path rather than asking for a test after the fact. A report silent on the question is not a clearance either, it is a missing piece of the report, and it gets re-dispatched for the same reason the full path re-dispatches for missing TDD evidence.
+2. **Read the implementer's report for new behaviour.** Step 1 required the report to state this outright, so read for the statement rather than inferring from its absence. A report claiming new behaviour has shown the triage was wrong regardless of what the table said, which is a `TRIAGE_INVALID` condition: end the fast path rather than asking for a test after the fact. A report silent on the question is not a clearance either, it is a missing piece of the report, and it gets re-dispatched for the same reason the full path re-dispatches for missing TDD evidence. That re-dispatch asks only for the missing statement, so it changes no code, does not re-enter the review in step 2, and does not draw on the fix budget, which is spent only on Critical and Important findings. Ask once. A second report still silent on the question cannot answer what this gate turns on, and you **MUST NOT** supply the answer yourself, so it is a stopping condition under `../../rules/common/workflow.md`.
 
 3. **Re-run the verification commands yourself.** Run whatever the design's acceptance criteria called out, in this message, against the current working tree. Where the criteria named nothing, run the project's standard test command, the linter and the build.
 
@@ -94,12 +94,12 @@ The obligations are discharged rather than waived. The combined review in step 2
 
 Implementers report one of the four statuses defined in `../_shared/implementer-prompt.md`. Two of them read differently here, because the classification makes a claim about the work that the status contradicts.
 
-| Status               | Response                                                                                                                                                                                                                        |
-|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `DONE`               | Proceed to the combined review.                                                                                                                                                                                                 |
-| `DONE_WITH_CONCERNS` | Read the concerns. A concern about correctness or scope goes into the reviewer's dispatch as something to check; an observation is noted and carried to the checkpoint. Either way, proceed to the review.                      |
-| `NEEDS_CONTEXT`      | `TRIAGE_INVALID`, when what is missing is a spec or design detail. Answer and re-dispatch only when what is missing is environmental (a path, a command name, where a credential lives) and the specification itself is intact. |
-| `BLOCKED`            | `TRIAGE_INVALID`, unless the blocker is environmental (a command needing elevated privilege, a missing tool), which goes to the user per `../../rules/common/subagents.md`.                                                     |
+| Status               | Response                                                                                                                                                                                                                             |
+|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `DONE`               | Proceed to the combined review.                                                                                                                                                                                                      |
+| `DONE_WITH_CONCERNS` | Every concern reported goes into the reviewer's dispatch as something to check, and every one is carried to the user checkpoint. Sorting them yourself is a judgement this row deliberately does not ask for. Proceed to the review. |
+| `NEEDS_CONTEXT`      | `TRIAGE_INVALID`, when what is missing is a spec or design detail. Answer and re-dispatch only when what is missing is environmental (a path, a command name, where a credential lives) and the specification itself is intact.      |
+| `BLOCKED`            | `TRIAGE_INVALID`, unless the blocker is environmental (a command needing elevated privilege, a missing tool), which goes to the user per `../../rules/common/subagents.md`.                                                          |
 
 On the full path, `NEEDS_CONTEXT` and `BLOCKED` mean supply more context, escalate the model, or split the task, and `../_shared/subagent-dispatch.md` lists exactly those responses. Here the same words carry a narrower meaning. Criterion 4 certified that the correct change at each location was fully specified with no room for interpretation, so an implementer that cannot proceed from the specification has falsified that criterion by trying. Supplying the missing decision would settle the case in front of you and leave the classification wrong, and the classification is what removed the per-task checkpoints that would have caught the next one.
 
@@ -113,7 +113,7 @@ This section is addressed to whichever skill invoked this one. It lives here rat
 
 **Commit declined.** The user chose "Skip commit" or "Adjust first" at the checkpoint. The work sits in the tree, reviewed and verified and uncommitted, and the caller receives that state along with whatever the user said. It does nothing to the tree. What makes this different from the same answer on the full path is that there is no next task to move on to, so the caller's next act is the user's to choose and it asks rather than assumes.
 
-**TRIAGE_INVALID.** The classification has been falsified: by the reviewer, by the implementer's report of new behaviour, by a `BLOCKED` or `NEEDS_CONTEXT` status, by a review that would not pass inside the fix budget, or by the orchestrator seeing it directly. The caller receives the criterion that failed and the evidence for it, then re-enters `../orchestrated-implementation/SKILL.md` at **Task Decomposition** with the classification fixed at COMPLEX.
+**TRIAGE_INVALID.** The classification has been falsified: by the reviewer, by the implementer's report of new behaviour, by a `BLOCKED` or `NEEDS_CONTEXT` status arising from the specification rather than the environment, by a review that would not pass inside the fix budget, or by the orchestrator seeing it directly. The caller receives the criterion that failed and the evidence for it, then re-enters `../orchestrated-implementation/SKILL.md` at **Task Decomposition** with the classification fixed at COMPLEX.
 
 Two of that skill's earlier steps are skipped on re-entry, and skipping them is deliberate:
 
@@ -142,6 +142,7 @@ digraph fast_path {
     "Implementer fixes issues" [shape=box];
     "Verification gate (orchestrator):\ngit diff + behaviour check + re-run verification\n(../../rules/common/verification.md)" [shape=box, style=bold];
     "Gate result?" [shape=diamond];
+    "Re-dispatch for the statement only\n(no code change, no budget spend)" [shape=box];
     "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [shape=box, style=bold];
     "Stop and report to user\n(../../rules/common/workflow.md)" [shape=box, style=bold];
     "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [shape=box, style=bold];
@@ -154,6 +155,8 @@ digraph fast_path {
     "Implementer implements, self-reviews" -> "Implementer status?";
     "Implementer status?" -> "Dispatch combined reviewer\n(../_shared/code-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" [label="DONE / DONE_WITH_CONCERNS"];
     "Implementer status?" -> "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="BLOCKED / NEEDS_CONTEXT\n(spec gap)"];
+    "Implementer status?" -> "Answer questions, provide context" [label="NEEDS_CONTEXT\n(environmental)"];
+    "Implementer status?" -> "Stop and report to user\n(../../rules/common/workflow.md)" [label="BLOCKED\n(environmental)"];
     "Dispatch combined reviewer\n(../_shared/code-reviewer-prompt.md,\ntriage table pasted in,\nLow-cost default tier)" -> "Reviewer result?";
     "Reviewer result?" -> "Verification gate (orchestrator):\ngit diff + behaviour check + re-run verification\n(../../rules/common/verification.md)" [label="Approved"];
     "Reviewer result?" -> "Fix dispatches remaining?" [label="Issues Found"];
@@ -165,6 +168,9 @@ digraph fast_path {
     "Verification gate (orchestrator):\ngit diff + behaviour check + re-run verification\n(../../rules/common/verification.md)" -> "Gate result?";
     "Gate result?" -> "Fix dispatches remaining?" [label="fail"];
     "Gate result?" -> "Hand back to orchestrated-implementation\nat Task Decomposition, fixed COMPLEX\n(settle partial work with user first)" [label="new behaviour reported"];
+    "Gate result?" -> "Re-dispatch for the statement only\n(no code change, no budget spend)" [label="behaviour statement missing"];
+    "Re-dispatch for the statement only\n(no code change, no budget spend)" -> "Gate result?" [label="statement supplied"];
+    "Re-dispatch for the statement only\n(no code change, no budget spend)" -> "Stop and report to user\n(../../rules/common/workflow.md)" [label="still silent"];
     "Gate result?" -> "User checkpoint:\npresent changes + verification evidence,\ncommit or ask" [label="pass"];
 }
 ```
@@ -179,10 +185,7 @@ User chose: Auto-commit after each task
 
 [Run complexity-triage, classification returns SIMPLE with evidence table]
 
-[Dispatch single implementer (Low-cost default tier) with all 8 files as one batch.
- Task description carries the TDD carve-out: triaged SIMPLE, criterion 2 means no
- observable behaviour, no new test expected, existing suite must stay green. It also
- asks the report to state outright whether any change introduced behaviour.]
+[Dispatch single implementer (Low-cost default tier) with all 8 files as one batch. Task description carries the TDD carve-out: triaged SIMPLE, criterion 2 means no observable behaviour, no new test expected, existing suite must stay green. It also asks the report to state outright whether any change introduced behaviour.]
 
 Implementer:
   - Updated copyright year in all 8 files
@@ -192,9 +195,7 @@ Implementer:
 
 [Dispatch combined reviewer (Low-cost default tier), triage table pasted into the prompt]
 
-Combined reviewer: Approved. Triage holds: git diff --stat shows 8 substantive lines
-against criterion 6's cap of 50. All 8 files correctly updated, no extra modifications,
-consistent with surrounding code style. No new tests, which is correct on this path.
+Combined reviewer: Approved. Triage holds: 8 substantive lines, counted once per changed line rather than once per diff side, against criterion 6's cap of 39. All 8 files correctly updated, no extra modifications, consistent with surrounding code style. No new tests, which is correct on this path.
 
 [Verification gate: orchestrator runs git diff + standard verification itself]
 $ git diff --stat
@@ -238,13 +239,3 @@ Every thought below means stop:
 | Reading a report that is silent on behaviour as "no new behaviour"       | Step 1 asks for the statement outright so that its absence is a gap rather than an inference. Re-dispatch for it.                                                                                                                              |
 | Asking the commit preference here                                        | The caller owns it and asked it once for the session. An invocation reaching here without it should have gone to `orchestrated-implementation`.                                                                                                |
 | Skipping verification because nothing executable changed                 | "There was nothing to run" is a claim about the project that has to be checked. Check it, then cite what you ran in place of the suite.                                                                                                        |
-
-## Prompt Templates
-
-- `../_shared/implementer-prompt.md`: the implementer prompt (shared with the full path, adapted per step 1)
-- `../_shared/code-reviewer-prompt.md`: the reviewer prompt, shared with the other two call sites; this one fills its Triage Re-Check block
-
-## Integration
-
-- **complexity-triage**: the precondition. Returns SIMPLE with the evidence table this skill passes to its reviewer.
-- **orchestrated-implementation**: the caller, and the destination for a `TRIAGE_INVALID` handback at its Task Decomposition step.
