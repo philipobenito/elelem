@@ -24,7 +24,7 @@ Git ownership follows the universal law in `subagents.md`: only the lead commits
 
 ## Board-Lag Reconciliation
 
-Task board status can lag behind reality. Before treating a task as truly terminal, freeing its files for reassignment, or treating a dependency as satisfied, the lead **MUST** confirm state via `TaskGet`, not cached or remembered state. At merge time the lead reconciles the diff against the real working tree, not against the board's account of what changed.
+Task board status can lag behind reality. Before treating a task as truly terminal, freeing its files for a new task, or treating a dependency as satisfied, the lead **MUST** confirm state via `TaskGet`, not cached or remembered state. At merge time the lead reconciles the diff against the real working tree, not against the board's account of what changed.
 
 ## Dead-Teammate Handling
 
