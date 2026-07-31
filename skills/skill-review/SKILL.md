@@ -5,7 +5,7 @@ description: "Audits a Claude Code skill against eight binary criteria by dispat
 
 # Skill Review
 
-Audits one skill as a written artefact and returns a verdict with the evidence behind it. Six reviewers each read the skill with fresh context through a single lens, every criterion they own comes back with a PASS or FAIL and a citation, and the fixes the user accepts are applied here.
+Audits one skill as a written artefact and returns a verdict with the evidence behind it. Six reviewers each read the skill with fresh context through a single lens, each is dispatched again against the unchanged text until it stops returning anything new, every criterion they own comes back with a PASS or FAIL and a citation, and the fixes the user accepts are applied here and then reviewed as a set of edits.
 
 The iron laws on subagent dispatch (context isolation, the git ban, the worktree ban, the privilege ban, and the ban on writing an identifier you have not confirmed the environment exposes) live in `../../rules/common/subagents.md`. The rule that implementation needs an approved design lives in `../../rules/common/workflow.md`, and the section below on what this skill may change explains how the approval gate in step 7 satisfies it.
 
@@ -38,7 +38,7 @@ Each criterion is binary and starts at FAIL. PASS is earned by a specific cited 
 | C7 | Every sentence changes what the model does, so deleting it would change behaviour                                                        | prose economy |
 | C8 | Every referenced path resolves, every loaded file is used and is loaded before the step needing it, and non-resident content is deferred | load model    |
 
-**The severity floor.** A finding fails a criterion only when it carries a named failing scenario. Anything without one is Advisory: it is reported, and it does not touch the verdict. The floor is defined once, in the Calibration section of `../_shared/skill-reviewer-prompt.md`, where every lens applies it at source; hold the merged list to the same bar when you reconcile at step 4 and demote what does not clear it. Without a floor, C5 and C7 can always yield one more finding on a branchy document, so a skill that is genuinely good never passes and the verdict stops carrying information.
+**The severity floor.** Not everything a lens returns can fail a criterion. The bar a finding must clear is the severity floor in the Calibration section of `../_shared/skill-reviewer-prompt.md`, which every lens applies at source; hold the merged list to that same bar when you reconcile at step 4. What does not clear it is Advisory: reported, and never counted against a criterion or the verdict. Without a floor, C5 and C7 can always yield one more finding on a branchy document, so a skill that is genuinely good never passes and the verdict stops carrying information.
 
 NOT SOUND is a work list, not a condemnation. Most skills worth auditing fail at least one criterion, and a rubric that flatters is worth nothing to the person holding it.
 
@@ -56,7 +56,7 @@ Applying accepted fixes without going through the `brainstorming` router is deli
 
 ## Applying Every Finding Is Not Automatically Correct
 
-A fix is an edit to a procedure, and most fixes close a gap by adding an arm: another branch, another table row, another "otherwise". Every arm is new surface, so the fix that closes one finding is where the next two come from, and a fix can cost more than the finding it closed. Prefer a fix that deletes or consolidates over one that adds an arm. Where only an added arm will do, say so when you present the finding at step 7, so the user is accepting it with that cost visible rather than accepting a list.
+A fix is an edit to a procedure, and most fixes close a gap by adding an arm: another branch, another table row, another "otherwise". Every arm is new surface, so the fix that closes one finding is where the next two come from, and a fix can cost more than the finding it closed. Prefer a fix that deletes or consolidates over one that adds an arm. Where only an added arm will do, say so when you present the finding at step 6, so the user reaches the step 7 gate with that cost visible rather than accepting a list.
 
 ## Procedure
 
@@ -102,11 +102,13 @@ A fix is an edit to a procedure, and most fixes close a gap by adding an arm: an
 
 7. **Take accept or reject on each finding from the user.** Use `AskUserQuestion` when the list is short enough to fit, otherwise present the numbered list and ask which to apply. Do not apply anything before this gate.
 
-8. **Apply the accepted fixes** to files inside the skill directory. Check the escape hatch first.
+8. **Apply the accepted fixes** to files inside the skill directory. Check the escape hatch first. Record against each edit the finding it closes: that is the intent step 9 hands to the delta reviewer, and recovering it afterwards from a list of accepted findings is guesswork about which edit served which.
 
-9. **Verify with a delta review.** Re-run the mechanical pass over the edited skill and confirm every referenced path still resolves. Then dispatch one delta reviewer, following the delta-review variant in `../_shared/skill-reviewer-prompt.md`. It reads the whole edited skill for context and is told which passages changed, and it judges the edits rather than the file: whether each one did what it set out to do, whether it broke anything adjacent, and whether it contradicts anything else in the skill. A fresh full round would resample text the rounds in step 3 have already exhausted, while the edits are the only part nobody has read yet.
+9. **Verify with a delta review.** Re-run the mechanical pass over the edited skill and confirm every referenced path still resolves. Then dispatch one delta reviewer, following the delta-review variant in `../_shared/skill-reviewer-prompt.md`. It receives the whole edited skill for context, the refreshed inventory, and every changed passage with the intent behind it, and it judges the edits rather than the file: whether each one did what it set out to do, whether it broke anything adjacent, and whether it contradicts anything else in the skill. A fresh full round would resample text the rounds in step 3 have already exhausted, while the edits are the only part nobody has read yet.
 
    The delta review runs once. Present what it finds, take accept or reject as at step 7, apply what the user accepts, and report those fixes as applied without reviewing them again. If a criterion the fixes targeted still fails, report it as still failing rather than dispatching its lens again.
+
+   **A delta finding can reverse a criterion that already passed.** An accepted C7 fix that adds a branch can strand a table row, which is a C4 regression against a criterion step 5 recorded as PASS. Where a delta finding contradicts a PASS, flip that criterion to FAIL in the final table with the delta finding as its evidence. Do this whether the user accepts the further fix or rejects it: nothing reviews a fix applied after the delta review, so a flip back to PASS would rest on no reviewer's citation, which is the one thing step 5 forbids. This is a different case from the criteria the fixes targeted, which were already failing and stay that way.
 
 10. **Report the final table**, what was applied, what the user rejected, and anything the escape hatch stopped. Commit nothing.
 
@@ -122,6 +124,7 @@ A delta review that fails the same way is retried once on the same terms. If the
 SKILL REVIEW: <skill-name>
 VERDICT: SOUND | NOT SOUND (<n> of 8 criteria failed)
 ROUNDS:  <lens>=<n> dry, <lens>=3 bound reached, ...
+DELTA:   <n> edits reviewed, <n> findings, criteria flipped: <list | none>  (step 10 only)
 
 | #  | Criterion       | Verdict | Evidence                          |
 |----|-----------------|---------|-----------------------------------|
@@ -129,23 +132,23 @@ ROUNDS:  <lens>=<n> dry, <lens>=3 bound reached, ...
 
 FINDINGS
 C4  <file>:<line>  <what is wrong>
-    Failing scenario: <the input or run state, then the wrong outcome>
+    Failing scenario: <the scenario the lens gave, carried through unchanged>
     Proposed fix:     <the specific edit>
 
 ADVISORY (fails no criterion, does not block)
     <observation>
 ```
 
-Findings are grouped under the criterion they fail, in criterion order. Advisory observations are reported separately and never block the verdict, because a criterion is the only thing that can. The ROUNDS line carries one entry per lens, so a lens that stopped at the bound rather than at dryness is visible in the verdict rather than buried in the findings.
+Findings are grouped under the criterion they fail, in criterion order. Advisory observations are reported separately and never block the verdict, because a criterion is the only thing that can. The ROUNDS line carries one entry per lens, so a lens that stopped at the bound rather than at dryness is visible in the verdict rather than buried in the findings. The DELTA line does the same for step 9, and a criterion the delta review flipped carries that finding as its evidence in the table above it.
 
 ## Completion Gate
 
 You **MUST NOT** report a verdict unless all of these are true:
 
 - Every lens either returned a dry round or reached the three-round bound, or a failed dispatch is recorded against the criteria it owns.
-- Every criterion carries a verdict and a citation from its owning lens.
+- Every criterion carries a verdict and a citation, from its owning lens or, where step 9 flipped it, from the delta review.
 - No criterion is marked PASS because no reviewer mentioned it.
-- No finding fails a criterion without a named failing scenario.
+- No finding fails a criterion without clearing the severity floor.
 - Every accepted fix is applied, the mechanical pass has been re-run against the edited files, and the delta review has run against the edits.
 - Every rejected finding is reported as rejected rather than dropped.
 
@@ -159,21 +162,23 @@ Every thought below means stop:
 - "This sentence reads nicely, keep it." C7 asks whether deleting it changes behaviour, not whether it is well written.
 - "The reviewer missed the point, I will correct its verdict." Step 5 is assembly. Re-dispatch with your evidence instead.
 - "That lens has reported, one reading is enough." One dispatch samples a lens's findings; it does not exhaust them. Step 3 stops on a dry round, not on a round.
-- "This is clearly a defect, I just cannot say what goes wrong." Then it is Advisory. The floor is a named failing scenario, not your confidence.
+- "This is clearly a defect, I just cannot say what goes wrong." Then it does not clear the floor, so it is Advisory. Your confidence is not the bar.
 - "Only one criterion failed, that is basically SOUND." SOUND is all eight.
 - You are rewriting the skill rather than applying the fixes the user accepted. Step 8 has a boundary and the escape hatch is how you leave it.
 
 ## Common Mistakes
 
-| Mistake                                                         | Why it is wrong                                                                                                                                        |
-|-----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Passing session history or the author's explanation to a lens   | Violates context isolation, and a skill that needs its author present to make sense is the C3 finding you have just suppressed.                        |
-| Reviewing a skill you wrote this session without dispatching    | You cannot audit prose for ambiguity while holding the intent that resolves it. The dispatch is the whole mechanism.                                   |
-| Marking a criterion PASS because nobody raised it               | PASS is earned by a citation. Silence is a lens that found nothing to say, or a lens that did not look.                                                |
-| Deleting prose that carries a constraint                        | The C7 failure mode. "Shorter" is not the goal; "every sentence load-bearing" is, and a deleted constraint changes behaviour by definition.            |
-| Editing a sibling skill so the target passes C2                 | Out of bounds. That skill has its own callers and its own review. Report the overlap instead.                                                          |
-| Renaming the skill directory                                    | The directory name is how the skill is invoked. A rename breaks every caller that names it.                                                            |
-| Faulting the target against your own installation's conventions | The target adopted its repository's conventions, not yours. Only what its `CLAUDE.md` or `AGENTS.md` actually states counts.                           |
-| Applying fixes before step 7                                    | The user's per-finding approval is what makes this skill's editing legitimate under `../../rules/common/workflow.md`. Without it there is no approval. |
-| Dispatching the six lenses across separate messages             | That is sequential, whatever it was called. Parallelism comes from the message.                                                                        |
-| Re-dispatching a lens because you dislike its verdict           | Re-dispatch on evidence, not on disagreement. Step 9 allows one confirming round, and a criterion that still fails is reported as failing.             |
+| Mistake                                                         | Why it is wrong                                                                                                                                                                                |
+|-----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Passing session history or the author's explanation to a lens   | Violates context isolation, and a skill that needs its author present to make sense is the C3 finding you have just suppressed.                                                                |
+| Reviewing a skill you wrote this session without dispatching    | You cannot audit prose for ambiguity while holding the intent that resolves it. The dispatch is the whole mechanism.                                                                           |
+| Marking a criterion PASS because nobody raised it               | PASS is earned by a citation. Silence is a lens that found nothing to say, or a lens that did not look.                                                                                        |
+| Deleting prose that carries a constraint                        | The C7 failure mode. "Shorter" is not the goal; "every sentence load-bearing" is, and a deleted constraint changes behaviour by definition.                                                    |
+| Editing a sibling skill so the target passes C2                 | Out of bounds. That skill has its own callers and its own review. Report the overlap instead.                                                                                                  |
+| Renaming the skill directory                                    | The directory name is how the skill is invoked. A rename breaks every caller that names it.                                                                                                    |
+| Faulting the target against your own installation's conventions | The target adopted its repository's conventions, not yours. Only what its `CLAUDE.md` or `AGENTS.md` actually states counts.                                                                   |
+| Applying fixes before step 7                                    | The user's per-finding approval is what makes this skill's editing legitimate under `../../rules/common/workflow.md`. Without it there is no approval.                                         |
+| Dispatching the lenses of one round across separate messages    | That is sequential, whatever it was called. Parallelism comes from the message.                                                                                                                |
+| Telling a re-dispatched lens what an earlier round found        | It anchors the lens to that list, so the round returns confirmations instead of the fresh sample you re-dispatched for.                                                                        |
+| Running a fresh full round at step 9                            | Step 3's rounds already exhausted the unchanged text. The edits are the only text nobody has read, and they are what step 9 reviews.                                                           |
+| Re-dispatching a lens because you dislike its verdict           | Re-dispatch on evidence, not on disagreement. Step 3's rounds re-run an identical prompt against unchanged text; correcting a verdict is a different act and carries the evidence you rely on. |

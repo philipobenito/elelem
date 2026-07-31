@@ -1,10 +1,10 @@
 # Skill Reviewer Prompt Template
 
-Use this template when dispatching the six reviewer lenses from `../skill-review/SKILL.md`.
+Use this template when dispatching the six reviewer lenses from `../skill-review/SKILL.md`, and its delta-review variant at the end of this file when dispatching that skill's step 9.
 
-**Purpose:** Return a PASS or FAIL with a citation for each criterion one lens owns, plus the findings behind any FAIL.
+**Purpose:** Return a PASS or FAIL with a citation for each criterion one lens owns, plus the findings behind any FAIL. The delta-review variant judges a set of applied edits instead, and returns no criterion verdicts.
 
-**Dispatch after:** The mechanical pass in step 2 has produced the inventory. All six dispatches go out in a single message.
+**Dispatch after:** The mechanical pass in step 2 has produced the inventory. Every dispatch belonging to one round goes out in a single message, and step 3 re-dispatches a lens against unchanged text until the lens goes dry or reaches its third round.
 
 ## Selecting the Model
 
@@ -50,7 +50,9 @@ Agent (Plan):
 
     Flag what changes what the model does when the skill runs. An instruction two competent readers would execute differently, a branch nothing reaches, a sentence whose deletion changes nothing: these are findings. Wording you would have phrased differently, a section shorter than its neighbours, and a structure you would have organised another way are not.
 
-    A finding needs a location and a consequence. "This is vague" is not a finding; "step 4 says to escalate when the change is large, and gives no threshold, so two runs will escalate at different points" is.
+    **The severity floor.** A finding MUST carry a named failing scenario: the concrete input or run state that reaches the problem, and then the wrong outcome that follows from it. "This is vague" is not a finding, and neither is "step 4 gives no threshold for a large change". "Step 4 escalates when the change is large and gives no threshold, so a run against a three-file change escalates and a second run against the same three files does not" is. Anything you cannot ground that way is Advisory: it is still worth reporting, it fails no criterion, and it does not affect the verdict.
+
+    For C7 the scenario a finding must name is what the deletion would cost: state what a competent model would do differently once the sentence is gone. The finding stands only where that answer is nothing at all, and a finding that does not state the answer is Advisory like any other.
 
     Uncertainty is not a finding either. If you cannot tell whether something is a defect, say so under Advisory rather than promoting it to a FAIL. Padding a report with maybes is worse than a short one.
 
@@ -67,9 +69,9 @@ Agent (Plan):
     **Criterion verdicts**
     - C<n>: PASS | FAIL - <the observation that grounds this verdict>
 
-    **Findings** (one per defect, grouped under the criterion it fails)
+    **Findings** (one per defect, grouped under the criterion it fails; an entry without a failing scenario belongs under Advisory)
     - C<n> <file>:<line> - <what is wrong>
-      Why it matters: <what goes wrong when the skill runs>
+      Failing scenario: <the input or run state that reaches it, then the wrong outcome>
       Proposed fix: <the specific edit>
 
     **Advisory** (fails no criterion, does not block)
@@ -146,3 +148,65 @@ You are checking that the skill loads the right files at the right time and noth
 **Orphans.** Files in the directory nothing references, from the inventory. Either something should read them or they should not ship.
 
 The inventory reports line counts. Treat size as a prompt to look, not as a finding: a long skill whose every section is reached on every run is fine, and a short one that defers what it always needs is not.
+
+## The Delta Review Prompt
+
+Dispatched once, at step 9 of `../skill-review/SKILL.md`, and its subject is the fixes that were just applied rather than the skill. It returns per-edit verdicts and no criterion verdicts, because the criteria table is already assembled by the time it runs.
+
+Resolve the model as for a lens. Judging edits against a whole skill is design judgement, so escalation as far as High-capability is available on the same terms.
+
+```yaml
+Agent (Plan):
+  description: "Skill review: delta"
+  prompt: |
+    You are reviewing a set of edits to a Claude Code skill. The skill itself has already been reviewed lens by lens; the edits below were applied afterwards and are the only text nobody has read yet. Read the whole skill so you can judge the edits in place, then judge only the edits.
+
+    **The skill as it now stands:**
+
+    [PASTE THE FULL TEXT OF EVERY FILE IN THE SKILL DIRECTORY AS EDITED, EACH UNDER ITS FILENAME.]
+
+    **The edits:**
+
+    [FOR EACH EDIT: THE FILE AND LOCATION, THE TEXT BEFORE, THE TEXT AFTER, AND THE ONE-LINE INTENT IT WAS APPLIED TO SERVE. Never pass session history, and never pass the author's explanation of anything the edits did not change.]
+
+    **Mechanical inventory (re-gathered after the edits, treat as fact):**
+
+    [PASTE THE REFRESHED INVENTORY FROM STEP 9: file list, frontmatter, line counts, which referenced paths resolve and which do not, orphaned files, and any conventions the target repository's own CLAUDE.md or AGENTS.md states.]
+
+    ## What to Check
+
+    Answer three questions about each edit, in this order.
+
+    1. **Did it do what it set out to do?** The intent is stated with the edit. An edit that misses its intent leaves the original defect in place in new wording, which is worse than leaving it alone, because the report records the fix as applied.
+    2. **Did it break something adjacent?** An added branch changes what reaches the steps around it, an added term changes what earlier uses of that term mean, and a renumbered step orphans every reference to the old number.
+    3. **Does it contradict anything?** Compare each edit against the rest of the skill and against the files it references. Two instructions that cannot both be followed are what this question exists to catch.
+
+    Report nothing about a passage no edit touched: those were reviewed before the edits were applied, and raising them again restarts a loop that has already terminated. A passage an edit did not touch but did change the meaning of is in scope, under question 2.
+
+    ## Judge It Against Its Own Repository, Not Yours
+
+    [PASTE THAT SECTION FROM THE LENS PROMPT ABOVE, UNCHANGED.]
+
+    ## Reading the Repository
+
+    [PASTE THAT SECTION FROM THE LENS PROMPT ABOVE, UNCHANGED.]
+
+    ## Calibration
+
+    [PASTE THAT SECTION FROM THE LENS PROMPT ABOVE, UNCHANGED. The severity floor binds a delta finding exactly as it binds a lens finding; where that section says FAIL, read it as "finding", since you return no criterion verdicts.]
+
+    ## Output Format
+
+    ## Delta Review
+
+    **Per edit**
+    - Edit <n>: ACHIEVED | NOT ACHIEVED - <what you checked, and what holds or does not>
+
+    **Findings** (one per defect the edits introduced or left behind)
+    - <file>:<line> - <what is wrong> (question 1 | 2 | 3)
+      Failing scenario: <the input or run state that reaches it, then the wrong outcome>
+      Proposed fix: <the specific edit>
+
+    **Advisory** (fails no criterion, does not block)
+    - <observation>
+```
