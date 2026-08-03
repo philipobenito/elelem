@@ -16,11 +16,14 @@
 //                 concrete model names confirmed to exist in the environment;
 //                 the reviewer never runs at a lower tier than the implementer;
 //                 a task may override implementerModel with its own model field
-//   tasks         [{ id, name, files, blockedBy, spec, verifyCommand, model?, isolated? }]
+//   tasks         [{ id, name, files, blockedBy, spec, verifyCommand, model?, isolated?, codeless? }]
 //                 files are repo-relative and pairwise disjoint across tasks;
 //                 verifyCommand is the task-scoped test command;
 //                 isolated: true dispatches the implementer into its own git
-//                 worktree (repo must be the session repository root)
+//                 worktree (repo must be the session repository root);
+//                 codeless: true marks a task whose files carry no production
+//                 code, so TDD does not apply and the task's proof is its
+//                 verifyCommand; inert when simple is true
 
 export const meta = {
   name: 'work-implementation',
@@ -149,6 +152,10 @@ This work was sized SIMPLE: it introduces no observable behaviour, so there is n
 
 For every behaviour in the spec, follow the test-driven cycle: write the failing test FIRST, run it and observe it fail for the right reason (RED), write the minimal production code to pass, observe the pass (GREEN). Capture the evidence per behaviour for your report. Run only the task's own verification command, not the full suite; other agents' work is mid-flight.`
 
+const codelessBlock = `## Testing
+
+This task is marked codeless: its files carry no production code, so there is nothing for TDD to bind and you MUST NOT write tests. The existing suite must stay green; run the task's verification command before reporting. If completing the task requires introducing production code, that falsifies the codeless marking: describe that code in behaviour_introduced and report honestly rather than quietly writing it. On this task, report behaviour_introduced as exactly 'none' unless completing it forced production code; content changes to codeless files are not behaviour.`
+
 function implPrompt(t) {
   return `You are a one-shot implementer. Work ONLY inside the git repository at ${repo}.${t.isolated ? ' You have been given an isolated worktree; your working directory IS your repository, work there and nowhere else.' : ''} All paths below are repo-relative.
 
@@ -163,7 +170,7 @@ ${t.files.map(f => '- ' + f).join('\n')}
 
 Other agents may be editing this tree concurrently and own the files you were not given. Do not create, edit, move or delete any path outside your list. If the task cannot be completed without another file, stop and report status BLOCKED with the reason in summary.
 
-${tddBlock}
+${!simple && t.codeless ? codelessBlock : tddBlock}
 
 Task verification command: ${t.verifyCommand}
 
@@ -201,10 +208,10 @@ Concerns: ${impl.concerns || 'none reported'}
 
 1. Spec compliance: every acceptance criterion is met. A missing criterion is Critical.
 2. Correctness: edge cases the spec names, and the ones it obviously implies.
-3. Tests: they genuinely exercise the specified behaviours; run the task's verification command yourself: ${t.verifyCommand}
+3. ${!simple && t.codeless ? `Verification: run the task's verification command yourself: ${t.verifyCommand}` : `Tests: they genuinely exercise the specified behaviours; run the task's verification command yourself: ${t.verifyCommand}`}
 4. Scope: nothing changed that the spec did not ask for.
 5. Quality: naming, clarity, consistency with the surrounding codebase.
-${simple ? `6. Sizing: this work was sized SIMPLE, meaning uniform mechanical change, no new logic, no new interfaces, no observable behaviour, under 40 substantive lines. You are reading the code the sizing predicted, so your evidence outranks the prediction. If any of that does not hold, including a new test appearing, return ISSUES_FOUND with a Critical finding whose description begins 'SIZING:' and names what does not hold. Absent new tests are correct on SIMPLE work; do not report their absence.` : ''}
+${simple ? `6. Sizing: this work was sized SIMPLE, meaning uniform mechanical change, no new logic, no new interfaces, no observable behaviour, under 40 substantive lines. You are reading the code the sizing predicted, so your evidence outranks the prediction. If any of that does not hold, including a new test appearing, return ISSUES_FOUND with a Critical finding whose description begins 'SIZING:' and names what does not hold. Absent new tests are correct on SIMPLE work; do not report their absence.` : t.codeless ? `6. Codeless: this task is marked codeless, meaning its files carry no production code and no tests. You are reading the diff the marking predicted, so your evidence outranks the prediction. If the diff introduces production code or tests, return ISSUES_FOUND with a Critical finding whose description begins 'CODELESS:' and names what appeared. Absent new tests are correct on a codeless task; do not report their absence.` : ''}
 
 ## Severity calibration
 
@@ -232,7 +239,7 @@ ${items}
 You may create or edit ONLY these paths:
 ${t.files.map(f => '- ' + f).join('\n')}
 
-Fix every finding. Keep the discipline that applies to this task: ${simple ? 'the work is sized SIMPLE, so introduce no new behaviour and no new tests; the suite stays green.' : 'if a finding reveals untested behaviour, add the failing test first, observe RED, fix, observe GREEN.'} Run the task's verification command: ${t.verifyCommand}
+Fix every finding. Keep the discipline that applies to this task: ${simple ? 'the work is sized SIMPLE, so introduce no new behaviour and no new tests; the suite stays green.' : t.codeless ? 'the task is marked codeless: introduce no production code and no tests; the verification command must pass.' : 'if a finding reveals untested behaviour, add the failing test first, observe RED, fix, observe GREEN.'} Run the task's verification command: ${t.verifyCommand}
 
 No git write commands, no sudo, leave changes uncommitted. Report via structured output as before.`
 }
@@ -278,15 +285,22 @@ async function runTask(t) {
   if (simple && impl.behaviour_introduced !== 'none') {
     state[t.id].failed = true; tr.failure = `sizing falsified: implementer reports new behaviour: ${impl.behaviour_introduced}`; tr.sizingFalsified = true; return
   }
-  if (!simple && !impl.tdd_evidence.length) {
+  if (!simple && t.codeless && impl.behaviour_introduced !== 'none') {
+    state[t.id].failed = true; tr.failure = `codeless falsified: implementer reports production code: ${impl.behaviour_introduced}`; tr.codelessFalsified = true; return
+  }
+  if (!simple && !t.codeless && !impl.tdd_evidence.length) {
     state[t.id].failed = true; tr.failure = 'no TDD evidence in report'; return
   }
 
   let review = await agent(reviewPrompt(t, impl), { label: `review:${t.id}`, phase: 'Review', schema: REVIEW_SCHEMA, model: reviewerModel })
   if (!review) { state[t.id].failed = true; tr.failure = 'reviewer dispatch died'; return }
   const sizingFinding = r => r.findings.find(f => f.description.startsWith('SIZING:'))
+  const codelessFinding = r => r.findings.find(f => f.description.startsWith('CODELESS:'))
   if (simple && sizingFinding(review)) {
     state[t.id].failed = true; tr.failure = `sizing falsified by reviewer: ${sizingFinding(review).description}`; tr.sizingFalsified = true; return
+  }
+  if (!simple && t.codeless && codelessFinding(review)) {
+    state[t.id].failed = true; tr.failure = `codeless falsified by reviewer: ${codelessFinding(review).description}`; tr.codelessFalsified = true; return
   }
   while (review.verdict === 'ISSUES_FOUND' && review.findings.some(f => f.severity !== 'Minor')) {
     if (fixBudget === 0) { state[t.id].failed = true; tr.failure = 'fix budget exhausted at review'; tr.lastReview = review; return }
@@ -300,6 +314,9 @@ async function runTask(t) {
     if (!review) { state[t.id].failed = true; tr.failure = 'reviewer dispatch died on re-review'; return }
     if (simple && sizingFinding(review)) {
       state[t.id].failed = true; tr.failure = `sizing falsified by reviewer: ${sizingFinding(review).description}`; tr.sizingFalsified = true; return
+    }
+    if (!simple && t.codeless && codelessFinding(review)) {
+      state[t.id].failed = true; tr.failure = `codeless falsified by reviewer: ${codelessFinding(review).description}`; tr.codelessFalsified = true; return
     }
   }
   tr.review = review
@@ -357,6 +374,7 @@ return {
   results,
   unreachedTasks: unreached,
   sizingFalsified: tasks.some(t => results[t.id] && results[t.id].sizingFalsified),
+  codelessFalsified: tasks.some(t => results[t.id] && results[t.id].codelessFalsified),
   reconcile: recon,
   rogueChanges: rogue,
   outputTokensSpent: budget.spent(),

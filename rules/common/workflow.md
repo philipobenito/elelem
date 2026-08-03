@@ -16,6 +16,8 @@ Where any criterion fails, or you cannot tell, the change is above the threshold
 
 Below the threshold, present a short design statement (what changes, where, the acceptance criteria) and get explicit approval before any edit; no skill, no plan mode. Above it, run `design-grill-me`, or `design-committee` only when the user has asked to be hands-off; you **MUST NOT** choose deliberation on their behalf. Each design skill carries its own plan-mode mechanics, scope rules, and completion gate.
 
+Once approved, a design above the threshold is built through the `work-implementation` skill; below it, implement the approved statement directly. A bug fix is built inside `debug-investigation`, which takes its own fix approval. Say which path the work is taking when implementation begins.
+
 ### Approval
 
 What counts: an explicit yes to a presented design, a ticket or specification the user wrote or previously approved, or the fix approach approved inside `debug-investigation`. What does not: silence, an unreviewed "looks fine", or your own unconfirmed interpretation.
