@@ -11,7 +11,7 @@ Reproduces a reported bug, gathers scoped evidence, tests ranked hypotheses with
 
 ## How It Runs
 
-You drive the investigation and keep the user in it: surface findings at each phase boundary, explain the reasoning behind a step where the user is unfamiliar with the system or asks what is happening, and follow their direction whenever they steer. How much the user steers is their choice turn by turn, not a mode selected up front. Two decisions are always theirs regardless: the direction to pursue when the Refocus Rule or the Investigation Budget triggers, and the approval of the root cause and fix approach in Phase 6.
+You drive the investigation and keep the user in it: surface findings at each phase boundary, explain the reasoning behind a step where the user is unfamiliar with the system or asks what is happening, and follow their direction whenever they steer. How much the user steers is their choice turn by turn, not a mode selected up front; when unsure how much to involve them, involve them more, because a user who did not want to steer can say so far more cheaply than a user who wanted to steer can undo an unsupervised investigation. Two decisions are always theirs regardless: the direction to pursue when the Refocus Rule or the Investigation Budget triggers, and the approval of the root cause and fix approach in Phase 6.
 
 ## The Seven Phases
 
@@ -80,7 +80,7 @@ Test the most likely hypothesis first:
 - **Cycle 2**: test the second hypothesis, or widen the scope in the direction the first cycle's evidence suggests
 - **Cycle 3**: test the third hypothesis, or revisit with fresh framing
 
-A cycle is a round of testing followed by a reassessment: the budget limits how many times you re-frame the problem before asking for help, not how many hypotheses you hold at once. After three cycles without a confirmed root cause, you **MUST** stop per "When the Bug Cannot Be Found" below, and you **MUST NOT** continue investigating in circles past the budget. Debugging without a budget becomes an ever-widening search that burns context without converging; three focused cycles are enough to either find the root cause or establish that you need help.
+A cycle is a round of testing followed by a reassessment, however many hypotheses that round tested: eliminating two hypotheses in one round and re-ranking is one cycle, not two, because the budget limits how many times you re-frame the problem before asking for help, not how many hypotheses you hold at once. After three cycles without a confirmed root cause, you **MUST** stop per "When the Bug Cannot Be Found" below, and you **MUST NOT** continue investigating in circles past the budget. Debugging without a budget becomes an ever-widening search that burns context without converging; three focused cycles are enough to either find the root cause or establish that you need help.
 
 ### Phase 6: Identify Root Cause
 
