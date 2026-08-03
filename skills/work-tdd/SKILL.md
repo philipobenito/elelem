@@ -208,38 +208,36 @@ If any box is unchecked, you skipped part of the cycle.
 
 ## When Stuck
 
-| Problem                   | Response                                                                     |
-|---------------------------|------------------------------------------------------------------------------|
-| Don't know how to test it | Write the wished-for API. Write the assertion first. Ask your human partner. |
-| Test is too complicated   | The design is too complicated. Simplify the interface.                       |
-| Must mock everything      | Code is too coupled. Use dependency injection.                               |
-| Test setup is huge        | Extract helpers. If still complex, simplify the design.                      |
+| Problem                     | Response                                                                       |
+|-----------------------------|--------------------------------------------------------------------------------|
+| Don't know how to test it   | Write the wished-for API. Write the assertion first. Ask your human partner.   |
+| Test is too complicated     | The design is too complicated. Simplify the interface.                         |
+| Must mock everything        | Code is too coupled. Use dependency injection.                                 |
+| Test setup is huge          | Extract helpers. If still complex, simplify the design.                        |
 
 ## Common Rationalisations
 
-You will be tempted to skip TDD. Every excuse below means **start over with a failing test**:
+You will be tempted to skip TDD. Every excuse below means **recover a genuine RED**:
 
-| Excuse                                      | Reality                                                        |
-|---------------------------------------------|----------------------------------------------------------------|
-| "Too simple to test"                        | Simple code breaks. The test takes thirty seconds.             |
-| "I'll test after"                           | Tests passing immediately prove nothing.                       |
-| "I already manually tested it"              | Manual testing has no record and cannot be re-run.             |
-| "Deleting hours of work is wasteful"        | Sunk cost. Unverified code is technical debt.                  |
-| "Keep the code as reference"                | You will adapt it. That is testing after. Delete means delete. |
-| "The test is hard to write"                 | Hard to test means hard to use. Fix the design.                |
-| "I must mock everything"                    | Code is too coupled. Use dependency injection.                 |
-| "TDD will slow me down"                     | TDD is faster than debugging in production.                    |
-| "Existing code has no tests"                | You are improving it. Add the test.                            |
-| "Just this once" / "this case is different" | No.                                                            |
+| Excuse                                        | Reality                                                                         |
+|-----------------------------------------------|---------------------------------------------------------------------------------|
+| "Too simple to test"                          | Simple code breaks. The test takes thirty seconds.                              |
+| "I'll test after"                             | Tests passing immediately prove nothing.                                        |
+| "I already manually tested it"                | Manual testing has no record and cannot be re-run.                              |
+| "The code is already written"                 | It is unverified. Stash the change, watch RED, restore the change, watch GREEN. |
+| "The test is hard to write"                   | Hard to test means hard to use. Fix the design.                                 |
+| "I must mock everything"                      | Code is too coupled. Use dependency injection.                                  |
+| "TDD will slow me down"                       | TDD is faster than debugging in production.                                     |
+| "Existing code has no tests"                  | You are improving it. Add the test.                                             |
+| "Just this once" / "this case is different"   | No.                                                                             |
 
-## Red Flags: Stop and Start Over
+## Red Flags: Stop and Recover RED
 
-If any of the following is true, stop immediately and restart the cycle from a failing test:
+If any of the following is true, stop immediately and recover a genuine RED, watching the test fail for the right reason before the code that passes it is accepted. If the production code already exists, stash or disable it until you have watched that failure:
 
 - You wrote code before a test
 - A test passed immediately on its first run
 - You cannot explain why a test failed
-- You are keeping code "as reference" or to "adapt"
 - You are about to say "just this once" or "this case is different"
 
 There are no exceptions without explicit permission from your human partner.

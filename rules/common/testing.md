@@ -16,7 +16,7 @@ A test exists to catch a genuine regression in the behaviour it names; if you ca
 
 **No production code without a failing test first.**
 
-You **MUST** write the test before the production code and watch it fail before writing the code that makes it pass; a test you never saw fail proves nothing about what it exercises. If you wrote production code before a test, you **MUST** delete that code and start again from a failing test. Delete means delete: not "keep as reference", not "adapt as I write the test".
+You **MUST** write the test before the production code and watch it fail before writing the code that makes it pass; a test you never saw fail proves nothing about what it exercises. If production code exists before its test, that code is unverified: write the test, stash or disable the change so the test runs against code without it, watch it fail for the right reason, then restore the change and watch it pass. Write that test from the behaviour the change should have, not from the shape of the code you already wrote; a test fitted to the code fails without it and still proves nothing. Code whose test has never been observed failing **MUST NOT** be presented as complete; the observed failure is the evidence a reviewer checks.
 
 ### When TDD Applies
 
