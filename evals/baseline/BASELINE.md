@@ -32,9 +32,16 @@ One correction to the epic's audit, found while building the coverage section: 9
 
 Whether each skill's `description` fires when it should and stays quiet when it should not, measured over the query sets in `../` (see `../README.md` for what each set discriminates against). This is the only behavioural measure of the corpus that is mechanically capturable today: the `skill-creator` plugin's `run_eval.py` performs a measure-only pass, with no optimisation loop, and reports per-query trigger rates as JSON.
 
-Status: **in the baseline, capture deferred.** A full capture is 153 queries times 3 runs per query, roughly 460 headless `claude -p` invocations against the operator's usage quota. On 2026-08-03 the recorded decision was to commit the definition and procedure and spend that quota later. The re-run procedure below is the capture procedure; the first dated `*-trigger/` directory in this folder will be the baseline capture.
+Status: **in the baseline, capture sequenced after the restructure.** The initial 2026-08-03 decision recorded this as a cost deferral; on reflection the sequencing is the substance, for two reasons:
 
-Extending coverage to the 9 skills without sets is also deferred, deliberately, until #17 decides the target shape. Several uncovered skills (`brainstorming-committee`, `complexity-triage`, `orchestrated-implementation` among them) are named cut candidates in the epic; authoring trigger sets for skills about to be deleted is waste. The coverage section of the static capture keeps the gap visible until then.
+- Trigger accuracy is an absolute measure, not a relative one. The acceptance bar is that positives fire and negatives stay quiet, and a post-restructure description is evaluated against that bar directly. No before-number is needed to interpret the after-number, so a pre-restructure capture is not the prerequisite it would be for a performance benchmark.
+- Most of the measured boundaries will not survive #17. Five of the eight sets discriminate against skills the epic names as cut or merge candidates; rates for boundaries about to stop existing inform nothing.
+
+What survives a restructure is the query sets themselves, especially the near-miss negatives, which encode routing judgement independent of any particular corpus shape and SHOULD be transferred to whatever skills replace their subjects.
+
+The one capture with forward value today is the pair whose skills and mutual boundary the epic marks keep verbatim: `requesting-code-review` and `receiving-code-review`, identical vocabulary discriminated only by direction of travel. Capturing those two sets now (38 queries, roughly 114 invocations at 3 runs per query) measures the future corpus and MAY be done at any time. The full capture is 153 queries times 3 runs, roughly 460 invocations, and SHOULD wait until the post-#17 descriptions exist; that capture, not this one's date, is the true behavioural baseline.
+
+Extending coverage to the 9 skills without sets is deferred on the same reasoning until #17 decides the target shape. Several uncovered skills (`brainstorming-committee`, `complexity-triage`, `orchestrated-implementation` among them) are named cut candidates in the epic; authoring trigger sets for skills about to be deleted is waste. The coverage section of the static capture keeps the gap visible until then.
 
 ## Rejected Measures
 
