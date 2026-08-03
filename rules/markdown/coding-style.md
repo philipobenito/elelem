@@ -17,7 +17,7 @@ You **MUST** structure headings consistently:
 
 ## Partials
 
-A partial is a Markdown file that is not meant to be read standalone: it is sourced, included, or loaded on demand by another file, rather than being an independent entry point. This is the Markdown equivalent of this repository's own `_install-common.sh` convention (a library file marked "source it, do not execute directly").
+A partial is a Markdown file that is not meant to be read standalone: it is sourced, included, or loaded on demand by another file, rather than being an independent entry point. This is the Markdown equivalent of a shell library file: sourced by other scripts, never executed directly.
 
 A file **MUST** be treated as a partial when either of the following is true:
 
