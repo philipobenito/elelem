@@ -89,6 +89,10 @@ Bug fixes also require an approved design, even if the design is a single senten
 
 That approval comes from the debugging skill's own fix-approval phase, not from a design skill: a bug's design is a consequence of evidence the investigation has already gathered and presented, so re-designing it would ask the user to approve the same thing twice. Route the work to `design-grill-me` only when the root cause turns out to need work large enough that the minimal fix principle in `debugging.md` no longer applies, and the fix needs decomposing rather than applying; it arrives there carrying the root cause, the reproduction approach, and the affected modules. The rules in `testing.md` still apply throughout: the failing test comes before the fix.
 
+## Waiving a Gate
+
+User instructions say *what* to do; these rules say *how*. Casual phrasing ("just add X") does not waive the design step, TDD, review, or verification. Only an explicit, scoped opt-out from your human partner ("skip TDD for this prototype", "no design statement for this one-character typo") waives a gate, and you **MUST** confirm the opt-out before acting on it. The reverse also holds: you **MUST NOT** invoke a rule or skill to override an instruction the user has given explicitly. The user is in control.
+
 ## Sequencing Work
 
 When a task involves multiple changes, you **MUST** complete them in the order the design specifies. If the design does not specify an order, foundations and dependencies come first, features next, integration after dependencies, polish last. You **MUST NOT** reorder tasks to make progress look faster or to avoid a harder task.

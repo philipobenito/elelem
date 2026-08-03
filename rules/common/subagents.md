@@ -32,6 +32,10 @@ You **MUST** dispatch every directly dispatched agent as a harness built-in type
 
 A delegated agent does not inherit your session history. Every dispatch starts from a clean slate, so you **MUST** construct exactly the context the agent needs: the task description, the relevant content pasted rather than referenced, the acceptance criteria, and any constraints. You **MUST NOT** instruct an agent to "discover" context on its own when you can provide it directly; agents exploring the codebase to rebuild context you already hold is a waste.
 
+### Skills
+
+A delegated agent **MUST NOT** run skill discovery against its dispatch prompt. The orchestrator owns skill invocation; the agent executes the task as dispatched, using the context, constraints, and procedures the prompt provides. If the dispatch prompt names a specific skill, the agent **MUST** invoke that skill; otherwise it invokes none.
+
 ## Dispatch Detail Lives in the Skills
 
 Each dispatching skill carries its own dispatch detail, the agent type its prompt templates name, model selection with identifier resolution, and its retry and escalation handling, and that detail loads when the skill is invoked.
