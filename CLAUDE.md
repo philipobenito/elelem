@@ -4,21 +4,19 @@ This file governs how to author elelem's own content, the rules and skills under
 
 ## Two Audiences
 
-`rules/` and `skills/` ship to, and govern, OTHER repositories once a user runs `install.sh` against them. This file governs authoring INSIDE elelem itself: it is what a human or Claude reads while adding or changing a rule, a skill, or a shared file in this tree. The two audiences are never the same repository at the same time. Do not blur them, for example by putting installer or authoring guidance into a rule file, or by putting authoring conventions into `README.md` where an installing user, not an authoring Claude, is the reader.
+`rules/` and `skills/` ship to, and govern, OTHER repositories once a user runs `install.sh` against them. This file governs authoring INSIDE elelem itself: it is what a human or Claude reads while adding or changing a rule or a skill in this tree. The two audiences are never the same repository at the same time. Do not blur them, for example by putting installer or authoring guidance into a rule file, or by putting authoring conventions into `README.md` where an installing user, not an authoring Claude, is the reader.
 
 ## The Load Model
 
 Every file in this repository is in context under exactly one condition. Nothing is in context by default.
 
-| File class                            | In context when                                      |
-| ------------------------------------- | ---------------------------------------------------- |
-| `CLAUDE.md`                           | Always, in this repository                           |
-| `rules/common/*.md`                   | Always, once installed                               |
-| `rules/<lang>/*.md`                   | A file matching its `globs:` frontmatter is read     |
-| `skills/<name>/SKILL.md`              | That skill is invoked                                |
-| `skills/<name>/RULES.md` and siblings | `SKILL.md` instructs a Read                          |
-| `skills/_shared/*.md`                 | A skill instructs a Read                             |
-| `skills/_shared/*-prompt.md`          | Never as instruction; pasted into a dispatched agent |
+| File class                      | In context when                                        |
+|---------------------------------|--------------------------------------------------------|
+| `CLAUDE.md`                     | Always, in this repository                             |
+| `rules/common/*.md`             | Always, once installed                                 |
+| `rules/<lang>/*.md`             | A file matching its `globs:` frontmatter is read       |
+| `skills/<name>/SKILL.md`        | That skill is invoked                                  |
+| Sibling files in a skill folder | `SKILL.md` instructs a Read, or launches a script file |
 
 ## Canonical Home and Duplication
 
@@ -27,17 +25,18 @@ Content has exactly one canonical home. Finding the same content in two or more 
 - **Duplication**, the same content in two or more homes, is a defect whether or not sync notes link the copies. Fix it: pick the canonical home and make every other occurrence a reference to it.
 - **Load-bearing structure**, two files sharing a shape (a heading layout, a table skeleton) but carrying different content, is not duplication at all and needs no reconciling.
 
-Where canonical content must reach a dispatched agent, the prompt template carries a fill-at-dispatch placeholder naming the canonical source to paste from, never a synced copy. One cross-file placeholder works this way: `[SEVERITY_TABLE]` in the reviewer prompt embedded in `skills/work-review-request/SKILL.md`, pasted from the severity table in `rules/common/code-review.md`. The canonical source is an always-on rule file, in context by definition, so the paste can neither drift nor fail on an installed tree. "Contracted duplication", a synced second copy justified by dispatched agents being unable to read the first, is retired: both dispatch agent types carry the Read tool, so the premise was false, and the placeholder mechanism removes the drift surface regardless. A skill that ships its own workflow script embeds its prompts and calibration defaults in the script instead; self-containment outranks the placeholder mechanism for new and rebuilt skills, and a rebuilt skill that dispatches with `Agent` embeds its prompt template in its own `SKILL.md`, pasting shared content from a sibling section at dispatch (`design-review` does this with its category table), which leaves no second file to drift.
+Where canonical content must reach a dispatched agent, the prompt template carries a fill-at-dispatch placeholder naming the canonical source to paste from, never a synced copy. A skill that dispatches with `Agent` embeds its prompt templates in its own `SKILL.md` and pastes shared content from a sibling section at dispatch (`design-review` does this with its category table), which leaves no second file to drift; a skill that ships a workflow script embeds its prompts and calibration defaults in the script. One cross-file placeholder exists: `[SEVERITY_TABLE]` in the reviewer prompt embedded in `skills/work-review-request/SKILL.md`, pasted from the severity table in `rules/common/code-review.md`. That canonical source is an always-on rule file, in context by definition, so the paste can neither drift nor fail on an installed tree.
 
 ## Where New Content Belongs
 
-| New content is...                                    | It belongs in...             |
-| ---------------------------------------------------- | ---------------------------- |
-| An iron law, binding on every repo that installs it  | `rules/common/`              |
-| A procedure, the steps a skill runs                  | `skills/<name>/SKILL.md`     |
-| Procedural rules that bind only while one skill runs | that skill's own `RULES.md`  |
-| Anything shared by two or more skills                | `skills/_shared/`            |
-| Text pasted verbatim into a dispatched agent         | `skills/_shared/*-prompt.md` |
+| New content is...                                    | It belongs in...                                          |
+|------------------------------------------------------|-----------------------------------------------------------|
+| An iron law, binding on every repo that installs it  | `rules/common/`                                           |
+| A procedure, the steps a skill runs                  | `skills/<name>/SKILL.md`                                  |
+| Procedural rules that bind only while one skill runs | that skill's own `SKILL.md`, at the step where they bite  |
+| Anything two or more skills need                     | `rules/common/`, whose always-on presence serves them all |
+| Text pasted verbatim into a dispatched agent         | a prompt template embedded in the dispatching `SKILL.md`  |
+| Reference material a skill needs only sometimes      | a sibling file in that skill's folder, read on demand     |
 
 ## Installer Blast Radius
 

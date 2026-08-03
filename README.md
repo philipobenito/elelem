@@ -51,11 +51,8 @@ User-scope path-scoped rules have a known issue ([claude-code#21858](https://git
 │       ├── testing.md
 │       └── tooling.md
 ├── skills/                Workflow skills with their own SKILL.md
-│   ├── _shared/          Files referenced by more than one skill, and every
-│   │                     dispatch prompt template
-│   ├── debugging/
+│   ├── debug-investigation/
 │   │   ├── SKILL.md      The procedure
-│   │   ├── RULES.md      Procedural rules loaded when the skill runs
 │   │   └── ...
 │   └── ...
 └── .elelem-manifest-claude   Written by install.sh; read by uninstall.sh
@@ -63,8 +60,7 @@ User-scope path-scoped rules have a known issue ([claude-code#21858](https://git
 
 - `rules/common/` rules have no frontmatter and load unconditionally.
 - Language packs (`rules/python/`, `rules/typescript/`, etc.) use `globs:` frontmatter and are auto-loaded by Claude Code when matching files are read.
-- Each skill folder has a `SKILL.md` that defines the procedure. Skill folders may also contain a `RULES.md` or other supporting files.
-- `skills/_shared/` holds files referenced by more than one skill, plus every dispatch prompt template. A skill's own folder holds its procedure and its rules; the templates it fills to dispatch an agent live in one place, named `*-prompt.md`.
+- Each skill folder has a `SKILL.md` that defines the procedure and carries everything the skill needs, including any prompt templates it fills to dispatch agents. Some skills ship supporting files alongside it: reference material their `SKILL.md` reads on demand, or a workflow script it launches.
 
 `rules/` and `skills/` keep the same internal structure once installed, which is what lets files reference each other across the tree. See `CLAUDE.md` for the cross-reference convention itself.
 

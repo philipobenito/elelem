@@ -21,8 +21,8 @@ A partial is a Markdown file that is not meant to be read standalone: it is sour
 
 A file **MUST** be treated as a partial when either of the following is true:
 
-- It lives in a directory whose name begins with an underscore (e.g. `skills/_shared/`)
-- It is a supplementary file loaded on demand by a sibling `SKILL.md` in the same skill directory rather than read standalone (e.g. `RULES.md`, `*-prompt.md`)
+- It lives in a directory whose name begins with an underscore (e.g. `_partials/`)
+- It is a supplementary file loaded on demand by a sibling `SKILL.md` in the same skill directory rather than read standalone (e.g. `testing-anti-patterns.md`)
 
 You **MUST NOT** classify a file as a partial by any other means, such as a comment or your own judgement on the day.
 
