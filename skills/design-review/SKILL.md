@@ -95,7 +95,7 @@ Nothing bounds how many times that can happen, and nothing needs to. Every round
 | Scope        | Focused enough for a single plan, not covering multiple independent subsystems |
 | YAGNI        | Unrequested features, over-engineering, unnecessary complexity                 |
 
-This table exists here so step 3 can categorise what comes back. The reviewer's own copy, along with the calibration that stops it flagging stylistic preferences and the rules bounding what it may read, lives in `../_shared/design-reviewer-prompt.md`. Keep the two copies of this table in sync when editing either file.
+This table exists here so step 3 can categorise what comes back, and it is the canonical copy: `../_shared/design-reviewer-prompt.md` does not restate it, but instructs pasting it into the reviewer prompt at dispatch, so an edit here is the only edit. The calibration that stops the reviewer flagging stylistic preferences and the rules bounding what it may read live in that prompt file.
 
 ## Worked Example: An Open Decision
 

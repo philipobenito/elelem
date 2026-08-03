@@ -24,13 +24,7 @@ Agent (Plan):
 
     ## What to Check
 
-    | Category     | What to Look For                                                               |
-    |--------------|--------------------------------------------------------------------------------|
-    | Completeness | Gaps, undefined behaviour, missing components, unanswered questions            |
-    | Consistency  | Contradictions between sections, conflicting requirements                      |
-    | Clarity      | Requirements ambiguous enough to cause someone to build the wrong thing        |
-    | Scope        | Focused enough for a single plan, not covering multiple independent subsystems |
-    | YAGNI        | Unrequested features, over-engineering, unnecessary complexity                 |
+    [PASTE THE CATEGORY TABLE FROM THE "What the Reviewer Checks" SECTION OF ../design-review/SKILL.md HERE]
 
     ## Reading the Repository
 
@@ -80,4 +74,4 @@ Agent (Plan):
 
 **Reviewer returns:** Status, Issues (each with its resolution line), Recommendations
 
-The "What to Check" table is duplicated in `../design-review/SKILL.md`, which needs its own copy so the orchestrator can categorise what comes back. Keep the two in sync when editing either file.
+The category table is deliberately not restated in this file. Its canonical home is the What the Reviewer Checks section of `../design-review/SKILL.md`, which the dispatching skill already holds in context and pastes in at dispatch, so an edit there reaches the reviewer with no second copy to keep in sync.

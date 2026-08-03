@@ -22,14 +22,12 @@ Every file in this repository is in context under exactly one condition. Nothing
 
 ## Canonical Home and Duplication
 
-Content has exactly one canonical home. Finding the same content in two or more places is one of three things, and only one of them is acceptable:
+Content has exactly one canonical home. Finding the same content in two or more places is one of two things:
 
-- **Uncontracted** duplication, the same content in two or more homes with nothing linking them, is a defect. Fix it: pick the canonical home and make every other occurrence a reference to it.
-- **Contracted** duplication, the same content in exactly two homes with an explicit sync note on BOTH sides pointing at the other, is legitimate only where the second copy is pasted into an isolated agent that cannot read the first. Three such pairs exist and MUST be kept:
-  - The severity table, in `skills/_shared/code-review.md` and `skills/_shared/code-reviewer-prompt.md`
-  - The design-review category table, in `skills/design-review/SKILL.md` and `skills/_shared/design-reviewer-prompt.md`
-  - The complexity-triage criteria table, in `skills/complexity-triage/SKILL.md` and `skills/_shared/code-reviewer-prompt.md`
+- **Duplication**, the same content in two or more homes, is a defect whether or not sync notes link the copies. Fix it: pick the canonical home and make every other occurrence a reference to it.
 - **Load-bearing structure**, two files sharing a shape (a heading layout, a table skeleton) but carrying different content, is not duplication at all and needs no reconciling.
+
+Where canonical content must reach a dispatched agent, the prompt template carries a fill-at-dispatch placeholder naming the canonical file to paste from, never a synced copy. Three placeholders work this way: `[SEVERITY_TABLE]` in `skills/_shared/code-reviewer-prompt.md` (pasted from `skills/_shared/code-review.md`), `[TRIAGE_CRITERIA]` in the same template (pasted from `skills/complexity-triage/SKILL.md`), and the category table placeholder in `skills/_shared/design-reviewer-prompt.md` (pasted from `skills/design-review/SKILL.md`). The dispatching skill holds the canonical file in context or one Read away, so the paste can neither drift nor fail on an installed tree. "Contracted duplication", a synced second copy justified by dispatched agents being unable to read the first, is retired: both dispatch agent types carry the Read tool, so the premise was false, and the placeholder mechanism removes the drift surface regardless.
 
 ## Where New Content Belongs
 

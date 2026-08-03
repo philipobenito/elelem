@@ -21,6 +21,8 @@ This file is the single source of truth for its own placeholders. Fill every one
 | `[PREVIOUS_ROUND]`       | On a re-dispatch: your previous findings and what changed in response. Omit the section on the first review.                                                                                                                |
 | `[SCOPE_FILES]`          | Optional, filled only by the per-task review in `orchestrated-implementation`: the exclusive set of files the task owns. Fills the Scope section below; omit that section entirely, heading included, for any other caller. |
 | `[TRIAGE_EVIDENCE]`      | Optional, filled only by `fast-path-implementation`: the completed complexity-triage evidence table. Fills the Triage Re-Check section below; omit that section entirely, heading included, for any other caller.           |
+| `[SEVERITY_TABLE]`       | The severity table from `code-review.md`'s Severity Discipline section, pasted whole. That section is the table's canonical home; read that file first if it is not already in context.                                     |
+| `[TRIAGE_CRITERIA]`      | Optional, filled only by `fast-path-implementation` alongside `[TRIAGE_EVIDENCE]`: the criteria table from `../complexity-triage/SKILL.md`'s The Criteria section, together with the counting rules below it, pasted whole. |
 
 ## Selecting the Model
 
@@ -89,14 +91,9 @@ Agent (general-purpose):
 
     If any row in that table is marked N, a user overrode a COMPLEX verdict. The row was left failing on purpose so you could test it against the real diff rather than take the override on trust. Weigh that row first.
 
-    The triage table is a prediction; you are reading the code it predicted, so your evidence is stronger than the table's. Work through all six criteria against the actual diff:
+    The triage table is a prediction; you are reading the code it predicted, so your evidence is stronger than the table's. Work through all six criteria against the actual diff. These are the criteria and the counting rules triage classified under:
 
-    1. **Uniform change type**: are the changes genuinely the same kind of edit applied across locations, or do they mix concerns (docs plus feature code, config plus new logic)?
-    2. **No new logic**: is there any new function, class, conditional, loop, error handling, or business rule?
-    3. **No new interfaces**: is there any new export, endpoint, contract, event, or other public surface area?
-    4. **Deterministic from spec**: did any change require a design decision, judgement call, or contextual understanding beyond the immediate edit? Look for choices the implementer had to make, especially ones its report mentions making.
-    5. **Independently verifiable**: can each change be understood and checked by reading it in isolation, or does one change's correctness depend on another change elsewhere in the change set?
-    6. **Small total delta**: count the substantive changed lines. Count each changed line once rather than once per diff side, so a one-line replacement is 1 line and not the 2 that `git diff --stat` reports. Where a contiguous run of changed lines is replaced by a run of a different size, count the larger of the two sides, and sum those counts across every such run in every file. Whitespace-only and comment-only lines are not substantive. The passing threshold is 39, so a count of 40 or more fails.
+    [TRIAGE_CRITERIA]
 
     Criterion 6 deserves particular attention, because it is the one triage could only estimate and you can measure. A count of 40 or more falsifies the classification no matter how cleanly the other five hold.
 
@@ -124,11 +121,7 @@ Agent (general-purpose):
 
     Severity is a commitment, not a description of how strongly you feel. Critical and Important both block: the orchestrator must fix them before the work advances at all. Assign them using these tests:
 
-    | Severity  | Test                                                                                           | If it ships unfixed     |
-    |-----------|------------------------------------------------------------------------------------------------|-------------------------|
-    | Critical  | It breaks behaviour that currently works, loses data, or opens a security hole.                | Someone is harmed now.  |
-    | Important | It works today, but a requirement is unmet, new behaviour is untested, or a failure is silent. | The next change breaks. |
-    | Minor     | Naming, style, an unmeasured optimisation, a documentation improvement.                        | Nothing happens.        |
+    [SEVERITY_TABLE]
 
     Inflation is the failure mode to guard against, because it looks conscientious while it stalls the work. If an issue would leave you comfortable shipping, it is Minor. Approve changes that are sound but imperfect: perfect is not the bar, and a review that never approves anything stops being read.
 
@@ -169,9 +162,7 @@ Agent (general-purpose):
 
 **Reviewer returns:** Status, Strengths, Issues grouped by severity, Recommendations
 
-The severity table above is duplicated in `code-review.md`, which keeps its own copy for the feedback that still reaches the orchestrator without tiers already assigned, a human partner or a bot, rather than a reviewer dispatched from this template. Keep the two tables in sync when editing either file.
-
-The six criteria in the Triage Re-Check block above are duplicated from `../complexity-triage/SKILL.md`, which carries the matching note on its own criteria table, because a reviewer dispatched with this prompt cannot read that file for itself. Keep the two in sync when editing either file: a criterion that drifts here is one the reviewer re-checks the diff against after triage has already classified it under the other.
+The severity tests and the triage criteria are deliberately not restated in this file. Their canonical homes are `code-review.md` and `../complexity-triage/SKILL.md`, and the `[SEVERITY_TABLE]` and `[TRIAGE_CRITERIA]` placeholders paste them in at dispatch, so an edit in the canonical home reaches the reviewer with no second copy to keep in sync.
 
 ## Example Output
 

@@ -110,9 +110,9 @@ Give the reaching input for a C4 finding and the terminating gap for a C5 one. "
 
 You are checking whether content sits in one place. Three things look alike and only one is a defect.
 
-**Uncontracted duplication is the defect:** the same content in two places with nothing linking them. It drifts, and then two files disagree.
+**Duplication is the defect:** the same content in two places, whether or not notes link the copies. It drifts, and then two files disagree.
 
-**Contracted duplication is legitimate:** the same content in exactly two places with an explicit note on both sides pointing at the other. This is how a skill gives a dispatched agent text it cannot read for itself. Check that the note is genuinely on both sides; one-sided is uncontracted.
+**A fill-at-dispatch placeholder is legitimate:** the mechanism for giving a dispatched agent content from another file is a placeholder in the prompt template naming the canonical file to paste from at dispatch time. Check that the placeholder names a real file and that no second copy is kept alongside it.
 
 **Shared structure is not duplication:** two sections with the same heading layout or table skeleton carrying different content need no reconciling.
 

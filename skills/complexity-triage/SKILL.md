@@ -33,7 +33,7 @@ Triage runs **once, against the whole design**, never per task. Criterion 1 asks
 
 **ALL** criteria must be true for the classification to be SIMPLE. A single failure means COMPLEX, no exceptions.
 
-This table is restated in `../_shared/code-reviewer-prompt.md`'s Triage Re-Check block, because the reviewer dispatched with that prompt cannot read this file. Keep the two in sync when editing either.
+This table is the canonical copy. `../_shared/code-reviewer-prompt.md`'s Triage Re-Check block does not restate it: its `[TRIAGE_CRITERIA]` placeholder instructs the dispatcher to paste this table and the counting rules below it into the reviewer prompt, so an edit here reaches the re-check with no second copy to keep in sync.
 
 | # | Criterion                    | Definition                                                                             | Fails if                                                                                                     |
 |---|------------------------------|----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
