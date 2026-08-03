@@ -43,7 +43,7 @@ If you pushed back and were wrong, state the correction factually in one or two 
 
 ### Assigning Tiers When the Feedback Has None
 
-Most review feedback arrives without severity tiers. A reviewer dispatched from `code-reviewer-prompt.md`, whether through `requesting-code-review`, the per-task review in `orchestrated-implementation`, or `fast-path-implementation`, returns Critical, Important and Minor natively, so this section does not apply to it. It applies to the sources that still return feedback untiered: a bot's comments, or a human partner listing problems in a message. Ordering that feedback still needs tiers, so when they are absent you **MUST** assign them before touching anything, using these tests:
+Most review feedback arrives without severity tiers. A reviewer dispatched from `code-reviewer-prompt.md` through `requesting-code-review`, or by `orchestrated-implementation`'s workflow script, returns Critical, Important and Minor natively, so this section does not apply to it. It applies to the sources that still return feedback untiered: a bot's comments, or a human partner listing problems in a message. Ordering that feedback still needs tiers, so when they are absent you **MUST** assign them before touching anything, using these tests:
 
 | Tier          | Test                                                                                                       | If it ships unfixed     |
 |---------------|------------------------------------------------------------------------------------------------------------|-------------------------|

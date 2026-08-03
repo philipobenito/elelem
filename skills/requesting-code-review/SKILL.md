@@ -21,7 +21,7 @@ Take the first row that applies.
 
 | Situation                                   | Base                                                                                                                                       |
 |---------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| Orchestrated work with a task board         | The `base_sha` recorded per `../_shared/task-board.md`: the task's own for a per-task review, the first task's for a feature-level review. |
+| Orchestrated work                           | The `baseSha` the orchestrator recorded at launch, which is the commit the whole feature is measured against.                              |
 | Branch work with an upstream                | `git merge-base HEAD <default-branch>`                                                                                                     |
 | Neither, and the boundary is not observable | Ask the user which commit the work starts from, and return **Range unknown** until they answer.                                            |
 
@@ -151,4 +151,4 @@ Every thought below means stop:
 
 ## Template
 
-The reviewer prompt template lives at `../_shared/code-reviewer-prompt.md`. It is the single source of truth for its own placeholders; do not restate them here. The same template is shared by three call sites: this skill, the per-task review in `../orchestrated-implementation/SKILL.md`, and `../fast-path-implementation/SKILL.md`. This skill fills neither of the template's two optional blocks, Scope and Triage Re-Check; both stay omitted, heading included, for a dispatch made from here.
+The reviewer prompt template lives at `../_shared/code-reviewer-prompt.md`. It is the single source of truth for its own placeholders; do not restate them here. This skill is its only call site: per-task reviews inside orchestrated work are dispatched by that skill's own workflow script and do not use the template.

@@ -4,7 +4,7 @@ Use this template when dispatching a code reviewer subagent.
 
 **Purpose:** Verify a change is production-ready: it does what was asked, it does not break what exists, and it is built well enough to change again.
 
-**Dispatch after:** The review range has been established by the calling skill, whichever it is: `../requesting-code-review/SKILL.md` for a standalone review, the per-task review inside `../orchestrated-implementation/SKILL.md`, or `../fast-path-implementation/SKILL.md`. The diff must be non-empty.
+**Dispatch after:** The review range has been established per `../requesting-code-review/SKILL.md`, which is this template's only call site: per-task reviews inside orchestrated work are dispatched by that skill's own workflow script and do not use this template. The diff must be non-empty.
 
 ## Placeholders
 
@@ -19,10 +19,7 @@ This file is the single source of truth for its own placeholders. Fill every one
 | `[REVIEW_TARGET]`        | `the working tree, which contains uncommitted changes` or `commit <sha>`.                                                                                                                                                   |
 | `[UNTRACKED_FILES]`      | Paths from `git status --porcelain` that the diff cannot show, or `none`.                                                                                                                                                   |
 | `[PREVIOUS_ROUND]`       | On a re-dispatch: your previous findings and what changed in response. Omit the section on the first review.                                                                                                                |
-| `[SCOPE_FILES]`          | Optional, filled only by the per-task review in `orchestrated-implementation`: the exclusive set of files the task owns. Fills the Scope section below; omit that section entirely, heading included, for any other caller. |
-| `[TRIAGE_EVIDENCE]`      | Optional, filled only by `fast-path-implementation`: the completed complexity-triage evidence table. Fills the Triage Re-Check section below; omit that section entirely, heading included, for any other caller.           |
 | `[SEVERITY_TABLE]`       | The severity table from `code-review.md`'s Severity Discipline section, pasted whole. That section is the table's canonical home; read that file first if it is not already in context.                                     |
-| `[TRIAGE_CRITERIA]`      | Optional, filled only by `fast-path-implementation` alongside `[TRIAGE_EVIDENCE]`: the criteria table from `../complexity-triage/SKILL.md`'s The Criteria section, together with the counting rules below it, pasted whole. |
 
 ## Selecting the Model
 
@@ -61,16 +58,6 @@ Agent (general-purpose):
 
     Diffing against the base rather than across a commit range is deliberate: it includes uncommitted work, which is often where the change under review lives. Any untracked file listed above is part of this change and will not appear in the diff at all. Read those files directly.
 
-    ## Scope
-
-    Optional section, filled only by the per-task review dispatched from `orchestrated-implementation`. Omit this whole section, heading included, for any other caller.
-
-    This task owns the following files exclusively:
-
-    [SCOPE_FILES]
-
-    Confine your review to the diff within that set. Changes outside it belong to a different task on the same board and are not yours to judge.
-
     ## Do Not Trust This Description
 
     The summary above is what someone believes they built. It may be incomplete, inaccurate, or optimistic. Verify everything against the code: read what was actually written, compare it to the acceptance criteria line by line, look for requirements silently skipped and for work nobody asked for.
@@ -80,26 +67,6 @@ Agent (general-purpose):
     Read whatever you need to judge the change: the diff, the files it touches, their callers, the tests that cover them, and the conventions of the surrounding code. Understanding a change means reading beyond it.
 
     You may not change anything. Do not edit files, do not stage or commit, and do not run the test suite or the build. Whether the suite passes is the orchestrator's verification gate, not yours, and running it from here mutates state the orchestrator is about to measure. Judge the tests by reading them.
-
-    ## Triage Re-Check
-
-    Optional section, filled only by `fast-path-implementation`. Omit this whole section, heading included, for any other caller. Where it is present, do this before anything under "What To Check".
-
-    Complexity triage classified this work as SIMPLE before the code existed:
-
-    [TRIAGE_EVIDENCE]
-
-    If any row in that table is marked N, a user overrode a COMPLEX verdict. The row was left failing on purpose so you could test it against the real diff rather than take the override on trust. Weigh that row first.
-
-    The triage table is a prediction; you are reading the code it predicted, so your evidence is stronger than the table's. Work through all six criteria against the actual diff. These are the criteria and the counting rules triage classified under:
-
-    [TRIAGE_CRITERIA]
-
-    Criterion 6 deserves particular attention, because it is the one triage could only estimate and you can measure. A count of 40 or more falsifies the classification no matter how cleanly the other five hold.
-
-    If the actual changes are more complex than the triage suggested, stop here and report **TRIAGE_INVALID** as your Status, naming the specific criterion that was wrong and why. The controller will switch to the full path.
-
-    Testing expectations follow from criterion 2: work triaged SIMPLE introduces no observable behaviour, so absent new tests is correct here, not a gap, and you MUST NOT report it as a failure. A NEW test appearing IS the finding worth reporting, because it usually means criterion 2 was falsified.
 
     ## What To Check
 
@@ -135,9 +102,6 @@ Agent (general-purpose):
 
     Approved means no Critical and no Important issues. Minor issues are compatible with Approved; list them and still approve.
 
-    Where the Triage Re-Check section above is present in this prompt, TRIAGE_INVALID is also a valid Status: use it exactly as that section instructs, in place of Issues Found, when the fast-path classification does not hold. Where that section is absent, the status set stays exactly Approved
-    | Issues Found.
-
     **Strengths:**
     - [what is genuinely well done, specifically, with file:line]
 
@@ -162,7 +126,7 @@ Agent (general-purpose):
 
 **Reviewer returns:** Status, Strengths, Issues grouped by severity, Recommendations
 
-The severity tests and the triage criteria are deliberately not restated in this file. Their canonical homes are `code-review.md` and `../complexity-triage/SKILL.md`, and the `[SEVERITY_TABLE]` and `[TRIAGE_CRITERIA]` placeholders paste them in at dispatch, so an edit in the canonical home reaches the reviewer with no second copy to keep in sync.
+The severity tests are deliberately not restated in this file. Their canonical home is `code-review.md`, and the `[SEVERITY_TABLE]` placeholder pastes them in at dispatch, so an edit in the canonical home reaches the reviewer with no second copy to keep in sync.
 
 ## Example Output
 

@@ -44,7 +44,7 @@ The escape hatch for the brainstorming router. The user already has a clear desi
 
 It does not explore the codebase, propose alternative approaches, or run `design-review`. The user chose a lightweight path and is themselves the reviewer; that is the trade they made, and re-adding any of it defeats the point.
 
-One consequence is worth stating plainly: because a skip-mode design carries no file-level evidence, `complexity-triage` downstream will usually classify the work COMPLEX. That is the expected outcome rather than a failure of skip mode. Triage reads the code itself; skip does not pre-empt it.
+One consequence is worth stating plainly: because a skip-mode design carries no file-level evidence, the sizing step downstream in `orchestrated-implementation` will usually classify the work COMPLEX. That is the expected outcome rather than a failure of skip mode. Sizing reads the code itself; skip does not pre-empt it.
 
 ## Worked Example: Design Reused From Context
 
