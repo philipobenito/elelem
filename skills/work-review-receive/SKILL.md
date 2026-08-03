@@ -5,7 +5,7 @@ description: "Turns code review feedback into verified, implemented changes: ver
 
 # Receiving Code Review
 
-Takes a batch of review feedback and returns implemented fixes, reasoned pushback, or the questions that have to be answered first. Everything this skill needs is below; nothing here requires reading any other file.
+Takes a batch of review feedback and returns implemented fixes, reasoned pushback, or the questions that have to be answered first.
 
 ## Source Trust Rules
 

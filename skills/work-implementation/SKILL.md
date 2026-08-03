@@ -5,7 +5,7 @@ description: Implements an approved design by sizing it against six evidence cri
 
 # Orchestrated Implementation
 
-Coordination is code, not conduct: `./implementation-workflow.js` enforces the pre-flight file-disjointness check, ready-set scheduling over `blockedBy` edges, review-before-verification with an integer fix budget of two, and the seam between an agent's completion claim and a verified task, all as control flow. This file holds the judgement the script cannot: sizing, decomposition, the content of the args, the checkpoint drain, and the final gates. Everything a dispatched agent needs is inside the script and the args; nothing here requires reading any other file.
+Coordination is code, not conduct: `./implementation-workflow.js` enforces the pre-flight file-disjointness check, ready-set scheduling over `blockedBy` edges, review-before-verification with an integer fix budget of two, and the seam between an agent's completion claim and a verified task, all as control flow. This file holds the judgement the script cannot: sizing, decomposition, the content of the args, the checkpoint drain, and the final gates.
 
 ## When to Run
 

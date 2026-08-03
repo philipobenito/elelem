@@ -5,7 +5,7 @@ description: "Reviews a consolidated design summary for completeness, consistenc
 
 # Design Review
 
-Runs a holistic pass over a consolidated design summary, catches what section-by-section approval missed, and returns an approved design, the open decisions it uncovered, or an escalation. Everything a dispatched reviewer needs is in the prompt template below; nothing here requires reading any other file.
+Runs a holistic pass over a consolidated design summary, catches what section-by-section approval missed, and returns an approved design, the open decisions it uncovered, or an escalation.
 
 ## Preconditions
 

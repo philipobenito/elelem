@@ -5,7 +5,7 @@ description: "Dispatches a code reviewer subagent against the work under review,
 
 # Requesting Code Review
 
-Dispatches a reviewer against a concrete diff, drives the fixes its findings require, and returns an approved change or an escalation. Everything a dispatched reviewer needs is in the prompt template below; nothing here requires reading any other file.
+Dispatches a reviewer against a concrete diff, drives the fixes its findings require, and returns an approved change or an escalation.
 
 ## Establishing the Review Range
 
