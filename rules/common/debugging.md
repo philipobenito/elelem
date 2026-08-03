@@ -27,6 +27,6 @@ Bug fixes do not waive the rules in `workflow.md`, `testing.md`, or `verificatio
 - Per `testing.md`, a bug fix **MUST** begin with a failing regression test that reproduces the bug. The test goes red, the fix goes in, the test goes green. You **MUST NOT** fix a bug without first writing that test.
 - Per `verification.md`, the fix is not complete until the verification gate has been run against it and the evidence has been cited.
 
-## Procedural Rules
+## The Investigation Skill
 
-The procedural rules that bind once the `debug-investigation` skill is running, scope discipline, the refocus rule, the investigation budget, root cause vs symptom, the minimal fix principle, and the rationalisation prevention table, live in `skills/debug-investigation/RULES.md` and load when the skill is invoked. The executable procedure (the 7-phase investigation, mode selection, investigator subagent dispatch) lives in `skills/debug-investigation/SKILL.md`.
+The `debug-investigation` skill is the procedure that produces the evidence and the fix these rules require: mode selection, the seven-phase investigation, scope discipline, the refocus rule, the investigation budget, the minimal fix principle, and the subagent dispatch used in autonomous mode all live there and load when it is invoked.
