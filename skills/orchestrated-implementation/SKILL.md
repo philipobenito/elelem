@@ -5,7 +5,7 @@ description: Implements an approved design by sizing it against six evidence cri
 
 # Orchestrated Implementation
 
-The coordination protocol that used to live here as prose now ships as code: `./implementation-workflow.js` enforces the pre-flight file-disjointness check, ready-set scheduling over `blockedBy` edges, review-before-verification with an integer fix budget of two, and the seam between an agent's completion claim and a verified task, all as control flow that cannot be forgotten under context pressure. This file holds the judgement the script cannot: sizing, decomposition, the content of the args, the checkpoint drain, and the final gates. Everything a dispatched agent needs is inside the script and the args; nothing here requires reading any other file.
+Coordination is code, not conduct: `./implementation-workflow.js` enforces the pre-flight file-disjointness check, ready-set scheduling over `blockedBy` edges, review-before-verification with an integer fix budget of two, and the seam between an agent's completion claim and a verified task, all as control flow. This file holds the judgement the script cannot: sizing, decomposition, the content of the args, the checkpoint drain, and the final gates. Everything a dispatched agent needs is inside the script and the args; nothing here requires reading any other file.
 
 ## When to Run
 
@@ -30,14 +30,14 @@ State inside the option text that the drain happens after the workflow completes
 
 Size the whole design once, before decomposing, by reading the affected code and filling every row of this table with specific observations. The default is COMPLEX; SIMPLE is earned, never assumed.
 
-| # | Criterion                    | Definition                                                                             | Fails if                                                                                                     |
-|---|------------------------------|----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| 1 | **Uniform change type**      | Every change is the same kind of edit applied across locations                         | Changes mix different concerns (e.g. docs + feature code, config + new logic)                                |
-| 2 | **No new logic**             | Zero new functions, classes, conditionals, loops, error handling, or business rules    | Any new control flow or callable unit is introduced                                                          |
-| 3 | **No new interfaces**        | No new exports, API endpoints, contracts, events, or public surface area               | Any new public-facing surface is created                                                                     |
-| 4 | **Deterministic from spec**  | The correct change at each location is fully specified with no room for interpretation | Any change requires a design decision, judgement call, or contextual understanding beyond the immediate edit |
-| 5 | **Independently verifiable** | Each change can be verified by reading it in isolation                                 | Correctness of one change depends on another change elsewhere in the change set                              |
-| 6 | **Small total delta**        | 39 lines or fewer of substantive change across all files, counted rather than felt     | The count is 40 or more, or cannot be produced at all                                                        |
+| #   | Criterion                      | Definition                                                                               | Fails if                                                                                                         |
+|-----|--------------------------------|------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| 1   | **Uniform change type**        | Every change is the same kind of edit applied across locations                           | Changes mix different concerns (e.g. docs + feature code, config + new logic)                                    |
+| 2   | **No new logic**               | Zero new functions, classes, conditionals, loops, error handling, or business rules      | Any new control flow or callable unit is introduced                                                              |
+| 3   | **No new interfaces**          | No new exports, API endpoints, contracts, events, or public surface area                 | Any new public-facing surface is created                                                                         |
+| 4   | **Deterministic from spec**    | The correct change at each location is fully specified with no room for interpretation   | Any change requires a design decision, judgement call, or contextual understanding beyond the immediate edit     |
+| 5   | **Independently verifiable**   | Each change can be verified by reading it in isolation                                   | Correctness of one change depends on another change elsewhere in the change set                                  |
+| 6   | **Small total delta**          | 39 lines or fewer of substantive change across all files, counted rather than felt       | The count is 40 or more, or cannot be produced at all                                                            |
 
 Count each changed line once rather than once per diff side: a one-line string replacement is 1 line, not 2, though `git diff --stat` reports it as 2. Where a contiguous run of changed lines is replaced by a run of a different size, count the larger of the two sides, and sum those counts across every such run in every file. Whitespace-only and comment-only lines are not substantive. The threshold is 39 rather than a round 50 because the 40 to 50 band is rejected deliberately: estimation error at a boundary that close exceeds the margin it decides, so push it to COMPLEX and lose nothing.
 
@@ -66,7 +66,7 @@ The args are the entire world each agent sees; the script pastes them into promp
 
 Two fields carry judgement:
 
-- **Each task's `spec`** is the full text the implementer works from: scene-setting for where it fits, the responsibility of each file, and the acceptance criteria as prose. Paste content, never a file reference. `verifyCommand` is the task-scoped test command, checked against how the project actually invokes its runner; the prototype behind this skill recorded a suite failing on a plausible-looking but wrong invocation.
+- **Each task's `spec`** is the full text the implementer works from: scene-setting for where it fits, the responsibility of each file, and the acceptance criteria as prose. Paste content, never a file reference. `verifyCommand` is the task-scoped test command, checked against how the project actually invokes its runner: a plausible-looking but wrong invocation fails every verification it gates.
 - **The three model fields** name concrete models confirmed to exist in the current environment (enumerate what the harness exposes; never construct an identifier from a remembered pattern). Implementers start at the tier the task signal names: clearly specified few-file work low, multi-file integration mid. The reviewer **MUST NOT** run at a lower tier than the work it reviews, because a reviewer that misses a real defect is the most expensive failure this pipeline can produce. Verifiers run commands and report facts; the low tier is enough.
 
 ## Launch and Results
@@ -98,7 +98,7 @@ Then commit scoped to the task's `files`, or ask first under "ask me each time" 
 
 Once every task has drained and `rogueChanges` came back empty:
 
-1. **Request a code review of the feature as a whole**, over the range starting at `baseSha`. The per-task reviewers each saw one task; integration gaps, drifting names and inconsistent error handling only appear across task boundaries, and the prototype behind this skill surfaced exactly that class of finding here and nowhere earlier. Fix and re-review until no Critical or Important issue remains.
+1. **Request a code review of the feature as a whole**, over the range starting at `baseSha`. The per-task reviewers each saw one task; integration gaps, drifting names and inconsistent error handling only appear across task boundaries, so this review finds what no earlier gate could. Fix and re-review until no Critical or Important issue remains.
 2. **Verify completion yourself, in the message that claims it**: the full suite, the linter, the build, and anything the design called out, with the output cited.
 3. **Report completion**: tasks, review verdict, verification evidence, deferred Minor findings.
 
@@ -106,11 +106,11 @@ You **MUST NOT** report the feature complete without steps 1 and 2 having run, w
 
 ## Common Mistakes
 
-| Mistake                                                       | Why it is wrong                                                                                                        |
-|----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| Re-authoring the control flow per run instead of passing args | The shipped script is the tested invariant carrier; a fresh script is untested control flow with the old prose risks.  |
-| Referencing files in a spec instead of pasting content        | The args are the whole world an agent sees; a reference points at nothing it can be assumed to read.                   |
-| Hand-rebuilding args for a resume                             | A quoting slip silently changes a prompt, and the cache correctly treats it as new work. Pass the canonical copy.      |
-| Committing with `rogueChanges` non-empty                      | Those paths belong to no task: unowned, unreviewed edits would ride along inside a scoped commit's blast radius.       |
-| Draining out of board order                                   | The question sequence becomes a race on which agent finished first, and a dependent can commit before its dependency.  |
-| Patching a failed task's files in the lead context            | It destroys the isolation that makes the review evidence trustworthy, and hides the failure the stop report must name. |
+| Mistake                                                          | Why it is wrong                                                                                                            |
+|------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Re-authoring the control flow per run instead of passing args    | The shipped script is the tested invariant carrier; a fresh script is untested control flow with none of its guarantees.   |
+| Referencing files in a spec instead of pasting content           | The args are the whole world an agent sees; a reference points at nothing it can be assumed to read.                       |
+| Hand-rebuilding args for a resume                                | A quoting slip silently changes a prompt, and the cache correctly treats it as new work. Pass the canonical copy.          |
+| Committing with `rogueChanges` non-empty                         | Those paths belong to no task: unowned, unreviewed edits would ride along inside a scoped commit's blast radius.           |
+| Draining out of board order                                      | The question sequence becomes a race on which agent finished first, and a dependent can commit before its dependency.      |
+| Patching a failed task's files in the lead context               | It destroys the isolation that makes the review evidence trustworthy, and hides the failure the stop report must name.     |

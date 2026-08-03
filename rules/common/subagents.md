@@ -1,6 +1,6 @@
 # Subagents
 
-These rules bind every delegated agent, whether dispatched directly through the `Agent` tool or from inside a workflow script. A delegated agent is dispatched for a task, terminates on completion, and coordinates through what it is given and what it returns; there is no persistent-peer model.
+These rules bind every delegated agent, whether dispatched directly through the `Agent` tool or from inside a workflow script. A delegated agent is dispatched for a task, terminates on completion, and coordinates through what it is given and what it returns.
 
 ### Authorisation
 

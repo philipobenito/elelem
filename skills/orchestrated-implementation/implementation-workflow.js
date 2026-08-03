@@ -1,11 +1,10 @@
 // The implementation workflow shipped with skills/orchestrated-implementation/SKILL.md.
-// The skill constructs the args value; this script owns the control flow. Every
-// coordination invariant the retired prose protocol asked a lead to remember is
-// enforced here as code: the pre-flight disjointness assertion throws, the
-// scheduler treats only verified as satisfied, the fix budget is an integer,
-// review-before-verification is control flow, and verified has exactly one
-// write site. Agents have no write path into script state, so write authority
-// needs no rule.
+// The skill constructs the args value; this script owns the control flow and
+// enforces the coordination invariants as code: the pre-flight disjointness
+// assertion throws, the scheduler treats only verified as satisfied, the fix
+// budget is an integer, review-before-verification is control flow, and
+// verified has exactly one write site. Agents have no write path into script
+// state, so write authority needs no rule.
 //
 // args (object, or a JSON string of the same shape):
 //   repo          absolute path to the repository being implemented in
