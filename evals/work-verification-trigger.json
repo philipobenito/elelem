@@ -1,0 +1,18 @@
+[
+  {"query": "is the ticket actually done? confirm it properly before i tell the team it shipped", "should_trigger": true},
+  {"query": "verify the fix really works before we commit anything", "should_trigger": true},
+  {"query": "prove the suite passes, fresh run, before you claim this is finished", "should_trigger": true},
+  {"query": "you said the feature's complete. show me the evidence, not the belief", "should_trigger": true},
+  {"query": "run whatever command proves the migration applied cleanly and cite the output", "should_trigger": true},
+  {"query": "double-check the build is green before you hand this back to me", "should_trigger": true},
+  {"query": "the subagent says its task passed. don't take its word for it, verify it yourself", "should_trigger": true},
+  {"query": "before we call the refactor done, demonstrate nothing else broke", "should_trigger": true},
+  {"query": "the branch is finished, give the diff a proper review before i open the PR", "should_trigger": false},
+  {"query": "the deploy check fails on step three and i don't know why, dig into it", "should_trigger": false},
+  {"query": "write tests for the new endpoint before the code, red first", "should_trigger": false},
+  {"query": "verify the email address format in the signup handler, we're letting junk through", "should_trigger": false},
+  {"query": "how do i verify a gpg signature on a release tag?", "should_trigger": false},
+  {"query": "the reviewer left five comments, verify each one against the codebase before implementing anything", "should_trigger": false},
+  {"query": "add a smoke-test verification step to the deploy pipeline", "should_trigger": false},
+  {"query": "what's your policy on claiming something works? asking generally, not about this branch", "should_trigger": false}
+]

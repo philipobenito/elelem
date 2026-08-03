@@ -1,0 +1,19 @@
+[
+  {"query": "the design's approved, cut the child tickets under a single epic like usual", "should_trigger": true},
+  {"query": "file these as issues on github, one per phase of the export design we just signed off", "should_trigger": true},
+  {"query": "break the approved notification plan into jira tickets so the team can pick bits up", "should_trigger": true},
+  {"query": "set up a backlog for the billing work, the design summary you presented is the source", "should_trigger": true},
+  {"query": "turn the approved design into linear issues, parent plus children", "should_trigger": true},
+  {"query": "there's no ticketing on this project, write the approved design up as a doc a future session can recover it from", "should_trigger": true},
+  {"query": "i've said yes to the design. persist it somewhere durable before we lose this conversation", "should_trigger": true},
+  {"query": "create gitlab issues for the migration design, the full write-up goes in the parent", "should_trigger": true},
+  {"query": "work on #42", "should_trigger": false},
+  {"query": "pick up PROJ-123 where we left off", "should_trigger": false},
+  {"query": "we should probably track this work somewhere but honestly i'm not sure yet what the pieces even are", "should_trigger": false},
+  {"query": "close out the stale issues in the tracker, anything untouched for six months", "should_trigger": false},
+  {"query": "design a ticketing system for our support team, customers email in and it's chaos", "should_trigger": false},
+  {"query": "what's the difference between an epic and a project in linear? deciding how to organise things", "should_trigger": false},
+  {"query": "reply to the comment thread on issue #88, they're asking when the fix lands", "should_trigger": false},
+  {"query": "the design is approved, now implement it", "should_trigger": false},
+  {"query": "move ticket #17 to done, the branch merged this morning", "should_trigger": false}
+]

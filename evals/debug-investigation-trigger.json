@@ -1,0 +1,21 @@
+[
+  {"query": "the export job times out on large accounts. started happening after tuesday's deploy. logs just show a 504 from the proxy, nothing in the app logs", "should_trigger": true},
+  {"query": "test_invoice_rounding is failing on CI but passes locally every time. can you work out what's going on", "should_trigger": true},
+  {"query": "users are reporting the password reset email never arrives. it definitely worked last month, nothing in the mailer logs has changed as far as i can see", "should_trigger": true},
+  {"query": "the discount gets applied twice at checkout. i'm fairly sure it's just a duplicated line in cart.ts, should be a two minute fix", "should_trigger": true},
+  {"query": "checkout is broken on staging, fix it however you see fit, i don't need the details", "should_trigger": true},
+  {"query": "since the ORM upgrade the audit log rows are missing the actor id. that's a regression, it was populated before", "should_trigger": true},
+  {"query": "the background worker crashes about once an hour under load. i've got a core dump and the systemd journal if you need them", "should_trigger": true},
+  {"query": "POST /api/orders returns a 500 whenever the customer name contains unicode. reproduces every time with 'Zoë'", "should_trigger": true},
+  {"query": "main is red, the websocket reconnect test hangs maybe one run in five. it's been flaky for a week and i'm done ignoring it", "should_trigger": true},
+  {"query": "we need retry logic on the outbound webhooks, deliveries that fail just vanish at the moment. that's by design today but it shouldn't be", "should_trigger": false},
+  {"query": "review the diff on my branch before i open the pr against main, i've touched the auth middleware and the session store", "should_trigger": false},
+  {"query": "the reviewer says my error handling swallows exceptions in the webhook consumer. go through the comments and address them", "should_trigger": false},
+  {"query": "why does the backoff in src/queue/worker.go use jitter? just trying to understand it, not changing anything", "should_trigger": false},
+  {"query": "i've written the failing test for the slug generator like we agreed, now write the minimal code to make it pass", "should_trigger": false},
+  {"query": "i want to add a caching layer in front of the pricing service, it's slower than i'd like and redis is already in the stack", "should_trigger": false},
+  {"query": "work on #482", "should_trigger": false},
+  {"query": "bump lodash to the patched release for that advisory, no behaviour change expected", "should_trigger": false},
+  {"query": "what makes a bug report actionable for you? i want to write better tickets for the team", "should_trigger": false},
+  {"query": "i fixed the timeout bug on my branch and the tests pass locally. is it done or is there something left?", "should_trigger": false}
+]

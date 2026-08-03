@@ -1,0 +1,17 @@
+[
+  {"query": "add a slugify helper to src/text/, test first, i want to see red before green", "should_trigger": true},
+  {"query": "write a failing test that reproduces the discount rounding bug before you touch the fix", "should_trigger": true},
+  {"query": "red-green-refactor the pagination change we discussed, one behaviour at a time", "should_trigger": true},
+  {"query": "next task is the email validation on signup. strictly test-driven please", "should_trigger": true},
+  {"query": "i already wrote the parser code but there are no tests. get it under test properly, i know that means proving the tests actually fail without it", "should_trigger": true},
+  {"query": "TDD the retry backoff calculation, the edge cases are exactly where i don't trust myself", "should_trigger": true},
+  {"query": "start the truncation task with the test and show me the failure output before you write any production code", "should_trigger": true},
+  {"query": "run the whole suite and tell me if it passes", "should_trigger": false},
+  {"query": "test_invoice_rounding is failing on CI but passes locally, work out why", "should_trigger": false},
+  {"query": "why does watching a test fail first matter? it feels like ritual to me", "should_trigger": false},
+  {"query": "look over the tests in my PR before i merge, i'm not sure the mocking is right", "should_trigger": false},
+  {"query": "set up vitest in this repo, config, npm script, the lot", "should_trigger": false},
+  {"query": "skip TDD for this one, it's a throwaway prototype, just spike it", "should_trigger": false},
+  {"query": "we need to design the notifications system before anyone writes a line, tests included", "should_trigger": false},
+  {"query": "is the coverage threshold in CI 80 or 90? i can't remember what we set", "should_trigger": false}
+]

@@ -1,0 +1,19 @@
+[
+  {"query": "work on #482", "should_trigger": true},
+  {"query": "pick up PROJ-123", "should_trigger": true},
+  {"query": "implement issue 7", "should_trigger": true},
+  {"query": "start on the export epic, the design's all in the parent ticket body", "should_trigger": true},
+  {"query": "implement docs/export-design.md", "should_trigger": true},
+  {"query": "pick up the backlog file we wrote last month, docs/billing-backlog.md, and carry on from wherever it says we stopped", "should_trigger": true},
+  {"query": "the design for the audit trail lives in the epic body on #12. get going on the first child ticket", "should_trigger": true},
+  {"query": "carry on with GL-204, it was designed and ticketed in a previous session", "should_trigger": true},
+  {"query": "the design's approved, cut the child tickets for it", "should_trigger": false},
+  {"query": "what should i work on next? have a look at what's open and give me a recommendation", "should_trigger": false},
+  {"query": "issue #90 says the export crashes on empty accounts. sort it out", "should_trigger": false},
+  {"query": "summarise what's open in the tracker for the standup", "should_trigger": false},
+  {"query": "we approved the design in this conversation five minutes ago, implement it", "should_trigger": false},
+  {"query": "review the PR linked from issue #33, it's someone else's branch", "should_trigger": false},
+  {"query": "ticket #55 is one line, 'add SSO', no design at all. help me actually work out what it should be", "should_trigger": false},
+  {"query": "recover the feature branch i deleted yesterday, it should still be in the reflog", "should_trigger": false},
+  {"query": "how should we structure epic bodies so the design survives between sessions?", "should_trigger": false}
+]
