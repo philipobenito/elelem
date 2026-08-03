@@ -6,7 +6,7 @@ This directory sits outside `skills/` on purpose. `install.sh` installs every fi
 
 The same applies to run outputs, and more urgently, because a run creates them without being asked. `skill-creator` defaults to writing results into `<skill-name>-workspace/` as a sibling of the skill directory, which here would resolve to `skills/brainstorming-workspace/` and put a full transcript archive into the install payload. Always point runs at `evals/workspace/` instead. That path and any `*-workspace/` directory are gitignored.
 
-The query sets (`evals/*.json`) are source and belong in version control. Everything a run generates (transcripts, `benchmark.json`, `feedback.json`, per-iteration output directories) is regenerable and does not.
+The query sets (`evals/*.json`) are source and belong in version control. Everything a run generates (transcripts, `benchmark.json`, `feedback.json`, per-iteration output directories) is regenerable and does not. The one exception is `baseline/`, which holds dated corpus measurement captures defined in `./baseline/BASELINE.md`; those are snapshots of a moving corpus, not regenerable later, and are committed deliberately.
 
 ## Format
 
