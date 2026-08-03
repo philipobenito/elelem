@@ -24,7 +24,7 @@
     "should_trigger": true
   },
   {
-    "query": "work-on-ticket references a couple of file paths i don't think exist any more. confirm every path in it resolves and while you're in there tell me what else is wrong with it",
+    "query": "design-recovery references a couple of file paths i don't think exist any more. confirm every path in it resolves and while you're in there tell me what else is wrong with it",
     "should_trigger": true
   },
   {
@@ -32,7 +32,7 @@
     "should_trigger": true
   },
   {
-    "query": "does the create-tickets description actually fire when someone says 'file these as issues'? and is there anything else wrong with that skill while you're looking",
+    "query": "does the design-handoff description actually fire when someone says 'file these as issues'? and is there anything else wrong with that skill while you're looking",
     "should_trigger": true
   },
   {
@@ -60,7 +60,7 @@
     "should_trigger": false
   },
   {
-    "query": "add a step to create-tickets that handles linear sub-issues, we've started using them for the bigger epics",
+    "query": "add a step to design-handoff that handles linear sub-issues, we've started using them for the bigger epics",
     "should_trigger": false
   },
   {

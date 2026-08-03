@@ -50,7 +50,7 @@ There is no test runner for markdown content; a change here is proven by a comma
 - A change to a rule or a skill: run `_tests/run_reference_tests.sh`.
 - A change to the installer: run `_tests/run_install_claude_tests.sh`.
 
-The reference checker only resolves cross-references written as relative paths (`./` or `../`). A bare-prefix reference, for example `skills/_shared/tickets.md` written without a leading `../`, is invisible to it: a broken one passes silently. The checker is a guard against one class of broken reference, not a complete one.
+The reference checker only resolves cross-references written as relative paths (`./` or `../`). A bare-prefix reference, for example `skills/_shared/code-review.md` written without a leading `../`, is invisible to it: a broken one passes silently. The checker is a guard against one class of broken reference, not a complete one.
 
 ## Authoring Conventions No Installed Rule Enforces
 

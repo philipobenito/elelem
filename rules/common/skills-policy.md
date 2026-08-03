@@ -39,7 +39,7 @@ Clarifying questions are themselves tasks, and there may be a skill governing ho
 
 When more than one skill could apply, you **MUST** invoke them in this order:
 
-1. **Entry skills first**: `design-grill-me` (before any code edit above the design threshold in `workflow.md`; `design-committee` instead when the user has asked for hands-off deliberation), `debugging` (when the task is "something is broken"), `work-on-ticket` (when the user references a ticket). These determine *what* you are doing.
+1. **Entry skills first**: `design-grill-me` (before any code edit above the design threshold in `workflow.md`; `design-committee` instead when the user has asked for hands-off deliberation), `debugging` (when the task is "something is broken"), `design-recovery` (when the user references a ticket or a persisted design document). These determine *what* you are doing.
 2. **Process skills second**: `verification-before-completion`. These determine *how* to approach the work.
 3. **Implementation skills third**: `orchestrated-implementation`, `test-driven-development`, and domain-specific skills. These guide execution.
 4. **Review skills fourth**: `requesting-code-review`, `receiving-code-review`. These run before completion claims.
@@ -48,7 +48,7 @@ Examples:
 
 - "Let's build X" -> `design-grill-me` first (or the inline design path in `workflow.md` when the change sits below the design threshold); the skill produces an approved design; an implementation skill takes over.
 - "Fix this bug" -> `debugging` first (reproduce, find root cause, get user approval on the fix approach); then `test-driven-development` for the regression test; then the fix; then `requesting-code-review`; then `verification-before-completion`.
-- "Work on #42" -> `work-on-ticket` first; it recovers the design from the parent epic and hands off to `orchestrated-implementation`.
+- "Work on #42" -> `design-recovery` first; it recovers the design from the persisted artefact and hands off to `orchestrated-implementation`.
 - "Is this done?" -> `verification-before-completion` first, nothing else until the gate has been run.
 
 ### The Orchestration Skill

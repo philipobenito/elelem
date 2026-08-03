@@ -39,8 +39,8 @@ It splits the set 60/40 into train and held-out test, runs each query three time
 
 | File                                  | Skill                    | Discriminates against                                                                                                                                      |
 |---------------------------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `design-grill-me-trigger.json`        | `design-grill-me`        | `debugging`, `work-on-ticket`, `design-committee`, below-threshold trivial edits, read-only questions                                                      |
-| `design-committee-trigger.json`       | `design-committee`       | `design-grill-me`, `debugging`, `work-on-ticket`, hands-off phrasing on trivial work, "committee" as feature vocabulary                                    |
+| `design-grill-me-trigger.json`        | `design-grill-me`        | `debugging`, `design-recovery`, `design-committee`, below-threshold trivial edits, read-only questions                                                     |
+| `design-committee-trigger.json`       | `design-committee`       | `design-grill-me`, `debugging`, `design-recovery`, hands-off phrasing on trivial work, "committee" as feature vocabulary                                   |
 | `design-review-trigger.json`          | `design-review`          | `requesting-code-review`, visual and UI design critique, ADR review, `design-grill-me` itself                                                              |
 | `requesting-code-review-trigger.json` | `requesting-code-review` | `receiving-code-review`, reviewing somebody else's PR, `design-review`, `debugging`, reading unfamiliar code                                               |
 | `receiving-code-review-trigger.json`  | `receiving-code-review`  | `requesting-code-review`, `debugging` a red PR, code review as a process question, "review" and "feedback" outside code                                    |
