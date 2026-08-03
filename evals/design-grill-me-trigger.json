@@ -6,7 +6,7 @@
   {"query": "I'd like to introduce a caching layer in front of the pricing service. Redis is already in the stack for sessions. Walk me through how the pricing code is currently structured before we decide anything, I only joined last week", "should_trigger": true},
   {"query": "need to add rate limiting to the public api. per-key, sliding window, and it has to work across our 3 app servers", "should_trigger": true},
   {"query": "just quickly add a healthcheck endpoint at /healthz that returns 200 and the git sha. should take you 2 minutes", "should_trigger": true},
-  {"query": "design-grill this one: i want the CSV export to stream rather than buffering the whole result set in memory. i know exactly what i want, just capture it and pressure-test it", "should_trigger": true},
+  {"query": "design-grill-me this one: i want the CSV export to stream rather than buffering the whole result set in memory. i know exactly what i want, just capture it and pressure-test it", "should_trigger": true},
   {"query": "i want to add a retry queue for the outbound webhooks in src/webhooks/, i wrote most of that package so you don't need to explain anything, and please push back on your own suggestion rather than giving me a menu", "should_trigger": true},
   {"query": "we should add proration when someone downgrades mid-cycle. i've been in app/billing for two years so keep it brisk", "should_trigger": true},
 

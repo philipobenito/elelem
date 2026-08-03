@@ -1,9 +1,9 @@
 ---
-name: design-grill
+name: design-grill-me
 description: "Turns an idea into an approved design through interactive dialogue: explores the affected code, asks one question at a time, proposes one approach and argues against it, presents the design in sections, has the consolidated summary design-reviewed, and takes explicit approval before any hand-off. The default design step for building features, adding functionality, or refactoring, whatever the user's familiarity with the codebase; scales from quickly capturing a design the user already holds to walking a newcomer through the area while designing. Not for bugs (debugging takes its own fix approval), not for tickets already carrying an approved design, not for trivial changes below the design threshold, and not when the user asks for hands-off deliberation, which is design-committee's job."
 ---
 
-# Design Grill
+# Design Grill Me
 
 Interactive design dialogue. The conversation is the design medium; nothing is written to disk while designing. The centre of the skill is the grill: propose the approach you actually believe in, then make the strongest case against it, and let whoever can answer that case, the user or the code, settle it. A design that has survived one real objection is worth more than one that was merely agreed to.
 

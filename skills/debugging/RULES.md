@@ -71,7 +71,7 @@ The fix **MUST** change only what is necessary to address the root cause. You **
 
 If the fix touches more than three locations, stop and verify that you are fixing one root cause, not patching the same symptom in several places. One bug is one fix.
 
-If it genuinely is one root cause but the fix it needs cannot be contained (several separate changes, a redesign, or a new interface), the work has stopped being a bug fix and this skill stops with it. Per `../../rules/common/workflow.md`, hand to `design-grill` with the root cause, the reproduction approach, and the affected modules. The alternative failure modes are both worse than escalating: shrinking the fix to fit leaves the root cause in place, and applying it anyway ships a redesign under a bug-fix approval the user never gave.
+If it genuinely is one root cause but the fix it needs cannot be contained (several separate changes, a redesign, or a new interface), the work has stopped being a bug fix and this skill stops with it. Per `../../rules/common/workflow.md`, hand to `design-grill-me` with the root cause, the reproduction approach, and the affected modules. The alternative failure modes are both worse than escalating: shrinking the fix to fit leaves the root cause in place, and applying it anyway ships a redesign under a bug-fix approval the user never gave.
 
 Any unrelated issues you notice during debugging **MUST** be logged separately (as tickets or notes), not fixed inside the debugging change.
 
@@ -92,5 +92,5 @@ Every thought below means **stop and return to the procedure**:
 | "I don't need to reproduce this, the error is clear"              | Reproduction is verification infrastructure. Without it, you cannot confirm your fix works.                                                            |
 | "I can't reproduce it, but the fix is obvious anyway"             | A non-reproducible bug cannot have a verified fix. Phase 2 is where that investigation stops, not a hurdle to route around.                            |
 | "A subagent read those files, not me, so the count is clear"      | The Refocus Rule binds the investigation, not your personal file list. Delegated, its trigger is the round: one sweep without a hypothesis means stop. |
-| "The fix is bigger than expected, but I already have the context" | A fix that outgrows the minimal fix principle is new work. Escalate to `design-grill` rather than spending saved context on an unapproved redesign.    |
+| "The fix is bigger than expected, but I already have the context" | A fix that outgrows the minimal fix principle is new work. Escalate to `design-grill-me` rather than spending saved context on an unapproved redesign. |
 | "It's a one-line fix, a code review would be ceremony"            | `../../rules/common/code-review.md` grants no exemption for small, simple, or obvious. Subtle bugs get small fixes; that is where review pays.         |

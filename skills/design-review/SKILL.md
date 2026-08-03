@@ -1,15 +1,11 @@
 ---
 name: design-review
-description: "Reviews a consolidated design summary for completeness, consistency, clarity, scope, and YAGNI by dispatching a fresh reviewer subagent against the summary text alone. Invoked by `design-grill` and `design-committee` once the design is consolidated and before final user approval; the inline design path below the design threshold deliberately does not use it. Returns an approved summary, the open decisions the design never made, or an escalation once its three-dispatch budget is spent. Not a standalone entry point; a design summary handed straight to Claude for review belongs to the design skill that owns it."
+description: "Reviews a consolidated design summary for completeness, consistency, clarity, scope, and YAGNI by dispatching a fresh reviewer subagent against the summary text alone. Invoked by `design-grill-me` and `design-committee` once the design is consolidated and before final user approval; the inline design path below the design threshold deliberately does not use it. Returns an approved summary, the open decisions the design never made, or an escalation once its three-dispatch budget is spent. Not a standalone entry point; a design summary handed straight to Claude for review belongs to the design skill that owns it."
 ---
 
 # Design Review
 
-Runs a holistic pass over a consolidated design summary, catches what section-by-section approval missed, and returns an approved design, the open decisions it uncovered, or an escalation.
-
-For the rule that no implementation may begin until a design has been approved, see `../../rules/common/workflow.md`. The iron laws on subagent dispatch (context isolation, the git ban, the worktree ban, the privilege ban, and the ban on writing an identifier you have not confirmed the environment exposes) live in `../../rules/common/subagents.md`.
-
-Before running the procedure below, read `../_shared/subagent-dispatch.md` with the Read tool if you have not already read it this session. It holds the type selection and model resolution procedures this skill depends on, and a dispatch made without them in context is a guess.
+Runs a holistic pass over a consolidated design summary, catches what section-by-section approval missed, and returns an approved design, the open decisions it uncovered, or an escalation. Everything a dispatched reviewer needs is in the prompt template below; nothing here requires reading any other file.
 
 ## Preconditions
 
@@ -17,7 +13,7 @@ Before running the procedure below, read `../_shared/subagent-dispatch.md` with 
 
 Self-contained is the whole precondition. A summary missing a section is not a precondition failure, it is a Completeness issue and the reviewer's job to find. Checking sections off a list here would review the design twice and reach the reviewer's verdict without the reviewer.
 
-**A caller.** This skill runs as a step inside a design skill (`design-grill` step 6, `design-committee` step 8), never on its own and never against a design the user has not worked through. The inline design path below the design threshold deliberately does not invoke it: the user approves the short statement directly and is themselves the reviewer.
+**A caller.** This skill runs as a step inside a design skill (`design-grill-me` step 6, `design-committee` step 8), never on its own and never against a design the user has not worked through. The inline design path below the design threshold deliberately does not invoke it: the user approves the short statement directly and is themselves the reviewer.
 
 ## What This Skill May Change
 
@@ -48,9 +44,7 @@ Report every substantive fix when you return. The user approved text that no lon
 
 1. **Confirm the summary is consolidated.** If the caller has not produced a single self-contained block, stop and return **Not consolidated** per the Return Contract. Do not consolidate it yourself: the caller holds the conversation the summary has to be built from.
 
-2. **Dispatch the reviewer** with `Agent`, following `../_shared/design-reviewer-prompt.md`. Paste the full summary into the prompt and pass no session history.
-
-   Resolve the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. This skill's task signal is design judgement, which that file's tier table maps to High-capability, so start there. That is the signal-driven default applied, not pre-escalation: the reviewer is the only gate between a design summary and approval, and a reviewer that returns nothing but editorial noise costs a full review round without buying one.
+2. **Dispatch the reviewer** with `Agent`, using the prompt template below. Paste the full summary and the category table where marked, and pass no session history. Let the dispatch inherit the session model rather than picking a cheaper one: the reviewer is the only gate between a design summary and approval, and a reviewer that returns nothing but editorial noise costs a full review round without buying one.
 
 3. **Read the reviewer's status.**
    - **Approved**: go to step 7.
@@ -65,9 +59,76 @@ Report every substantive fix when you return. The user approved text that no lon
 
 7. **Return the approved summary** per the Return Contract, carrying the substantive fixes and the reviewer's recommendations.
 
+### The Reviewer Prompt
+
+```yaml
+Agent:
+  subagent_type: "Plan"
+  description: "Review design summary"
+  prompt: |
+    You are a design reviewer. Verify this design is complete and ready for
+    implementation planning.
+
+    **Design to review:**
+
+    [PASTE THE FULL DESIGN SUMMARY HERE - never pass session history]
+
+    ## What to Check
+
+    [PASTE THE CATEGORY TABLE FROM "What the Reviewer Checks" BELOW]
+
+    ## Reading the Repository
+
+    The design summary is the only thing you receive from the session, and that
+    isolation is about the conversation rather than the code. The repository is
+    shared ground truth, not somebody's account of it, so you may read it.
+
+    Read it to check claims the summary makes about existing code: a component it
+    says it will modify, an interface it says it will extend, a convention it says
+    it will follow. Keep the reading to those checks. A general tour of the
+    codebase is not what you are for, and it will cost more than it finds.
+
+    A claim you cannot verify is not an issue. Looking for `IngestWorker` and not
+    finding it is worth raising; not being able to tell where to look is not.
+    Manufacturing issues out of your own uncertainty is the failure mode this
+    permission introduces, and it is worse than not reading at all.
+
+    You are reviewing a design, not changing anything: do not write, edit, create,
+    move, or delete any file, and do not run any command that changes state.
+
+    ## Calibration
+
+    **Only flag issues that would cause real problems during implementation planning.**
+    A missing component, a contradiction, or a requirement so ambiguous it could be
+    interpreted two different ways are issues. Minor wording improvements,
+    stylistic preferences, and "sections less detailed than others" are not.
+
+    Approve unless there are serious gaps that would lead to a flawed plan.
+
+    For every issue, state what the design would have to say to resolve it. The
+    orchestrator uses that line to tell an issue the design already answers
+    elsewhere from one that needs a decision nobody has made yet, and those two
+    take different routes. Naming the resolution is not the same as choosing it:
+    where several answers would each resolve the issue, say so and name them
+    rather than picking one.
+
+    ## Output Format
+
+    ## Design Review
+
+    **Status:** Approved | Issues Found
+
+    **Issues (if any):**
+    - [Section/Area]: [specific issue] - [why it matters for planning]
+      Resolved by: [what the design would have to state; or the candidate answers, where more than one would do]
+
+    **Recommendations (advisory, do not block approval):**
+    - [suggestions for improvement]
+```
+
 ### When the Dispatch Fails
 
-A dispatch that returns no usable status, reports BLOCKED, or errors has reviewed nothing, so it spends no budget. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md` where a higher tier remains, otherwise at the same tier. If the retry returns a usable status, take it back to step 3. If the retry also fails, the review cannot be performed here: return **Issues outstanding** with the dispatch failure as the outstanding item, so the decision reaches a human rather than a third attempt.
+A dispatch that returns no usable status, reports BLOCKED, or errors has reviewed nothing, so it spends no budget. Retry it once. If the retry returns a usable status, take it back to step 3. If the retry also fails, the review cannot be performed here: return **Issues outstanding** with the dispatch failure as the outstanding item, so the decision reaches a human rather than a third attempt.
 
 ## Return Contract
 
@@ -95,7 +156,7 @@ Nothing bounds how many times that can happen, and nothing needs to. Every round
 | Scope        | Focused enough for a single plan, not covering multiple independent subsystems |
 | YAGNI        | Unrequested features, over-engineering, unnecessary complexity                 |
 
-This table exists here so step 3 can categorise what comes back, and it is the canonical copy: `../_shared/design-reviewer-prompt.md` does not restate it, but instructs pasting it into the reviewer prompt at dispatch, so an edit here is the only edit. The calibration that stops the reviewer flagging stylistic preferences and the rules bounding what it may read live in that prompt file.
+This table exists here so step 3 can categorise what comes back, and it is the canonical copy: the prompt template above pastes it to the reviewer at dispatch rather than restating it, so an edit here is the only edit.
 
 ## Worked Example: An Open Decision
 
@@ -144,15 +205,14 @@ Every thought below means stop:
 
 ## Common Mistakes
 
-| Mistake                                                             | Why it is wrong                                                                                                                                                      |
-|---------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Passing session history to the reviewer                             | Violates context isolation. The reviewer reads the design summary, otherwise it grades the conversation rather than the design.                                      |
-| Skipping the dispatch and reviewing the summary yourself            | The orchestrator's perspective is not a fresh review. The whole point is the second pair of eyes.                                                                    |
-| Answering an undetermined issue yourself                            | The design never made that decision, so filling it in commits the user to a choice they have not seen. It goes back to the caller, who has the user.                 |
-| Treating a missing section as a precondition failure                | The precondition is that the summary stands alone, not that it is complete. Completeness is what the reviewer is for.                                                |
-| Continuing past three dispatches                                    | The budget exists to prevent endless polish loops. Past three, the caller and the human need to decide whether to redesign.                                          |
-| Counting a failed dispatch against the budget                       | A dispatch that errored reviewed nothing. Retry it once, a tier up where one remains; spending budget on it burns a review the design never got.                     |
-| Pre-escalating to the top tier because the task is design judgement | The signal permits the tier, it does not start you there. `../_shared/subagent-dispatch.md` still requires one tier at a time, on evidence.                          |
-| Treating advisory recommendations as blockers                       | Recommendations are advisory. Only Issues block.                                                                                                                     |
-| Dropping the recommendations because they are advisory              | The reviewer produced them from a fresh reading and they cost nothing to carry. Advisory means the caller decides, not that the output is discarded on the way back. |
-| Returning Approved without re-dispatching after fixes               | The Approved status must come from a reviewer run against the updated summary, not the original.                                                                     |
+| Mistake                                                  | Why it is wrong                                                                                                                                                      |
+|----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Passing session history to the reviewer                  | Violates context isolation. The reviewer reads the design summary, otherwise it grades the conversation rather than the design.                                      |
+| Skipping the dispatch and reviewing the summary yourself | The orchestrator's perspective is not a fresh review. The whole point is the second pair of eyes.                                                                    |
+| Answering an undetermined issue yourself                 | The design never made that decision, so filling it in commits the user to a choice they have not seen. It goes back to the caller, who has the user.                 |
+| Treating a missing section as a precondition failure     | The precondition is that the summary stands alone, not that it is complete. Completeness is what the reviewer is for.                                                |
+| Continuing past three dispatches                         | The budget exists to prevent endless polish loops. Past three, the caller and the human need to decide whether to redesign.                                          |
+| Counting a failed dispatch against the budget            | A dispatch that errored reviewed nothing. Retry it once; spending budget on it burns a review the design never got.                                                  |
+| Treating advisory recommendations as blockers            | Recommendations are advisory. Only Issues block.                                                                                                                     |
+| Dropping the recommendations because they are advisory   | The reviewer produced them from a fresh reading and they cost nothing to carry. Advisory means the caller decides, not that the output is discarded on the way back. |
+| Returning Approved without re-dispatching after fixes    | The Approved status must come from a reviewer run against the updated summary, not the original.                                                                     |

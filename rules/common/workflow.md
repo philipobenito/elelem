@@ -26,7 +26,7 @@ Traced for a one-line change: read the affected code, post the statement, receiv
 
 ### The Design Skills
 
-Above the threshold, the design step is `design-grill`: an interactive dialogue that scales its own depth, from quickly capturing a design the user already holds to walking a newcomer through the area while designing. `design-committee` runs instead only when the user has asked to be hands-off; deliberation without them is theirs to ask for, and you **MUST NOT** choose it on their behalf.
+Above the threshold, the design step is `design-grill-me`: an interactive dialogue that scales its own depth, from quickly capturing a design the user already holds to walking a newcomer through the area while designing. `design-committee` runs instead only when the user has asked to be hands-off; deliberation without them is theirs to ask for, and you **MUST NOT** choose it on their behalf.
 
 You **MUST NOT** bypass the design step by:
 
@@ -50,13 +50,13 @@ Count one subsystem per top-level directory the brief requires you to change, pl
 
 ### The Two Adversarial Passes
 
-A design skill argues against its own proposal while the design is still forming, when the user can supply constraints that exist nowhere in the code; in `design-grill` that is the grill itself, and in `design-committee` it is the cross-examination round. `design-review` argues against the finished artefact afterwards, for completeness and consistency, and its reviewer cannot ask anyone anything. Neither substitutes for the other, so a design that has been argued against still gets the review.
+A design skill argues against its own proposal while the design is still forming, when the user can supply constraints that exist nowhere in the code; in `design-grill-me` that is the grill itself, and in `design-committee` it is the cross-examination round. `design-review` argues against the finished artefact afterwards, for completeness and consistency, and its reviewer cannot ask anyone anything. Neither substitutes for the other, so a design that has been argued against still gets the review.
 
 Two approaches are genuinely live only where nothing in the codebase favours one over the other and you would defend either if the user chose it. Where a file or a convention does favour one, that is evidence rather than preference, and the recommendation is presented instead of a menu.
 
 ### What Counts as an Approved Design
 
-- A design produced by `design-grill` or `design-committee` that the user has explicitly approved
+- A design produced by `design-grill-me` or `design-committee` that the user has explicitly approved
 - An inline-path design statement, for a change below the threshold, that the user has explicitly approved
 - A root cause and fix approach produced by the debugging skill's fix-approval phase that the user has explicitly approved (see "Bug Fixes" below)
 - An epic or ticket containing a design that the user has written or previously approved
@@ -87,7 +87,7 @@ Once the gate is crossed, the design skill asks the user whether to create ticke
 
 Bug fixes also require an approved design, even if the design is a single sentence. At minimum, present the failing-test reproduction approach and which function or module will change, and get explicit approval before writing the fix.
 
-That approval comes from the debugging skill's own fix-approval phase, not from a design skill: a bug's design is a consequence of evidence the investigation has already gathered and presented, so re-designing it would ask the user to approve the same thing twice. Route the work to `design-grill` only when the root cause turns out to need work large enough that the minimal fix principle in `debugging.md` no longer applies, and the fix needs decomposing rather than applying; it arrives there carrying the root cause, the reproduction approach, and the affected modules. The rules in `testing.md` still apply throughout: the failing test comes before the fix.
+That approval comes from the debugging skill's own fix-approval phase, not from a design skill: a bug's design is a consequence of evidence the investigation has already gathered and presented, so re-designing it would ask the user to approve the same thing twice. Route the work to `design-grill-me` only when the root cause turns out to need work large enough that the minimal fix principle in `debugging.md` no longer applies, and the fix needs decomposing rather than applying; it arrives there carrying the root cause, the reproduction approach, and the affected modules. The rules in `testing.md` still apply throughout: the failing test comes before the fix.
 
 ## Sequencing Work
 

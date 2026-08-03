@@ -16,7 +16,7 @@
     "should_trigger": true
   },
   {
-    "query": "i think design-grill and design-committee are fighting over the same prompts. can you check their descriptions against each other properly",
+    "query": "i think design-grill-me and design-committee are fighting over the same prompts. can you check their descriptions against each other properly",
     "should_trigger": true
   },
   {
@@ -52,7 +52,7 @@
     "should_trigger": false
   },
   {
-    "query": "run the description optimiser against evals/design-grill-trigger.json, five iterations, and give me the best_description it lands on",
+    "query": "run the description optimiser against evals/design-grill-me-trigger.json, five iterations, and give me the best_description it lands on",
     "should_trigger": false
   },
   {

@@ -105,7 +105,7 @@ State the root cause clearly, per the Root Cause, Not Symptom rule in `RULES.md`
 - **Why**: the causal chain from the root cause to the observed symptom
 - **Since when**: if determinable, when the bug was introduced (commit reference)
 
-Then check the fix against the Minimal Fix Principle in `RULES.md` before proposing it. If the confirmed root cause needs work that principle cannot contain (several genuinely separate changes rather than one change, a redesign, or a new interface), the work is no longer a bug fix and this skill stops here. Per `../../rules/common/workflow.md`, hand to `design-grill` carrying the root cause, the reproduction approach, and the modules that will change. Do not shrink the fix to fit inside this skill, and do not apply a large fix here on the grounds that you already have the context.
+Then check the fix against the Minimal Fix Principle in `RULES.md` before proposing it. If the confirmed root cause needs work that principle cannot contain (several genuinely separate changes rather than one change, a redesign, or a new interface), the work is no longer a bug fix and this skill stops here. Per `../../rules/common/workflow.md`, hand to `design-grill-me` carrying the root cause, the reproduction approach, and the modules that will change. Do not shrink the fix to fit inside this skill, and do not apply a large fix here on the grounds that you already have the context.
 
 Otherwise present the root cause and the proposed fix approach to the user for confirmation. Per `../../rules/common/workflow.md`, this is the approved design for the bug fix, and it is why a bug does not go through the design step again. You **MUST** wait for explicit approval before moving to Phase 7.
 
@@ -142,7 +142,7 @@ This skill terminates in one of four states. Say which one explicitly, because t
 
 **Fixed.** The root cause was confirmed and approved, the regression test went red then green, the review was processed, and the verification gate produced fresh evidence. Report the root cause, the test, and the cited evidence.
 
-**Escalated.** Phase 6 confirmed a root cause whose fix exceeds the Minimal Fix Principle. Hand to `design-grill` with the root cause, the reproduction, and the affected modules. Nothing has been changed.
+**Escalated.** Phase 6 confirmed a root cause whose fix exceeds the Minimal Fix Principle. Hand to `design-grill-me` with the root cause, the reproduction, and the affected modules. Nothing has been changed.
 
 **Non-reproducible.** Phase 2 could not reproduce the bug. No fix has been attempted and none may be. The user owes you reproduction conditions.
 

@@ -31,7 +31,7 @@ You **MUST** complete these steps in order. Do not skip a step and do not reorde
 
    If `resolve_epic_context` succeeds but the resolved Epic has **no** `## Design` section at all (tickets created manually or by an older workflow predating the rule), follow the manual fallback documented in `../_shared/tickets.md` under "Recovery Before Implementation", including its prohibition on guessing the design.
 
-   That fallback asks the user for the missing context, and each answer has its own continuation. If they have none to give, stop here and recommend establishing a design through `design-grill` before the ticket is picked up again. Do not proceed to step 5 on the reduced context: an Epic with no design has nothing for the implementation workflow to treat as approved, and inferring one is the guess the paragraph above forbids.
+   That fallback asks the user for the missing context, and each answer has its own continuation. If they have none to give, stop here and recommend establishing a design through `design-grill-me` before the ticket is picked up again. Do not proceed to step 5 on the reduced context: an Epic with no design has nothing for the implementation workflow to treat as approved, and inferring one is the guess the paragraph above forbids.
 
    If they do supply it, carry it forward as the design and continue from step 5, presenting it at step 6 as user-supplied rather than recovered so they can see what they are ratifying. Step 7's confirmation is what approves it, which is why it cannot be skipped on this path. Recommend back-filling the Epic's `## Design` with what they gave you: per `../_shared/tickets.md` the epic body is the single source of truth, so an Epic left empty puts the next session through this same recovery.
 
