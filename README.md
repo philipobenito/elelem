@@ -38,7 +38,6 @@ User-scope path-scoped rules have a known issue ([claude-code#21858](https://git
 .
 ├── install.sh            Installer; prompts for scope and selections
 ├── uninstall.sh           Reads .elelem-manifest-claude and removes the install
-├── _install-common.sh    Common functions sourced by install.sh and uninstall.sh
 ├── _tests/                Test scripts and fixtures for the installers
 ├── rules/
 │   ├── common/           Always-on rules (no frontmatter)

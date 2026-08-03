@@ -13,8 +13,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# shellcheck source=_install-common.sh
-source "$SCRIPT_DIR/_install-common.sh"
+# install.sh guards its interactive body, so sourcing it only defines the
+# shared helpers (say_*, multiselect) without running the install.
+# shellcheck source=install.sh
+source "$SCRIPT_DIR/install.sh"
 
 # ---------------------------------------------------------------------------
 # Pure helper functions (no TTY required; exercisable from tests by sourcing)

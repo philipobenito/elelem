@@ -195,6 +195,32 @@ $result"
   fi
 }
 
+test_no_placeholder_tokens_in_rules_or_skills() {
+  local name="no_placeholder_tokens_in_rules_or_skills"
+  local matches
+  matches="$(grep -rEn '\{\{[A-Z_]+\}\}' "$REPO_ROOT/rules" "$REPO_ROOT/skills" 2>/dev/null || true)"
+
+  if [[ -z "$matches" ]]; then
+    _pass "$name"
+  else
+    _fail "$name" "{{TOKEN}} placeholder(s) found; nothing substitutes these at install time, so they would ship literally:
+$matches"
+  fi
+}
+
+test_no_todowrite_references_in_rules_or_skills() {
+  local name="no_todowrite_references_in_rules_or_skills"
+  local matches
+  matches="$(grep -rn 'TodoWrite' "$REPO_ROOT/rules" "$REPO_ROOT/skills" 2>/dev/null || true)"
+
+  if [[ -z "$matches" ]]; then
+    _pass "$name"
+  else
+    _fail "$name" "TodoWrite reference(s) found (TodoWrite no longer exists; use the Task* family):
+$matches"
+  fi
+}
+
 test_resolve_reference_uses_citing_files_own_directory_not_cwd
 test_broken_dot_relative_reference_is_reported
 test_valid_dot_relative_reference_is_not_reported
@@ -202,6 +228,8 @@ test_uncited_shared_file_is_reported
 test_cited_shared_file_is_not_reported
 test_no_broken_dot_relative_references_in_repo
 test_every_shared_file_is_cited_in_repo
+test_no_placeholder_tokens_in_rules_or_skills
+test_no_todowrite_references_in_rules_or_skills
 
 total=$(( passed + failed ))
 echo

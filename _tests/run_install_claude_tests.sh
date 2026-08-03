@@ -4,12 +4,9 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# shellcheck source=../_install-common.sh
-source "$REPO_ROOT/_install-common.sh"
-
 # install.sh guards its interactive main flow behind a
 # `[[ "${BASH_SOURCE[0]}" == "${0}" ]]` check, so sourcing it here only
-# defines its functions (_skill_resolve_dst, run_claude_install) without
+# defines its functions (run_claude_install, common_rule_basenames) without
 # running the multiselect-driven install. Tests drive the install by calling
 # run_claude_install directly with hardcoded selections, exercising the same
 # deterministic install sequence install.sh's interactive body calls, instead
@@ -48,32 +45,6 @@ test_install_dot_sh_executable() {
     _pass "$name"
   else
     _fail "$name" "install.sh is not executable"
-  fi
-}
-
-test_skill_resolve_dst_preserves_subdirectory_structure() {
-  local name="skill_resolve_dst_preserves_subdirectory_structure"
-  local result
-
-  result="$(_skill_resolve_dst "$SKILLS_SOURCE/debug-investigation/SKILL.md" /out)"
-
-  if [[ "$result" == "/out/debug-investigation/SKILL.md" ]]; then
-    _pass "$name"
-  else
-    _fail "$name" "expected /out/debug-investigation/SKILL.md, got $result"
-  fi
-}
-
-test_skill_resolve_dst_preserves_nested_files() {
-  local name="skill_resolve_dst_preserves_nested_files"
-  local result
-
-  result="$(_skill_resolve_dst "$SKILLS_SOURCE/brainstorming/modes/standard.md" /out)"
-
-  if [[ "$result" == "/out/brainstorming/modes/standard.md" ]]; then
-    _pass "$name"
-  else
-    _fail "$name" "expected /out/brainstorming/modes/standard.md, got $result"
   fi
 }
 
@@ -207,8 +178,6 @@ test_reinstall_prunes_stale_file_but_preserves_user_created_file() {
 
 test_install_dot_sh_exists
 test_install_dot_sh_executable
-test_skill_resolve_dst_preserves_subdirectory_structure
-test_skill_resolve_dst_preserves_nested_files
 test_common_rule_basenames_returns_all_common_md_files
 test_full_install_to_tmp_target
 test_reinstall_prunes_stale_file_but_preserves_user_created_file
