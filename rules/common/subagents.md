@@ -26,12 +26,12 @@ You **MUST NOT** write a model identifier you have not confirmed the current env
 
 ### Agent Types
 
-You **MUST** dispatch every directly dispatched agent as a harness built-in type, per the table in `skills/_shared/subagent-dispatch.md`. You **MUST NOT** select an installed or plugin-supplied agent definition, and you **MUST NOT** pick a type on the basis of the task's language, framework, or domain. An installed definition carries its own tool permissions, which no dispatch can verify beforehand: an agent silently missing a tool fails mid-task rather than at the call site. Agents launched from a workflow script use the script's default agent type unless the script says otherwise.
+You **MUST** dispatch every directly dispatched agent as a harness built-in type, the one named in the dispatching skill's own prompt template. You **MUST NOT** select an installed or plugin-supplied agent definition, and you **MUST NOT** pick a type on the basis of the task's language, framework, or domain. An installed definition carries its own tool permissions, which no dispatch can verify beforehand: an agent silently missing a tool fails mid-task rather than at the call site. Agents launched from a workflow script use the script's default agent type unless the script says otherwise.
 
 ### Context Isolation
 
 A delegated agent does not inherit your session history. Every dispatch starts from a clean slate, so you **MUST** construct exactly the context the agent needs: the task description, the relevant content pasted rather than referenced, the acceptance criteria, and any constraints. You **MUST NOT** instruct an agent to "discover" context on its own when you can provide it directly; agents exploring the codebase to rebuild context you already hold is a waste.
 
-## Procedural Rules
+## Dispatch Detail Lives in the Skills
 
-The procedural rules that bind once a skill is dispatching directly, the agent type lookup, model selection with identifier resolution and verification, answering subagent questions, process discipline, and escalation handling, live in `skills/_shared/subagent-dispatch.md` and load when any dispatching skill is invoked.
+Each dispatching skill carries its own dispatch detail, the agent type its prompt templates name, model selection with identifier resolution, and its retry and escalation handling, and that detail loads when the skill is invoked.
