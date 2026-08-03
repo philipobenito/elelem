@@ -32,6 +32,24 @@ You **MUST NOT** respond to code review feedback with any performative, gratitud
 
 Rationale: actions speak. The fix in the code is the acknowledgement. Performative language signals compliance theatre, not understanding, and wastes the reviewer's time. If you catch yourself about to write "thanks" or "you're right", you **MUST** delete it and state the fix instead.
 
-## Procedural Rules
+## Severity Discipline
 
-The procedural rules that bind once a code review skill is running, verify-before-acting, clarify-before-partial-implementation, the YAGNI check on "implement properly", when to push back, severity discipline, and the GitHub inline reply procedure, live in `skills/_shared/code-review.md` and load when either `work-review-request` or `work-review-receive` is invoked. To request a review, invoke the `work-review-request` skill. To process incoming review feedback, invoke the `work-review-receive` skill.
+Every review finding carries a tier, and a tier is a commitment rather than a description of how strongly anyone feels:
+
+| Tier          | Test                                                                                                       | If it ships unfixed     |
+|---------------|------------------------------------------------------------------------------------------------------------|-------------------------|
+| **Critical**  | It breaks behaviour that currently works, loses data, or opens a security hole.                            | Someone is harmed now.  |
+| **Important** | It works today, but a requirement is unmet, new behaviour is untested, or a failure is swallowed silently. | The next change breaks. |
+| **Minor**     | Naming, style, an unmeasured optimisation, a documentation improvement.                                    | Nothing happens.        |
+
+- **Critical** issues **MUST** be fixed before any further progress on the work under review
+- **Important** issues **MUST** be fixed before the work advances: before the next task in an orchestrated flow, before merge in ad-hoc work, and before any completion claim where neither applies
+- **Minor** issues are still valid feedback, it is permitted to defer them, but not preferred, if a fix makes sense it **MUST** be applied
+
+You **MUST NOT** mark a task complete, proceed to the next task, or merge while Critical or Important issues remain unfixed. "I'll fix it after" is forbidden. The failure to guard against when assigning tiers is inflation, because it looks conscientious while it stalls the work: an Important tier is a blocker, so calling a naming preference Important commits you to fixing it before anything else proceeds.
+
+This table is the canonical severity definition. The review skills apply it directly, and a dispatched reviewer receives it pasted whole into its prompt, so an edit here reaches every consumer with no second copy to keep in sync.
+
+## The Review Skills
+
+To request a review, invoke the `work-review-request` skill: it dispatches a reviewer, applies the severity discipline above to the verdict, and owns the fix-and-re-review loop. To process incoming review feedback from any source, invoke the `work-review-receive` skill: it verifies each item, pushes back where the reviewer is wrong, and implements what survives in severity order.

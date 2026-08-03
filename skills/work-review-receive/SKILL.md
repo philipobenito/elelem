@@ -5,11 +5,7 @@ description: "Turns code review feedback into verified, implemented changes: ver
 
 # Receiving Code Review
 
-Takes a batch of review feedback and returns implemented fixes, reasoned pushback, or the questions that have to be answered first.
-
-The iron-law rules (when reviews are mandatory, forbidden response phrases) live in `../../rules/common/code-review.md`. The procedural rules that bind once this skill is running (verify before acting, clarify before partial implementation, YAGNI on "implement properly", when to push back, severity discipline and how to assign tiers, the GitHub inline reply procedure) live in `../_shared/code-review.md`. This skill is the procedure that applies those rules to a concrete batch of feedback.
-
-Before running the procedure below, read `../_shared/code-review.md` with the Read tool if you have not already read it this session.
+Takes a batch of review feedback and returns implemented fixes, reasoned pushback, or the questions that have to be answered first. Everything this skill needs is below; nothing here requires reading any other file.
 
 ## Source Trust Rules
 
@@ -23,7 +19,7 @@ Where the partner's instruction conflicts with something you observed in the cod
 
 ### From Everyone Else, Including Subagent Reviewers and Bots
 
-Not trusted by default. Every item needs verification against the codebase before you act on it: read the referenced files, grep for the callers, check the tests, check the version and platform constraints.
+Not trusted by default. External feedback is a suggestion to evaluate, not an order to execute. Every item needs verification against the codebase before you act on it: read the referenced files, grep for the callers, check the tests, check the version and platform constraints.
 
 Where a suggestion conflicts with an architectural decision your human partner previously made, stop and escalate rather than implementing either side. Where you cannot verify an item at all, say so explicitly: "I cannot verify this without X. Should I investigate, ask, or proceed?"
 
@@ -31,19 +27,38 @@ Where a suggestion conflicts with an architectural decision your human partner p
 
 1. **Read all of it first.** Every item, to the end. Do not react, do not start implementing, do not respond. A batch of review items is frequently one problem described from several angles, and you cannot see that from the first item.
 
-2. **Assign severity if the feedback has none.** A reviewer dispatched from `../_shared/code-reviewer-prompt.md` returns tiers natively, so this step is usually a no-op for one. It is the other sources that arrive untiered: a bot's comments, or a partner listing three problems in a message. Use the tests in `../_shared/code-review.md` and state the tier you assigned with your reason, so the reviewer or partner can correct it. Skip this where the feedback is already categorised.
+2. **Assign severity if the feedback has none.** A reviewer dispatched by `work-review-request` or by an orchestration workflow returns Critical, Important and Minor natively, so this step is usually a no-op for one. It is the other sources that arrive untiered: a bot's comments, or a partner listing three problems in a message. Ordering the work still needs tiers, so assign each item one from the severity table in the always-on code review rules, and state the tier you assigned with your reason, so the reviewer or partner can correct it. Skip this where the feedback is already categorised.
 
 3. **Verify each item against the codebase**, applying the source trust rules above. Restate each item in your own words as you go: if you cannot, you have not understood it yet, and that is worth knowing now rather than after you have changed code. Check that the suggestion is correct for this stack, version, and platform, that it does not break existing behaviour, that it does not conflict with a prior decision, and that it does not build out code nothing calls.
 
-4. **Sort each item** into one of three outcomes: accept and implement, push back with technical reasoning, or genuinely unclear. `../_shared/code-review.md` sets out the conditions under which pushback is not optional.
+4. **Sort each item** into one of three outcomes: accept and implement, push back with technical reasoning, or genuinely unclear. "When Pushback Is Not Optional" below sets out the conditions under which the second is mandatory.
 
    Verification comes before this sort on purpose. Until you have read the code, an item that is simply wrong about the codebase is indistinguishable from one you have failed to understand, and the two take opposite routes: one gets pushback, the other gets a question. Sorting first means guessing which.
 
-5. **Stop and ask if anything is genuinely unclear.** Ask about every unclear item at once, and implement nothing, including the items you do understand. Review items are frequently related, so an implementation built on partial understanding produces a wrong implementation that also looks like progress. See `../_shared/code-review.md` on partial implementation.
+5. **Stop and ask if anything is genuinely unclear.** Ask about every unclear item at once, and implement nothing, including the items you do understand. Review items are frequently related, so an implementation built on partial understanding produces a wrong implementation that also looks like progress.
 
-6. **Respond per item**: the fix you will make and where, the question you need answered, or the technical reason you are pushing back. Forbidden responses are listed in `../../rules/common/code-review.md`.
+6. **Respond per item**: the fix you will make and where, the question you need answered, or the technical reason you are pushing back. The forbidden responses in the always-on code review rules, performative agreement, gratitude, "you're absolutely right", apply to every item.
 
-7. **Implement in severity order**, per `../_shared/code-review.md`: blocking issues first, then simple fixes, then complex ones. Test each fix individually and confirm no regressions before starting the next. A batch of fixes verified only at the end cannot tell you which one broke something.
+7. **Implement in severity order**: blocking issues first, then simple fixes, then complex ones. Test each fix individually and confirm no regressions before starting the next. A batch of fixes verified only at the end cannot tell you which one broke something.
+
+## When Pushback Is Not Optional
+
+You **MUST** push back when any of the following is true:
+
+- The suggestion breaks existing functionality
+- The reviewer lacks context that changes the calculus: legacy compatibility, platform support, a prior decision
+- The code path is unused and the suggestion violates YAGNI
+- The suggestion is technically incorrect for this stack, framework, or runtime version
+
+Pushback **MUST** be grounded in technical reasoning: cite the file, the test, the version constraint, or the prior decision. Defensive or emotional pushback is forbidden, and so is silence: you **MUST NOT** implement a suggestion you believe is wrong without pushing back first.
+
+The YAGNI case has a mandatory first step. When a reviewer suggests implementing a feature "properly", "fully", or "the right way", grep the codebase for actual usage of the code in question before doing anything else. If nothing calls it, the correct response is to propose removal, not to build out the suggested feature. Only when usage exists do you implement the suggestion.
+
+If you pushed back and were wrong, state the correction factually in one or two sentences, cite what changed your mind, and move on. No apology, no re-litigation, no over-explanation.
+
+## GitHub Inline Replies
+
+When replying to an inline review comment on a GitHub pull request, reply in the comment thread using `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies`. You **MUST NOT** respond as a top-level PR comment: a top-level reply detaches the response from the comment it answers and makes the review thread unreadable.
 
 ## Return Contract
 
@@ -120,7 +135,7 @@ Every thought below means stop:
 | Mistake                                                           | Why it is wrong                                                                                                                          |
 |-------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
 | Sorting items as unclear before verifying them                    | An item that is wrong about the code looks identical to one you have not understood. They take opposite routes: pushback, or a question. |
-| Implementing a subagent or bot suggestion without checking it     | `../_shared/code-review.md` treats external feedback as a suggestion to evaluate, not an order to execute.                               |
+| Implementing a subagent or bot suggestion without checking it     | External feedback is a suggestion to evaluate, not an order to execute.                                                                  |
 | Verifying feedback from your human partner                        | The partner is trusted. Clarify scope where it is unclear, but do not audit the instruction.                                             |
 | Treating uncategorised feedback as though it had no severity      | Order still matters. Assign the tiers yourself and say what you assigned, so it can be corrected.                                        |
 | Fixing everything at once and testing at the end                  | When something breaks you cannot tell which fix did it, and the batch has to be unpicked.                                                |

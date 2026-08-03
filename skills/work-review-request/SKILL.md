@@ -5,11 +5,7 @@ description: "Dispatches a code reviewer subagent against the work under review,
 
 # Requesting Code Review
 
-Dispatches a reviewer against a concrete diff, drives the fixes its findings require, and returns an approved change or an escalation.
-
-The iron-law rules (when reviews are mandatory, forbidden response phrases) live in `../../rules/common/code-review.md`. The procedural rules that bind once a review skill is running (verify before acting, severity discipline and how to assign tiers, when to push back, the GitHub inline reply procedure) live in `../_shared/code-review.md`. The iron laws on subagent dispatch (context isolation, the git ban, the worktree ban, the privilege ban, and the ban on writing an identifier you have not confirmed the environment exposes) live in `../../rules/common/subagents.md`.
-
-Before running the procedure below, read `../_shared/code-review.md` and `../_shared/subagent-dispatch.md` with the Read tool if you have not already read them this session. The second holds the type selection and model resolution procedures this skill depends on, and a dispatch made without them in context is a guess.
+Dispatches a reviewer against a concrete diff, drives the fixes its findings require, and returns an approved change or an escalation. Everything a dispatched reviewer needs is in the prompt template below; nothing here requires reading any other file.
 
 ## Establishing the Review Range
 
@@ -29,7 +25,7 @@ Never fall back to `HEAD~1`. It is right only when the work is exactly one commi
 
 ### Include the Working Tree
 
-Work reaching this skill is frequently uncommitted. `debug-investigation` reviews at Phase 7 step 3 and commits only after its Completion Gate. `work-implementation` offers "Ask me each time" as a commit preference, and a user may decline. A `BASE..HEAD` range excludes the working tree, so in both cases the reviewer would receive the previous commit and none of the work under review.
+Work reaching this skill is frequently uncommitted. A bug fix arrives here before its completion gate has permitted a commit, and orchestrated work under "Ask me each time" may be draining tasks the user has not yet approved. A `BASE..HEAD` range excludes the working tree, so in both cases the reviewer would receive the previous commit and none of the work under review.
 
 Diffing against the base alone rather than across a range solves this without a branch. `git diff <base>` compares the base to the working tree, so it covers committed and uncommitted changes together, and it is identical to `BASE..HEAD` when the tree is clean. Untracked files are the one thing it cannot show, which is what `git status --porcelain` is for.
 
@@ -40,20 +36,29 @@ git diff --stat "$BASE_SHA"
 
 If the diff is empty and no untracked files are listed, there is nothing to review. Return **Nothing to review** rather than dispatching, because a reviewer given an empty diff returns an approval, and nothing downstream can tell that approval apart from one earned by real code.
 
+## Selecting the Reviewer Model
+
+Resolve the model at dispatch time, every time:
+
+1. Enumerate the models the current environment actually exposes by reading the values the `Agent` tool's `model` parameter accepts. Never construct an identifier from a remembered pattern: recognising the shape of an identifier is not confirming it exists. If enumeration is impossible, let the dispatch inherit the session model and say so; never fall back silently.
+2. Start at the tier whose task signal matches the change under review, and map it to a concrete value from that enumeration: a change confined to a few files with clear acceptance criteria reviews at a low-cost model, and a change whose correctness depends on how several files interact starts at a mid-tier one.
+3. Never review below the tier that produced the work. The review is the last gate before the work is accepted, so a reviewer that misses a real defect is the most expensive failure this skill can produce, and no per-call saving covers it.
+4. Escalate one tier at a time and only on evidence, such as a previous dispatch whose findings show it did not follow the change across file boundaries. A long diff is not by itself a signal; line count measures size, not judgement.
+
 ## Procedure
 
 1. **Establish the range** per the section above. A precondition failure returns **Nothing to review** or **Range unknown** and spends no budget.
 
-2. **Resolve the model** per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the tier whose task signal matches the change under review, and never below the tier that produced it: a single-file change with a clear spec reviews at the Low-cost default, while a change spanning several files whose correctness depends on how they interact starts at Standard escalation. Escalate one tier at a time and only on evidence, such as a reviewer whose findings show it did not follow the change across files.
+2. **Resolve the model** per "Selecting the Reviewer Model" above.
 
-3. **Fill the template** in `../_shared/code-reviewer-prompt.md` and dispatch. The template names its own placeholders; fill every one, and leave none unreplaced. Pass no session history: the reviewer reads the repository and the diff, and anything it needs from the conversation belongs in the template you fill.
+3. **Fill the prompt template** below and dispatch with `Agent`. The placeholder table names every placeholder; fill every one, and leave none unreplaced. Pass no session history: the reviewer reads the repository and the diff, and anything it needs from the conversation belongs in the template you fill.
 
 4. **Read the status.**
    - **Approved**: go to step 7.
    - **Issues Found**: go to step 5.
    - **Neither, or the dispatch failed**: see "When the Dispatch Fails" below.
 
-5. **Process the findings through `work-review-receive`.** That skill verifies each item, pushes back where the reviewer is wrong, and implements what survives, in the severity order set by `../_shared/code-review.md`. Pushback is a legitimate outcome: an item the reviewer got wrong is closed by the reasoning, not by a change to the code.
+5. **Process the findings through `work-review-receive`.** That skill verifies each item, pushes back where the reviewer is wrong, and implements what survives in severity order. Pushback is a legitimate outcome: an item the reviewer got wrong is closed by the reasoning, not by a change to the code.
 
    Only its **Applied** return continues this loop. **Clarification required** and **Escalated** both need a person, so carry them to the user and stop; re-dispatching a reviewer cannot supply what it never had. **Pushback pending** needs an answer from whoever produced the feedback before the batch closes.
 
@@ -69,17 +74,131 @@ The dispatch that returns Approved must be one that read the fixes. Code written
 
 ### When the Dispatch Fails
 
-A dispatch that returns no usable status, reports BLOCKED, or errors has reviewed nothing, so it spends no budget. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md` where a higher tier remains, otherwise at the same tier. If the retry also fails, return **Issues outstanding** with the dispatch failure as the outstanding item, so the decision reaches a human rather than a third attempt.
+A dispatch that returns no usable status, reports BLOCKED, or errors has reviewed nothing, so it spends no budget. Retry it once, one tier up where a higher tier remains, otherwise at the same tier. If the retry also fails, return **Issues outstanding** with the dispatch failure as the outstanding item, so the decision reaches a human rather than a third attempt.
+
+## The Reviewer Prompt
+
+Fill every placeholder; leave none unreplaced in the dispatched prompt.
+
+| Placeholder              | What goes in it                                                                                                                                                                                                                                     |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `[WHAT_WAS_IMPLEMENTED]` | One line naming what the change builds.                                                                                                                                                                                                             |
+| `[DESCRIPTION]`          | A short paragraph: what it builds, and the design decisions that matter for review.                                                                                                                                                                 |
+| `[PLAN_REFERENCE]`       | The approved design, ticket, or plan the work delivers against. Paste the acceptance criteria, do not link.                                                                                                                                         |
+| `[BASE_SHA]`             | The base commit established per "Establishing the Review Range" above.                                                                                                                                                                              |
+| `[REVIEW_TARGET]`        | `the working tree, which contains uncommitted changes` or `commit <sha>`.                                                                                                                                                                           |
+| `[UNTRACKED_FILES]`      | Paths from `git status --porcelain` that the diff cannot show, or `none`.                                                                                                                                                                           |
+| `[PREVIOUS_ROUND]`       | On a re-dispatch: your previous findings and what changed in response. Omit the section on the first review.                                                                                                                                        |
+| `[SEVERITY_TABLE]`       | The severity table from the always-on code review rules, pasted whole. That table is the canonical copy and this template deliberately does not restate it, so an edit there reaches every dispatched reviewer with no second copy to keep in sync. |
+
+```yaml
+Agent (general-purpose):
+  description: "Code review: [WHAT_WAS_IMPLEMENTED]"
+  prompt: |
+    You are reviewing a change for production readiness.
+
+    ## What Was Built
+
+    [DESCRIPTION]
+
+    ## What Was Asked For
+
+    [PLAN_REFERENCE]
+
+    ## Previous Review Round
+
+    [PREVIOUS_ROUND]
+
+    ## The Change
+
+    Base commit: [BASE_SHA]
+    Reviewing: [REVIEW_TARGET]
+    Untracked files not shown by the diff: [UNTRACKED_FILES]
+
+    ```bash
+    git diff --stat [BASE_SHA]
+    git diff [BASE_SHA]
+    ```
+
+    Diffing against the base rather than across a commit range is deliberate: it includes uncommitted work, which is often where the change under review lives. Any untracked file listed above is part of this change and will not appear in the diff at all. Read those files directly.
+
+    ## Do Not Trust This Description
+
+    The summary above is what someone believes they built. It may be incomplete, inaccurate, or optimistic. Verify everything against the code: read what was actually written, compare it to the acceptance criteria line by line, look for requirements silently skipped and for work nobody asked for.
+
+    ## What You May and May Not Do
+
+    Read whatever you need to judge the change: the diff, the files it touches, their callers, the tests that cover them, and the conventions of the surrounding code. Understanding a change means reading beyond it.
+
+    You may not change anything. Do not edit files, do not stage or commit, and do not run the test suite or the build. Whether the suite passes is the orchestrator's verification gate, not yours, and running it from here mutates state the orchestrator is about to measure. Judge the tests by reading them.
+
+    ## What To Check
+
+    Scale this to the change in front of you. A one-line bug fix does not have a migration strategy, and asking after one produces noise that costs the orchestrator real work to dismiss. Skip whole sections that do not apply and say nothing about them.
+
+    | Area              | What to look for                                                                                                               |
+    |-------------------|--------------------------------------------------------------------------------------------------------------------------------|
+    | Correctness       | Bugs, unhandled edge cases, errors caught and swallowed, race conditions, off-by-one boundaries                                |
+    | Spec compliance   | Requirements unmet, requirements misread, work delivered that nobody asked for                                                 |
+    | Tests             | New behaviour covered, tests driving real code rather than mocks of it, a test that would actually fail if the behaviour broke |
+    | Design            | Responsibilities separated, complexity the problem does not require, duplication worth naming                                  |
+    | Consistency       | Naming, structure, and idiom matching the surrounding code rather than a different house style                                 |
+    | Security and data | Untrusted input reaching a boundary unvalidated, secrets in the diff, destructive or lossy paths                               |
+    | Compatibility     | Breaking changes to a published interface, schema changes without a migration, where these apply                               |
+
+    ## Calibration
+
+    Only report what would cause a real problem. A swallowed error, an unmet requirement, and new behaviour with no test are issues. Wording preferences, a structure you would have chosen differently, and optimisations with no measurement behind them are not.
+
+    Severity is a commitment, not a description of how strongly you feel. Critical and Important both block: the orchestrator must fix them before the work advances at all. Assign them using these tests:
+
+    [SEVERITY_TABLE]
+
+    Inflation is the failure mode to guard against, because it looks conscientious while it stalls the work. If an issue would leave you comfortable shipping, it is Minor. Approve changes that are sound but imperfect: perfect is not the bar, and a review that never approves anything stops being read.
+
+    Anything you want to suggest that is not an issue goes under Recommendations, which are advisory and do not block.
+
+    ## Output Format
+
+    ## Code Review
+
+    **Status:** Approved | Issues Found
+
+    Approved means no Critical and no Important issues. Minor issues are compatible with Approved; list them and still approve.
+
+    **Strengths:**
+    - [what is genuinely well done, specifically, with file:line]
+
+    **Issues:**
+
+    ### Critical
+    ### Important
+    ### Minor
+
+    For each issue, under its severity heading:
+    - **[one-line summary]**
+      - Where: file:line
+      - What: what is wrong
+      - Why it matters: the consequence, concretely
+      - Fix: how to resolve it, where that is not obvious
+
+    Omit any severity heading that has no issues under it.
+
+    **Recommendations (advisory, do not block approval):**
+    - [suggestions the orchestrator may take or leave]
+```
+
+This skill is the template's only call site: per-task reviews inside orchestrated work are dispatched by that skill's own workflow script and do not use it.
 
 ## Return Contract
 
 This section is addressed to whichever skill or user invoked this one. It lives here because invoking this skill is what loads the file, so the caller has the text at the moment it needs it.
 
-**Approved.** The most recent dispatch found no Critical or Important issues. The caller receives the range reviewed, any Minor issues left deferred, and the reviewer's recommendations. The caller continues. Minor issues and recommendations travel unapplied by design: deferring them is permitted by `../_shared/code-review.md`, and acting on them here would expand a change the review had already cleared.
+**Approved.** The most recent dispatch found no Critical or Important issues. The caller receives the range reviewed, any Minor issues left deferred, and the reviewer's recommendations. The caller continues. Minor issues and recommendations travel unapplied by design: deferring a Minor issue is a permitted response to it, and acting on recommendations here would expand a change the review had already cleared.
 
 **Issues outstanding.** The three-dispatch budget is spent with Critical or Important issues remaining, or the reviewer could not be dispatched. The caller receives those issues and **MUST NOT** invoke this skill again in the hope of a better verdict. The budget exists so that a change which will not converge reaches a human rather than a fourth reviewer. The caller stops and puts it to the user.
 
-**Nothing to review.** The range is empty. Nothing was reviewed and no budget was spent. This is a precondition failure, not an approval, and the caller **MUST NOT** treat it as one: the mandatory-review requirement in `../../rules/common/code-review.md` is unsatisfied. The caller establishes where the work actually is and invokes this skill again.
+**Nothing to review.** The range is empty. Nothing was reviewed and no budget was spent. This is a precondition failure, not an approval, and the caller **MUST NOT** treat it as one: the mandatory review has not happened. The caller establishes where the work actually is and invokes this skill again.
 
 **Range unknown.** The base could not be established and the user has not supplied one. Nothing was reviewed. The caller obtains the base and invokes this skill again.
 
@@ -95,7 +214,7 @@ git status --porcelain    # M src/index.ts, ?? src/repair.ts
 git diff --stat "$BASE_SHA"
 ```
 
-The diff is non-empty and `repair.ts` is untracked, so the reviewer is told to read it directly rather than expect it in the diff. Dispatch the reviewer at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`.
+The diff is non-empty and `repair.ts` is untracked, so the reviewer is told to read it directly rather than expect it in the diff. Dispatch the reviewer at a low-cost tier resolved per "Selecting the Reviewer Model".
 
 **Dispatch 1** returns Issues Found:
 
@@ -135,20 +254,16 @@ Every thought below means stop:
 
 ## Common Mistakes
 
-| Mistake                                                    | Why it is wrong                                                                                                                                            |
-|------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Defaulting the base to `HEAD~1`                            | Right only for single-commit work. On a multi-task feature it reviews the last task and reports on the whole thing.                                        |
-| Reviewing `BASE..HEAD` when the tree is dirty              | Excludes the working tree, so the reviewer reads the previous commit and none of the work. `debug-investigation` reaches this skill in exactly that state. |
-| Forgetting untracked files                                 | A new file that was never added shows in `git status` but not in `git diff`. The reviewer will report on a change with its main file missing.              |
-| Treating **Nothing to review** as an approval              | The mandatory review has not happened. The empty range is a bug in the range, not evidence about the code.                                                 |
-| Returning Approved on the verdict that preceded the fixes  | That verdict described code that no longer exists.                                                                                                         |
-| Letting the caller decide whether to re-review             | The loop belongs to this skill. Callers that own it either skip it or run it twice.                                                                        |
-| Passing session history to the reviewer                    | Violates context isolation. Anything the reviewer needs from the conversation goes in the template.                                                        |
-| Fixing the reviewer's findings yourself in this context    | `../_shared/subagent-dispatch.md` forbids patching a subagent's output in the orchestrator context. Findings go through `work-review-receive`.             |
-| Accepting every finding because a reviewer produced it     | `../_shared/code-review.md` makes pushback mandatory where the reviewer is wrong. An unverified fix to a non-issue is a change nobody asked for.           |
-| Counting a failed dispatch against the budget              | A dispatch that errored reviewed nothing. Retry once, a tier up where one remains; spending budget on it burns a review the change never got.              |
-| Pre-escalating to a high tier because the change feels big | Size is not the signal. `../_shared/subagent-dispatch.md` requires one tier at a time, on evidence.                                                        |
-
-## Template
-
-The reviewer prompt template lives at `../_shared/code-reviewer-prompt.md`. It is the single source of truth for its own placeholders; do not restate them here. This skill is its only call site: per-task reviews inside orchestrated work are dispatched by that skill's own workflow script and do not use the template.
+| Mistake                                                    | Why it is wrong                                                                                                                                                 |
+|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Defaulting the base to `HEAD~1`                            | Right only for single-commit work. On a multi-task feature it reviews the last task and reports on the whole thing.                                             |
+| Reviewing `BASE..HEAD` when the tree is dirty              | Excludes the working tree, so the reviewer reads the previous commit and none of the work. A bug fix reaches this skill in exactly that state.                  |
+| Forgetting untracked files                                 | A new file that was never added shows in `git status` but not in `git diff`. The reviewer will report on a change with its main file missing.                   |
+| Treating **Nothing to review** as an approval              | The mandatory review has not happened. The empty range is a bug in the range, not evidence about the code.                                                      |
+| Returning Approved on the verdict that preceded the fixes  | That verdict described code that no longer exists.                                                                                                              |
+| Letting the caller decide whether to re-review             | The loop belongs to this skill. Callers that own it either skip it or run it twice.                                                                             |
+| Passing session history to the reviewer                    | Violates context isolation. Anything the reviewer needs from the conversation goes in the template.                                                             |
+| Fixing the reviewer's findings yourself in this context    | Patching a subagent's output in the orchestrator context destroys the isolation that makes the evidence trustworthy. Findings go through `work-review-receive`. |
+| Accepting every finding because a reviewer produced it     | Pushback is mandatory where the reviewer is wrong. An unverified fix to a non-issue is a change nobody asked for.                                               |
+| Counting a failed dispatch against the budget              | A dispatch that errored reviewed nothing. Retry once, a tier up where one remains; spending budget on it burns a review the change never got.                   |
+| Pre-escalating to a high tier because the change feels big | Size is not the signal. Escalate one tier at a time, on evidence a lower tier missed something.                                                                 |
