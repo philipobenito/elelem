@@ -1,6 +1,6 @@
 # Debugging - Procedural Rules
 
-These rules apply once the `debugging` skill has been invoked. They are the procedural detail behind the iron laws in `../../rules/common/debugging.md`. The iron laws (the Hard Gate, Evidence Over Intuition, and the cross-references that bind bug fixes to `../../rules/common/workflow.md`, `../../rules/common/testing.md`, and `../../rules/common/verification.md`) live in the always-on rule file and bind whether or not this skill runs. The rules below bind once the skill has been invoked and govern *how* the investigation is carried out.
+These rules apply once the `debug-investigation` skill has been invoked. They are the procedural detail behind the iron laws in `../../rules/common/debugging.md`. The iron laws (the Hard Gate, Evidence Over Intuition, and the cross-references that bind bug fixes to `../../rules/common/workflow.md`, `../../rules/common/testing.md`, and `../../rules/common/verification.md`) live in the always-on rule file and bind whether or not this skill runs. The rules below bind once the skill has been invoked and govern *how* the investigation is carried out.
 
 ## Reproduction Is Non-Negotiable
 

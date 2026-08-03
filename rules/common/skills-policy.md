@@ -39,21 +39,21 @@ Clarifying questions are themselves tasks, and there may be a skill governing ho
 
 When more than one skill could apply, you **MUST** invoke them in this order:
 
-1. **Entry skills first**: `design-grill-me` (before any code edit above the design threshold in `workflow.md`; `design-committee` instead when the user has asked for hands-off deliberation), `debugging` (when the task is "something is broken"), `design-recovery` (when the user references a ticket or a persisted design document). These determine *what* you are doing.
-2. **Process skills second**: `verification-before-completion`. These determine *how* to approach the work.
-3. **Implementation skills third**: `orchestrated-implementation`, `test-driven-development`, and domain-specific skills. These guide execution.
-4. **Review skills fourth**: `requesting-code-review`, `receiving-code-review`. These run before completion claims.
+1. **Entry skills first**: `design-grill-me` (before any code edit above the design threshold in `workflow.md`; `design-committee` instead when the user has asked for hands-off deliberation), `debug-investigation` (when the task is "something is broken"), `design-recovery` (when the user references a ticket or a persisted design document). These determine *what* you are doing.
+2. **Process skills second**: `work-verification`. These determine *how* to approach the work.
+3. **Implementation skills third**: `work-implementation`, `work-tdd`, and domain-specific skills. These guide execution.
+4. **Review skills fourth**: `work-review-request`, `work-review-receive`. These run before completion claims.
 
 Examples:
 
 - "Let's build X" -> `design-grill-me` first (or the inline design path in `workflow.md` when the change sits below the design threshold); the skill produces an approved design; an implementation skill takes over.
-- "Fix this bug" -> `debugging` first (reproduce, find root cause, get user approval on the fix approach); then `test-driven-development` for the regression test; then the fix; then `requesting-code-review`; then `verification-before-completion`.
-- "Work on #42" -> `design-recovery` first; it recovers the design from the persisted artefact and hands off to `orchestrated-implementation`.
-- "Is this done?" -> `verification-before-completion` first, nothing else until the gate has been run.
+- "Fix this bug" -> `debug-investigation` first (reproduce, find root cause, get user approval on the fix approach); then `work-tdd` for the regression test; then the fix; then `work-review-request`; then `work-verification`.
+- "Work on #42" -> `design-recovery` first; it recovers the design from the persisted artefact and hands off to `work-implementation`.
+- "Is this done?" -> `work-verification` first, nothing else until the gate has been run.
 
 ### The Orchestration Skill
 
-`orchestrated-implementation` is the only orchestration skill. It implements an approved design as file-disjoint tasks run concurrently through the workflow script it ships with, with the lead holding commits, the checkpoint drain and the final feature-level review. Its full operational detail lives in `skills/orchestrated-implementation/`, not here.
+`work-implementation` is the only orchestration skill. It implements an approved design as file-disjoint tasks run concurrently through the workflow script it ships with, with the lead holding commits, the checkpoint drain and the final feature-level review. Its full operational detail lives in `skills/work-implementation/`, not here.
 
 Coupled and strictly ordered work goes there too. Ordering is expressed as `blockedBy` edges between tasks inside the decomposition, rather than as a reason to route the work elsewhere.
 
@@ -62,10 +62,10 @@ You **MUST NOT** substitute a bare concurrent fan-out of implementer subagents f
 Specific mandatory pairings:
 
 - **Before any code edit**: the design step in `workflow.md`. Above the design threshold that means `design-grill-me`, or `design-committee` when the user has asked for hands-off deliberation; below it, a short design statement presented in the conversation and explicitly approved, with no skill invoked. The threshold is decided on its three stated criteria against code you have read, never on the feel of the request, and uncertainty routes to the skill. Either way, no edit happens before the user has approved a design.
-- **Before writing implementation code for a feature or non-trivial change**: `test-driven-development`. This does not apply to one-line bug fixes (those go through `debugging` first), typo corrections, or edits to non-code files.
-- **Before any debugging or fix work**: `debugging`. The hard gate in `debugging.md` (reproduce + root cause) applies whether or not the skill is invoked, and the skill is the procedure that produces the evidence the rule requires.
-- **Before claiming work is complete**: `requesting-code-review` followed by `verification-before-completion`. In orchestrated work via `orchestrated-implementation`, the workflow script covers the per-task reviews and that skill requests the feature-level review itself at the end against the cumulative diff, you do not invoke it again.
-- **Before asserting that something passes, works, or is ready**: `verification-before-completion`.
+- **Before writing implementation code for a feature or non-trivial change**: `work-tdd`. This does not apply to one-line bug fixes (those go through `debug-investigation` first), typo corrections, or edits to non-code files.
+- **Before any debugging or fix work**: `debug-investigation`. The hard gate in `debugging.md` (reproduce + root cause) applies whether or not the skill is invoked, and the skill is the procedure that produces the evidence the rule requires.
+- **Before claiming work is complete**: `work-review-request` followed by `work-verification`. In orchestrated work via `work-implementation`, the workflow script covers the per-task reviews and that skill requests the feature-level review itself at the end against the cumulative diff, you do not invoke it again.
+- **Before asserting that something passes, works, or is ready**: `work-verification`.
 
 ## Instruction Priority
 
@@ -77,7 +77,7 @@ When instructions from different sources conflict, you **MUST** resolve them in 
 
 If the user says "do not use TDD on this file" and a skill says "always use TDD", the user wins. The user is in control. You **MUST NOT** invoke a skill to override an explicit user instruction.
 
-This does **not** mean a casual phrasing like "just add X" overrides workflow skills. User instructions say *what* to do; skills say *how* to do it. "Add a new endpoint" does not waive `design-grill-me`, `test-driven-development`, or `verification-before-completion`. A change below the design threshold already takes the lightweight inline path, so "this is small" is an argument to make against the threshold's criteria, not against the design step. Only an explicit, scoped opt-out from the user ("skip TDD for this prototype", "no design statement for this one-character typo") waives a workflow skill, and you **MUST** confirm the opt-out before acting on it.
+This does **not** mean a casual phrasing like "just add X" overrides workflow skills. User instructions say *what* to do; skills say *how* to do it. "Add a new endpoint" does not waive `design-grill-me`, `work-tdd`, or `work-verification`. A change below the design threshold already takes the lightweight inline path, so "this is small" is an argument to make against the threshold's criteria, not against the design step. Only an explicit, scoped opt-out from the user ("skip TDD for this prototype", "no design statement for this one-character typo") waives a workflow skill, and you **MUST** confirm the opt-out before acting on it.
 
 ## Subagent Exemption
 

@@ -1,6 +1,6 @@
 # Debugging
 
-These rules apply to every debugging activity, regardless of whether the `debugging` skill has been invoked and regardless of how obvious the bug seems.
+These rules apply to every debugging activity, regardless of whether the `debug-investigation` skill has been invoked and regardless of how obvious the bug seems.
 
 ## The Hard Gate
 
@@ -29,4 +29,4 @@ Bug fixes do not waive the rules in `workflow.md`, `testing.md`, or `verificatio
 
 ## Procedural Rules
 
-The procedural rules that bind once the `debugging` skill is running, scope discipline, the refocus rule, the investigation budget, root cause vs symptom, the minimal fix principle, and the rationalisation prevention table, live in `skills/debugging/RULES.md` and load when the skill is invoked. The executable procedure (the 7-phase investigation, mode selection, investigator subagent dispatch) lives in `skills/debugging/SKILL.md`.
+The procedural rules that bind once the `debug-investigation` skill is running, scope discipline, the refocus rule, the investigation budget, root cause vs symptom, the minimal fix principle, and the rationalisation prevention table, live in `skills/debug-investigation/RULES.md` and load when the skill is invoked. The executable procedure (the 7-phase investigation, mode selection, investigator subagent dispatch) lives in `skills/debug-investigation/SKILL.md`.

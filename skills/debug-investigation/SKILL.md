@@ -1,5 +1,5 @@
 ---
-name: debugging
+name: debug-investigation
 description: "Runs a disciplined, evidence-driven investigation to reproduce a bug, identify its root cause, and deliver a minimal verified fix. You MUST use this before touching any code in response to a bug, an error, a crash, a failing or flaky test, a regression, or anything described as not working, including one-line fixes and changes that look like an obvious typo: the hard gate (no fix without a reproduction and an identified root cause) applies however simple the fix looks. Enforces scope discipline, the investigation budget, and the minimal fix principle, and takes its own approval for the fix approach so bugs do not go through the design step."
 ---
 
@@ -113,10 +113,10 @@ Otherwise present the root cause and the proposed fix approach to the user for c
 
 Once the user has approved the root cause and the fix approach:
 
-1. **Invoke the `test-driven-development` skill** to write a failing regression test that reproduces the bug. Per `../../rules/common/testing.md`, the test **MUST** fail before the fix and pass after. Watch it fail for the right reason.
+1. **Invoke the `work-tdd` skill** to write a failing regression test that reproduces the bug. Per `../../rules/common/testing.md`, the test **MUST** fail before the fix and pass after. Watch it fail for the right reason.
 2. **Implement the minimal fix** per the Minimal Fix Principle in `RULES.md`. Do not refactor, do not add features, do not fix unrelated issues.
-3. **Invoke the `requesting-code-review` skill** against the fix and its regression test. `../../rules/common/code-review.md` grants no exemption for a change that is small, simple, obvious, or locally tested, and a minimal bug fix is the change most likely to claim one. The fix is still uncommitted at this point, because this skill commits only after the Completion Gate; that skill diffs against the base rather than across a commit range for exactly this reason, so the uncommitted work is what gets reviewed. It also owns the fix-and-re-review loop and processes findings through `receiving-code-review` itself, so do not run that loop here. An **Issues outstanding** return means the fix did not pass review, and none of the four return states below is Fixed until it does.
-4. **Invoke the `verification-before-completion` skill** to run the full relevant test suite, confirm the regression test passes, confirm no other tests broke, and cite the evidence before claiming the fix complete.
+3. **Invoke the `work-review-request` skill** against the fix and its regression test. `../../rules/common/code-review.md` grants no exemption for a change that is small, simple, obvious, or locally tested, and a minimal bug fix is the change most likely to claim one. The fix is still uncommitted at this point, because this skill commits only after the Completion Gate; that skill diffs against the base rather than across a commit range for exactly this reason, so the uncommitted work is what gets reviewed. It also owns the fix-and-re-review loop and processes findings through `work-review-receive` itself, so do not run that loop here. An **Issues outstanding** return means the fix did not pass review, and none of the four return states below is Fixed until it does.
+4. **Invoke the `work-verification` skill** to run the full relevant test suite, confirm the regression test passes, confirm no other tests broke, and cite the evidence before claiming the fix complete.
 
 ## Autonomous-Mode Subagent Dispatch
 
@@ -159,7 +159,7 @@ Before claiming a bug fixed, confirm every box:
 - [ ] The user explicitly approved the root cause and the fix approach
 - [ ] A regression test was watched failing for the right reason before the fix
 - [ ] The fix changes only what the root cause requires
-- [ ] `requesting-code-review` ran and its findings were processed
-- [ ] `verification-before-completion` ran fresh in the current message and the evidence was cited
+- [ ] `work-review-request` ran and its findings were processed
+- [ ] `work-verification` ran fresh in the current message and the evidence was cited
 
 An unchecked box means one of the four return states above is the honest one, not "Fixed".

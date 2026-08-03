@@ -58,7 +58,7 @@ Two approaches are genuinely live only where nothing in the codebase favours one
 
 - A design produced by `design-grill-me` or `design-committee` that the user has explicitly approved
 - An inline-path design statement, for a change below the threshold, that the user has explicitly approved
-- A root cause and fix approach produced by the debugging skill's fix-approval phase that the user has explicitly approved (see "Bug Fixes" below)
+- A root cause and fix approach produced by the `debug-investigation` skill's fix-approval phase that the user has explicitly approved (see "Bug Fixes" below)
 - An epic or ticket containing a design that the user has written or previously approved
 - A specification committed to the repository that the user has pointed to as the source of truth for the current change
 

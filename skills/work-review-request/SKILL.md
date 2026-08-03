@@ -1,6 +1,6 @@
 ---
-name: requesting-code-review
-description: "Dispatches a code reviewer subagent against the work under review, applies severity discipline to its verdict, and owns the fix-and-re-review loop until no Critical or Important issue remains. Use this whenever a change is about to be committed to main, opened as a pull request, handed back as complete, or declared done, and whenever the user asks for a branch, a diff, or their changes to be looked over before shipping. Invoked by `orchestrated-implementation` for the feature-level review and by `debugging` after a fix. No change is exempt for being small, simple, obvious, or locally tested."
+name: work-review-request
+description: "Dispatches a code reviewer subagent against the work under review, applies severity discipline to its verdict, and owns the fix-and-re-review loop until no Critical or Important issue remains. Use this whenever a change is about to be committed to main, opened as a pull request, handed back as complete, or declared done, and whenever the user asks for a branch, a diff, or their changes to be looked over before shipping. Invoked by `work-implementation` for the feature-level review and by `debug-investigation` after a fix. No change is exempt for being small, simple, obvious, or locally tested."
 ---
 
 # Requesting Code Review
@@ -19,17 +19,17 @@ The reviewer sees exactly the diff you point it at, and it cannot tell a diff th
 
 Take the first row that applies.
 
-| Situation                                   | Base                                                                                                                                       |
-|---------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| Orchestrated work                           | The `baseSha` the orchestrator recorded at launch, which is the commit the whole feature is measured against.                              |
-| Branch work with an upstream                | `git merge-base HEAD <default-branch>`                                                                                                     |
-| Neither, and the boundary is not observable | Ask the user which commit the work starts from, and return **Range unknown** until they answer.                                            |
+| Situation                                   | Base                                                                                                          |
+|---------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Orchestrated work                           | The `baseSha` the orchestrator recorded at launch, which is the commit the whole feature is measured against. |
+| Branch work with an upstream                | `git merge-base HEAD <default-branch>`                                                                        |
+| Neither, and the boundary is not observable | Ask the user which commit the work starts from, and return **Range unknown** until they answer.               |
 
 Never fall back to `HEAD~1`. It is right only when the work is exactly one commit, it errors on a repository's first commit, and the rest of the time it is silently wrong: on a five-task feature it reviews task five and reports on the feature.
 
 ### Include the Working Tree
 
-Work reaching this skill is frequently uncommitted. `debugging` reviews at Phase 7 step 3 and commits only after its Completion Gate. `orchestrated-implementation` offers "Ask me each time" as a commit preference, and a user may decline. A `BASE..HEAD` range excludes the working tree, so in both cases the reviewer would receive the previous commit and none of the work under review.
+Work reaching this skill is frequently uncommitted. `debug-investigation` reviews at Phase 7 step 3 and commits only after its Completion Gate. `work-implementation` offers "Ask me each time" as a commit preference, and a user may decline. A `BASE..HEAD` range excludes the working tree, so in both cases the reviewer would receive the previous commit and none of the work under review.
 
 Diffing against the base alone rather than across a range solves this without a branch. `git diff <base>` compares the base to the working tree, so it covers committed and uncommitted changes together, and it is identical to `BASE..HEAD` when the tree is clean. Untracked files are the one thing it cannot show, which is what `git status --porcelain` is for.
 
@@ -53,7 +53,7 @@ If the diff is empty and no untracked files are listed, there is nothing to revi
    - **Issues Found**: go to step 5.
    - **Neither, or the dispatch failed**: see "When the Dispatch Fails" below.
 
-5. **Process the findings through `receiving-code-review`.** That skill verifies each item, pushes back where the reviewer is wrong, and implements what survives, in the severity order set by `../_shared/code-review.md`. Pushback is a legitimate outcome: an item the reviewer got wrong is closed by the reasoning, not by a change to the code.
+5. **Process the findings through `work-review-receive`.** That skill verifies each item, pushes back where the reviewer is wrong, and implements what survives, in the severity order set by `../_shared/code-review.md`. Pushback is a legitimate outcome: an item the reviewer got wrong is closed by the reasoning, not by a change to the code.
 
    Only its **Applied** return continues this loop. **Clarification required** and **Escalated** both need a person, so carry them to the user and stop; re-dispatching a reviewer cannot supply what it never had. **Pushback pending** needs an answer from whoever produced the feedback before the batch closes.
 
@@ -104,7 +104,7 @@ The diff is non-empty and `repair.ts` is untracked, so the reviewer is told to r
 - Minor: magic number (100) for the reporting interval; no progress indicator on long runs
 - Status: Issues Found
 
-`receiving-code-review` verifies the Important item, confirms the swallowed failure is real, and fixes it. The two Minor items are logged and deferred.
+`work-review-receive` verifies the Important item, confirms the swallowed failure is real, and fixes it. The two Minor items are logged and deferred.
 
 **Dispatch 2** reads the fix and returns Approved with a recommendation about extracting the interval as a named constant. Return **Approved**, carrying the two deferred Minor issues and the recommendation. Task 3 may begin.
 
@@ -116,7 +116,7 @@ You **MUST NOT** return Approved unless all of these are true:
 
 - The most recent dispatch **in this invocation** returned Approved. A previous Approved from earlier in the session, or your own reading of the fixes, does not count.
 - That dispatch reviewed a range that included every fix made during this invocation.
-- Every Critical and Important issue raised across every dispatch is either fixed in the code you are returning, or was pushed back through `receiving-code-review` with technical reasoning the reviewer did not contest.
+- Every Critical and Important issue raised across every dispatch is either fixed in the code you are returning, or was pushed back through `work-review-receive` with technical reasoning the reviewer did not contest.
 - Every deferred Minor issue is enumerated in the return.
 - The reviewer's recommendations travel with the return.
 
@@ -135,19 +135,19 @@ Every thought below means stop:
 
 ## Common Mistakes
 
-| Mistake                                                    | Why it is wrong                                                                                                                                  |
-|------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| Defaulting the base to `HEAD~1`                            | Right only for single-commit work. On a multi-task feature it reviews the last task and reports on the whole thing.                              |
-| Reviewing `BASE..HEAD` when the tree is dirty              | Excludes the working tree, so the reviewer reads the previous commit and none of the work. `debugging` reaches this skill in exactly that state. |
-| Forgetting untracked files                                 | A new file that was never added shows in `git status` but not in `git diff`. The reviewer will report on a change with its main file missing.    |
-| Treating **Nothing to review** as an approval              | The mandatory review has not happened. The empty range is a bug in the range, not evidence about the code.                                       |
-| Returning Approved on the verdict that preceded the fixes  | That verdict described code that no longer exists.                                                                                               |
-| Letting the caller decide whether to re-review             | The loop belongs to this skill. Callers that own it either skip it or run it twice.                                                              |
-| Passing session history to the reviewer                    | Violates context isolation. Anything the reviewer needs from the conversation goes in the template.                                              |
-| Fixing the reviewer's findings yourself in this context    | `../_shared/subagent-dispatch.md` forbids patching a subagent's output in the orchestrator context. Findings go through `receiving-code-review`. |
-| Accepting every finding because a reviewer produced it     | `../_shared/code-review.md` makes pushback mandatory where the reviewer is wrong. An unverified fix to a non-issue is a change nobody asked for. |
-| Counting a failed dispatch against the budget              | A dispatch that errored reviewed nothing. Retry once, a tier up where one remains; spending budget on it burns a review the change never got.    |
-| Pre-escalating to a high tier because the change feels big | Size is not the signal. `../_shared/subagent-dispatch.md` requires one tier at a time, on evidence.                                              |
+| Mistake                                                    | Why it is wrong                                                                                                                                            |
+|------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Defaulting the base to `HEAD~1`                            | Right only for single-commit work. On a multi-task feature it reviews the last task and reports on the whole thing.                                        |
+| Reviewing `BASE..HEAD` when the tree is dirty              | Excludes the working tree, so the reviewer reads the previous commit and none of the work. `debug-investigation` reaches this skill in exactly that state. |
+| Forgetting untracked files                                 | A new file that was never added shows in `git status` but not in `git diff`. The reviewer will report on a change with its main file missing.              |
+| Treating **Nothing to review** as an approval              | The mandatory review has not happened. The empty range is a bug in the range, not evidence about the code.                                                 |
+| Returning Approved on the verdict that preceded the fixes  | That verdict described code that no longer exists.                                                                                                         |
+| Letting the caller decide whether to re-review             | The loop belongs to this skill. Callers that own it either skip it or run it twice.                                                                        |
+| Passing session history to the reviewer                    | Violates context isolation. Anything the reviewer needs from the conversation goes in the template.                                                        |
+| Fixing the reviewer's findings yourself in this context    | `../_shared/subagent-dispatch.md` forbids patching a subagent's output in the orchestrator context. Findings go through `work-review-receive`.             |
+| Accepting every finding because a reviewer produced it     | `../_shared/code-review.md` makes pushback mandatory where the reviewer is wrong. An unverified fix to a non-issue is a change nobody asked for.           |
+| Counting a failed dispatch against the budget              | A dispatch that errored reviewed nothing. Retry once, a tier up where one remains; spending budget on it burns a review the change never got.              |
+| Pre-escalating to a high tier because the change feels big | Size is not the signal. `../_shared/subagent-dispatch.md` requires one tier at a time, on evidence.                                                        |
 
 ## Template
 

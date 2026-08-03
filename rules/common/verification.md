@@ -35,4 +35,4 @@ You **MUST** run fresh verification before any of:
 
 ## Procedural Rules and Procedure
 
-The procedural rules that bind once the `verification-before-completion` skill is running, the common-failures table, the rationalisation prevention table, and the red-flags stop list, live in `skills/verification-before-completion/RULES.md` and load when the skill is invoked. The executable Gate Function lives in `skills/verification-before-completion/SKILL.md`.
+The procedural rules that bind once the `work-verification` skill is running, the common-failures table, the rationalisation prevention table, and the red-flags stop list, live in `skills/work-verification/RULES.md` and load when the skill is invoked. The executable Gate Function lives in `skills/work-verification/SKILL.md`.

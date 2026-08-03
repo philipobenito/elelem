@@ -1,6 +1,6 @@
 # Verification Before Completion - Procedural Rules
 
-These rules apply once the `verification-before-completion` skill has been invoked. They are the procedural detail behind the iron law in `../../rules/common/verification.md`. The iron law itself, the scope of what counts as a completion claim, and the trigger conditions live in the always-on rule file and bind every message. The rules below help you recognise common failure modes and rationalisations once you are running the gate function.
+These rules apply once the `work-verification` skill has been invoked. They are the procedural detail behind the iron law in `../../rules/common/verification.md`. The iron law itself, the scope of what counts as a completion claim, and the trigger conditions live in the always-on rule file and bind every message. The rules below help you recognise common failure modes and rationalisations once you are running the gate function.
 
 ## Common Failures
 

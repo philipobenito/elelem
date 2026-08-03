@@ -6,7 +6,7 @@ These rules apply to every code review interaction: requesting a review, receivi
 
 You **MUST** request a code review before any of the following:
 
-- Handing a task back as complete in orchestrated work (see `subagents.md` and the `orchestrated-implementation` skill)
+- Handing a task back as complete in orchestrated work (see `subagents.md` and the `work-implementation` skill)
 - Merging to main or opening a pull request
 - Declaring a major feature complete
 
@@ -34,4 +34,4 @@ Rationale: actions speak. The fix in the code is the acknowledgement. Performati
 
 ## Procedural Rules
 
-The procedural rules that bind once a code review skill is running, verify-before-acting, clarify-before-partial-implementation, the YAGNI check on "implement properly", when to push back, severity discipline, and the GitHub inline reply procedure, live in `skills/_shared/code-review.md` and load when either `requesting-code-review` or `receiving-code-review` is invoked. To request a review, invoke the `requesting-code-review` skill. To process incoming review feedback, invoke the `receiving-code-review` skill.
+The procedural rules that bind once a code review skill is running, verify-before-acting, clarify-before-partial-implementation, the YAGNI check on "implement properly", when to push back, severity discipline, and the GitHub inline reply procedure, live in `skills/_shared/code-review.md` and load when either `work-review-request` or `work-review-receive` is invoked. To request a review, invoke the `work-review-request` skill. To process incoming review feedback, invoke the `work-review-receive` skill.

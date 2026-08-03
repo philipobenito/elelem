@@ -86,4 +86,4 @@ You **MUST NOT** fix a bug without first writing a failing test that reproduces 
 
 ### Procedural Rules
 
-The procedural rules that bind once the `test-driven-development` skill is running (the rationalisation table, the red-flags stop list) live in `../../skills/test-driven-development/RULES.md` and load when the skill is invoked.
+The procedural rules that bind once the `work-tdd` skill is running (the rationalisation table, the red-flags stop list) live in `../../skills/work-tdd/RULES.md` and load when the skill is invoked.

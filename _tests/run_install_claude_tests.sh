@@ -55,12 +55,12 @@ test_skill_resolve_dst_preserves_subdirectory_structure() {
   local name="skill_resolve_dst_preserves_subdirectory_structure"
   local result
 
-  result="$(_skill_resolve_dst "$SKILLS_SOURCE/debugging/SKILL.md" /out)"
+  result="$(_skill_resolve_dst "$SKILLS_SOURCE/debug-investigation/SKILL.md" /out)"
 
-  if [[ "$result" == "/out/debugging/SKILL.md" ]]; then
+  if [[ "$result" == "/out/debug-investigation/SKILL.md" ]]; then
     _pass "$name"
   else
-    _fail "$name" "expected /out/debugging/SKILL.md, got $result"
+    _fail "$name" "expected /out/debug-investigation/SKILL.md, got $result"
   fi
 }
 
@@ -127,8 +127,8 @@ test_full_install_to_tmp_target() {
     return
   fi
 
-  if [[ ! -f "$skills_target/debugging/SKILL.md" ]]; then
-    _fail "$name" "expected $skills_target/debugging/SKILL.md to exist"
+  if [[ ! -f "$skills_target/debug-investigation/SKILL.md" ]]; then
+    _fail "$name" "expected $skills_target/debug-investigation/SKILL.md to exist"
     return
   fi
 
@@ -142,8 +142,8 @@ test_full_install_to_tmp_target() {
     return
   fi
 
-  if ! grep -qF "skills/debugging/SKILL.md" "$manifest_file"; then
-    _fail "$name" "manifest is missing the skills/debugging/SKILL.md entry"
+  if ! grep -qF "skills/debug-investigation/SKILL.md" "$manifest_file"; then
+    _fail "$name" "manifest is missing the skills/debug-investigation/SKILL.md entry"
     return
   fi
 

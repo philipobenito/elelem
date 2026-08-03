@@ -1,6 +1,6 @@
 # Code Review - Procedural Rules
 
-These rules apply once either of the code review skills (`requesting-code-review`, `receiving-code-review`) has been invoked. They are the procedural detail behind the iron laws in `../../rules/common/code-review.md`. The iron laws (when reviews are mandatory, the forbidden-response banned phrases) live in the always-on rule file and bind every interaction. The rules below govern *how* feedback is verified, evaluated, and acted on once you are inside a review skill.
+These rules apply once either of the code review skills (`work-review-request`, `work-review-receive`) has been invoked. They are the procedural detail behind the iron laws in `../../rules/common/code-review.md`. The iron laws (when reviews are mandatory, the forbidden-response banned phrases) live in the always-on rule file and bind every interaction. The rules below govern *how* feedback is verified, evaluated, and acted on once you are inside a review skill.
 
 ## Verify Before Acting
 
@@ -43,7 +43,7 @@ If you pushed back and were wrong, state the correction factually in one or two 
 
 ### Assigning Tiers When the Feedback Has None
 
-Most review feedback arrives without severity tiers. A reviewer dispatched from `code-reviewer-prompt.md` through `requesting-code-review`, or by `orchestrated-implementation`'s workflow script, returns Critical, Important and Minor natively, so this section does not apply to it. It applies to the sources that still return feedback untiered: a bot's comments, or a human partner listing problems in a message. Ordering that feedback still needs tiers, so when they are absent you **MUST** assign them before touching anything, using these tests:
+Most review feedback arrives without severity tiers. A reviewer dispatched from `code-reviewer-prompt.md` through `work-review-request`, or by `work-implementation`'s workflow script, returns Critical, Important and Minor natively, so this section does not apply to it. It applies to the sources that still return feedback untiered: a bot's comments, or a human partner listing problems in a message. Ordering that feedback still needs tiers, so when they are absent you **MUST** assign them before touching anything, using these tests:
 
 | Tier          | Test                                                                                                       | If it ships unfixed     |
 |---------------|------------------------------------------------------------------------------------------------------------|-------------------------|

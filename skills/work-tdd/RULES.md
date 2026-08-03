@@ -1,6 +1,6 @@
 # Test-Driven Development - Procedural Rules
 
-These rules apply once the `test-driven-development` skill has been invoked. They are the procedural detail behind the iron law in `../../rules/common/testing.md`. The iron law (no production code without a failing test first), the when-TDD-applies list, the verification requirement, and the YAGNI-during-GREEN rule live in the always-on rule file and bind whether or not this skill runs. The rules below help you recognise common failure modes and stop conditions once you are running the cycle.
+These rules apply once the `work-tdd` skill has been invoked. They are the procedural detail behind the iron law in `../../rules/common/testing.md`. The iron law (no production code without a failing test first), the when-TDD-applies list, the verification requirement, and the YAGNI-during-GREEN rule live in the always-on rule file and bind whether or not this skill runs. The rules below help you recognise common failure modes and stop conditions once you are running the cycle.
 
 ## Common Rationalisations
 

@@ -1,5 +1,5 @@
 ---
-name: verification-before-completion
+name: work-verification
 description: Runs the gate function that produces fresh verification evidence before a completion claim. Identifies the proving command, runs it fresh in the current message, reads the output, and only states the claim with cited evidence.
 ---
 

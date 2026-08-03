@@ -1,6 +1,6 @@
 ---
-name: receiving-code-review
-description: "Turns code review feedback into verified, implemented changes: verifies each item against the codebase, pushes back with technical reasoning where the reviewer is wrong, and implements what survives in severity order. Use this whenever review feedback arrives from any source, whether a pull request comment, a reviewer subagent, a bot, or your human partner telling you what is wrong with the code, and whenever the user pastes review comments and asks you to address them. Invoked by `requesting-code-review` to act on its reviewer's findings. Enforces the ban on performative agreement and the requirement to push back rather than silently implement a suggestion you believe is wrong."
+name: work-review-receive
+description: "Turns code review feedback into verified, implemented changes: verifies each item against the codebase, pushes back with technical reasoning where the reviewer is wrong, and implements what survives in severity order. Use this whenever review feedback arrives from any source, whether a pull request comment, a reviewer subagent, a bot, or your human partner telling you what is wrong with the code, and whenever the user pastes review comments and asks you to address them. Invoked by `work-review-request` to act on its reviewer's findings. Enforces the ban on performative agreement and the requirement to push back rather than silently implement a suggestion you believe is wrong."
 ---
 
 # Receiving Code Review
@@ -47,7 +47,7 @@ Where a suggestion conflicts with an architectural decision your human partner p
 
 ## Return Contract
 
-This skill is usually invoked by `requesting-code-review` inside its fix-and-re-review loop, and that loop needs to know which of these it got.
+This skill is usually invoked by `work-review-request` inside its fix-and-re-review loop, and that loop needs to know which of these it got.
 
 **Applied.** Every accepted item is implemented and individually verified; every pushed-back item is closed with reasoning the reviewer did not contest. The caller re-reviews the result.
 

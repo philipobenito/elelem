@@ -1,14 +1,14 @@
 [
   {
-    "query": "can you go over skills/debugging and tell me if it's actually any good? i've rewritten it twice and i'm fairly sure there's stuff in there that does nothing any more",
+    "query": "can you go over skills/debug-investigation and tell me if it's actually any good? i've rewritten it twice and i'm fairly sure there's stuff in there that does nothing any more",
     "should_trigger": true
   },
   {
-    "query": "audit requesting-code-review for unreachable branches. i added a return arm months ago and i'm not convinced anything ever produces it",
+    "query": "audit work-review-request for unreachable branches. i added a return arm months ago and i'm not convinced anything ever produces it",
     "should_trigger": true
   },
   {
-    "query": "orchestrated-implementation is 334 lines and i'm certain a chunk of it just restates rules/common. check whether that's true before i start cutting",
+    "query": "work-implementation is 334 lines and i'm certain a chunk of it just restates rules/common. check whether that's true before i start cutting",
     "should_trigger": true
   },
   {

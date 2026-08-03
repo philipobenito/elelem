@@ -57,6 +57,6 @@ The reference checker only resolves cross-references written as relative paths (
 Two conventions apply to every file under `rules/` and `skills/`, and neither is enforced by anything a user installs; they hold only because this file states them.
 
 - `MUST` / `MUST NOT` / `SHOULD` / `MAY` are used in the RFC 2119 sense.
-- Cross-references are written as relative paths from the CITING file's own location, for example `../../rules/common/debugging.md` from inside `skills/debugging/SKILL.md`, so they resolve both from this repository and from an installed tree.
+- Cross-references are written as relative paths from the CITING file's own location, for example `../../rules/common/debugging.md` from inside `skills/debug-investigation/SKILL.md`, so they resolve both from this repository and from an installed tree.
 
 These two conventions previously lived in `README.md`. They have moved here because `README.md` is read by a human setting up the project, not by Claude authoring it, and `CLAUDE.md` is the file that is always in context in this repository.

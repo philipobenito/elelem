@@ -1,6 +1,6 @@
 ---
 name: skill-review
-description: "Audits a Claude Code skill against eight binary criteria by dispatching six fresh reviewer subagents (trigger, ambiguity, reachability, redundancy, prose economy, load model), returns a SOUND or NOT SOUND verdict with cited evidence, then applies the fixes the user accepts. Use whenever a skill is being written, changed, or handed over, whenever someone asks whether a skill is any good, whether its description fires reliably, whether it is bloated or repeats itself, whether its instructions are ambiguous, or whether any of its branches are unreachable. Works against any directory containing a SKILL.md, in any repository. For a code diff use `requesting-code-review`; for a design summary use `design-review`."
+description: "Audits a Claude Code skill against eight binary criteria by dispatching six fresh reviewer subagents (trigger, ambiguity, reachability, redundancy, prose economy, load model), returns a SOUND or NOT SOUND verdict with cited evidence, then applies the fixes the user accepts. Use whenever a skill is being written, changed, or handed over, whenever someone asks whether a skill is any good, whether its description fires reliably, whether it is bloated or repeats itself, whether its instructions are ambiguous, or whether any of its branches are unreachable. Works against any directory containing a SKILL.md, in any repository. For a code diff use `work-review-request`; for a design summary use `design-review`."
 ---
 
 # Skill Review
@@ -52,7 +52,7 @@ The reviewers find issues; this skill applies the ones the user accepts. That ma
 
 **The escape hatch.** If the fixes the user accepted would restructure the procedure rather than repair it, adding or removing steps, changing the control flow, or replacing the skill's approach, stop before editing and route to `design-grill-me` instead. That work needs a design, and this skill has not produced one.
 
-Applying accepted fixes without a separate design session is deliberate, and it follows the precedent `../../rules/common/workflow.md` already sets for `debugging` Phase 6. The fix is a consequence of evidence this skill has gathered and put in front of the user, and the user approved each fix individually at step 7, which is exactly the seen-and-approved design the workflow rules require. The escape hatch above is the line past which that argument stops holding.
+Applying accepted fixes without a separate design session is deliberate, and it follows the precedent `../../rules/common/workflow.md` already sets for `debug-investigation` Phase 6. The fix is a consequence of evidence this skill has gathered and put in front of the user, and the user approved each fix individually at step 7, which is exactly the seen-and-approved design the workflow rules require. The escape hatch above is the line past which that argument stops holding.
 
 ## Applying Every Finding Is Not Automatically Correct
 

@@ -1,6 +1,6 @@
 ---
 name: design-grill-me
-description: "Turns an idea into an approved design through interactive dialogue: explores the affected code, asks one question at a time, proposes one approach and argues against it, presents the design in sections, has the consolidated summary design-reviewed, and takes explicit approval before any hand-off. The default design step for building features, adding functionality, or refactoring, whatever the user's familiarity with the codebase; scales from quickly capturing a design the user already holds to walking a newcomer through the area while designing. Not for bugs (debugging takes its own fix approval), not for tickets already carrying an approved design, not for trivial changes below the design threshold, and not when the user asks for hands-off deliberation, which is design-committee's job."
+description: "Turns an idea into an approved design through interactive dialogue: explores the affected code, asks one question at a time, proposes one approach and argues against it, presents the design in sections, has the consolidated summary design-reviewed, and takes explicit approval before any hand-off. The default design step for building features, adding functionality, or refactoring, whatever the user's familiarity with the codebase; scales from quickly capturing a design the user already holds to walking a newcomer through the area while designing. Not for bugs (debug-investigation takes its own fix approval), not for tickets already carrying an approved design, not for trivial changes below the design threshold, and not when the user asks for hands-off deliberation, which is design-committee's job."
 ---
 
 # Design Grill Me
@@ -10,7 +10,7 @@ Interactive design dialogue. The conversation is the design medium; nothing is w
 ## When Not to Run
 
 - **A change below the design threshold.** The always-on workflow rules define the threshold; below it the design is a short statement presented in conversation and explicitly approved, with no skill invoked. If such a change has reached this skill anyway, say so in one line and take the inline path instead.
-- **A bug.** Reproduction and root cause come before design, and the fix approach takes its own approval inside the debugging procedure. Expect a return here only when a confirmed root cause needs work too large for a minimal fix, at which point it arrives as new work carrying the root cause, the reproduction approach, and the affected modules.
+- **A bug.** Reproduction and root cause come before design, and the fix approach takes its own approval inside the debug-investigation procedure. Expect a return here only when a confirmed root cause needs work too large for a minimal fix, at which point it arrives as new work carrying the root cause, the reproduction approach, and the affected modules.
 - **A design that already exists and is approved**, on a ticket, in an epic body, or in a committed specification. That work goes to implementation, not to a second design.
 - **A user who wants to be hands-off.** "You decide, come back when it's done" is deliberation without them, and that is a different skill.
 
