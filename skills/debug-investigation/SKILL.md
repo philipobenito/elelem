@@ -9,19 +9,9 @@ Reproduces a reported bug, gathers scoped evidence, tests ranked hypotheses with
 
 **Precondition**: the user has reported something not working, pasted an error, reported a failing test, or described behaviour differing from what was intended. If you are unsure whether the report is a bug or a feature request, clarify during Phase 1.
 
-## Mode Selection
+## How It Runs
 
-The three modes differ in who holds the wheel, not in how much rigour applies. Every phase runs in every mode.
-
-| Mode              | When                                                                                       | How it runs                                                                                      |
-|-------------------|--------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| **Collaborative** | The user knows this system and wants to steer; the failure spans components you cannot see | The user directs. You surface findings at each phase boundary and follow the direction they pick |
-| **Guided**        | The user is unfamiliar with this system, or wants to learn how the investigation works     | You drive and narrate. You explain the reasoning behind each step as you take it                 |
-| **Autonomous**    | The user has asked for the fix rather than the process; clear error; well-tested codebase  | You investigate independently with subagents and present findings once                           |
-
-Pick between Collaborative and Guided from context: Collaborative when the user is already reasoning about the cause with you, Guided when they are asking what is happening or why. If it is unclear, default to Collaborative, because a user who did not want to steer can say so far more cheaply than a user who wanted to steer can undo an unsupervised investigation.
-
-Autonomous mode is different in kind: it spends the most context with the least supervision. Select it only when the user has asked for it or has made clear they do not want to be involved. You **MUST NOT** select it on the user's behalf because the bug looks tractable.
+You drive the investigation and keep the user in it: surface findings at each phase boundary, explain the reasoning behind a step where the user is unfamiliar with the system or asks what is happening, and follow their direction whenever they steer. How much the user steers is their choice turn by turn, not a mode selected up front. Two decisions are always theirs regardless: the direction to pursue when the Refocus Rule or the Investigation Budget triggers, and the approval of the root cause and fix approach in Phase 6.
 
 ## The Seven Phases
 
@@ -38,8 +28,6 @@ Before touching code, establish:
 
 If the bug report is ambiguous, ask clarifying questions. Do not guess at what "broken" means.
 
-In **Guided mode**, explain why each question matters for narrowing the search space.
-
 ### Phase 2: Reproduce
 
 Run the failing scenario and observe the actual output:
@@ -54,8 +42,6 @@ If reproduction fails, check whether the environment matches (dependencies, conf
 
 If the bug is still not reproducible, the sequence stops here. Say explicitly that the bug is non-reproducible, present what the evidence supports at reduced confidence, and ask the user for the conditions you are missing. You **MUST NOT** continue to Phase 7: a non-reproducible bug cannot have a verified fix, so there would be nothing for the verification gate to check and no way to tell a fix from a coincidence.
 
-In **Guided mode**, explain why reproduction matters: without it, you cannot verify that any fix works.
-
 ### Phase 3: Gather Scoped Evidence
 
 During initial evidence gathering, limit your reading to:
@@ -67,17 +53,7 @@ During initial evidence gathering, limit your reading to:
 
 You **MUST NOT**, during initial evidence gathering, read every file in the directory, trace the entire call chain from the entry point, read configuration files unless the error points to configuration, or search the whole codebase for patterns. Expand scope only after forming a hypothesis and only in the direction the hypothesis requires.
 
-In **Autonomous mode**, dispatch two or three evidence subagents in parallel via `Agent` using the evidence prompt under "Dispatching Subagents" below:
-
-- One reads the error site and its immediate context
-- One checks recent git history for affected files
-- One traces the specific code path from the error
-
-Use the evidence prompt rather than the investigator prompt here. No hypothesis exists yet, and the investigator template demands a verdict on one; an investigator dispatched at this phase can only invent a hypothesis or return INCONCLUSIVE by construction.
-
-In **Guided mode**, explain what evidence you are gathering and what you are deliberately not looking at yet.
-
-**The Refocus Rule.** If you have read five files without forming a clear hypothesis, stop gathering evidence. A hypothesis is clear when you can state its What, its Evidence and its Predicted observation distinctly, as Phase 4 requires; clarity is whether those three can be stated, not how confident you are in them. Delegating the reading does not exempt you: when evidence gathering is delegated to subagents, the trigger is the round, because counting the subagents' file reads one for one would make any parallel sweep illegal on arrival. If one parallel sweep returns and you still cannot state a clear hypothesis, that is the same signal, and you **MUST NOT** dispatch a second sweep. Either way, stop and present what you know, what you have ruled out, and what remains uncertain, and ask the user which direction to pursue. Unfocused investigation wastes time and context; the instinct to "just read one more file" is how investigation spirals begin, and the rule exists to cut the spiral early.
+**The Refocus Rule.** If you have read five files without forming a clear hypothesis, stop gathering evidence. A hypothesis is clear when you can state its What, its Evidence and its Predicted observation distinctly, as Phase 4 requires; clarity is whether those three can be stated, not how confident you are in them. Stop and present what you know, what you have ruled out, and what remains uncertain, and ask the user which direction to pursue. Unfocused investigation wastes time and context; the instinct to "just read one more file" is how investigation spirals begin, and the rule exists to cut the spiral early.
 
 ### Phase 4: Form Hypotheses
 
@@ -87,7 +63,7 @@ Based on the evidence, form two to four ranked hypotheses. Rank by the specifici
 - **Evidence**: the specific observations that support it
 - **Predicted observation**: what you would expect to see if the hypothesis is correct
 
-In **Collaborative** and **Guided** modes, present the ranked list to the user. In **Collaborative** mode the user picks which to test first; in **Guided** mode you pick and explain the ranking. In **Autonomous** mode, rank internally and proceed to test the top two or three.
+Present the ranked list to the user with the evidence behind the ranking, then test in that order; the user can reorder or redirect at any point.
 
 ### Phase 5: Test Hypotheses
 
@@ -98,15 +74,13 @@ Test the most likely hypothesis first:
 3. Record the result as evidence for or against
 4. If confirmed, proceed to Phase 6. If disproven, move to the next hypothesis.
 
-In **Autonomous mode**, test the top two or three hypotheses in parallel using the investigator prompt under "Dispatching Subagents" below, each with a clear scope and a single hypothesis to answer. Issue every dispatch for a concurrent round in the same message: a dispatch issued in the next turn runs only after the previous one has returned, which is sequential however it was described. When the round returns, read every investigator's report before drawing a conclusion from any one of them. Investigators write nothing, so overlapping reads are expected and need no partitioning; what does apply is the shared-blind-spot check, because two isolated investigators agreeing on a wrong hypothesis is not evidence that it is right.
-
 **The Investigation Budget.** You get three hypothesis cycles before you stop and refocus with the user:
 
 - **Cycle 1**: test the most likely hypothesis
 - **Cycle 2**: test the second hypothesis, or widen the scope in the direction the first cycle's evidence suggests
 - **Cycle 3**: test the third hypothesis, or revisit with fresh framing
 
-A cycle is a round of testing followed by a reassessment, however many hypotheses that round tested in parallel: testing three hypotheses concurrently and then re-ranking is one cycle, not three, because the budget limits how many times you re-frame the problem before asking for help, not how many hypotheses you hold at once. After three cycles without a confirmed root cause, you **MUST** stop per "When the Bug Cannot Be Found" below, and you **MUST NOT** continue investigating in circles past the budget. Debugging without a budget becomes an ever-widening search that burns context without converging; three focused cycles are enough to either find the root cause or establish that you need help.
+A cycle is a round of testing followed by a reassessment: the budget limits how many times you re-frame the problem before asking for help, not how many hypotheses you hold at once. After three cycles without a confirmed root cause, you **MUST** stop per "When the Bug Cannot Be Found" below, and you **MUST NOT** continue investigating in circles past the budget. Debugging without a budget becomes an ever-widening search that burns context without converging; three focused cycles are enough to either find the root cause or establish that you need help.
 
 ### Phase 6: Identify Root Cause
 
@@ -130,141 +104,6 @@ Once the user has approved the root cause and the fix approach:
 2. **Implement the minimal fix** per the Minimal Fix Principle above. Do not refactor, do not add features, do not fix unrelated issues.
 3. **Request a code review** of the fix and its regression test. No exemption exists for a change that is small, simple, obvious, or locally tested, and a minimal bug fix is the change most likely to claim one. The fix is still uncommitted at this point, because this skill commits only after the Completion Gate; the review diffs against the base rather than across a commit range for exactly this reason, so the uncommitted work is what gets reviewed. The review skill owns the fix-and-re-review loop and processes findings itself, so do not run that loop here. An **Issues outstanding** return means the fix did not pass review, and none of the four return states below is Fixed until it does.
 4. **Verify before claiming completion**: run the full relevant test suite fresh, confirm the regression test passes, confirm no other tests broke, and cite the evidence before claiming the fix complete.
-
-## Dispatching Subagents
-
-Autonomous mode is the only mode in which subagents run; loading this section in the other modes buys nothing. Phase 3 dispatches evidence gatherers; Phase 5 dispatches hypothesis testers. Both prompts receive the bug description (expected vs actual), a single assignment, and the scoped list of files or areas the agent may examine, and nothing else: no session history, and no context beyond what the assignment needs.
-
-Both dispatches are scoped, single-question tasks, so start at a low-cost model. Resolve the model at dispatch time, every time: enumerate the values the `Agent` tool's `model` parameter accepts and pick from that enumeration; never construct an identifier from a remembered pattern, because recognising the shape of an identifier is not confirming it exists. Escalate one tier at a time and only on evidence, such as an INCONCLUSIVE that reads as want of capability rather than want of evidence. If enumeration is impossible, let the dispatch inherit the session model and say so; never fall back silently.
-
-Reconcile the returned reports yourself in the orchestrator context. Evidence reports feed Phase 4. Investigator verdicts route as follows: CONFIRMED advances you to Phase 6, ELIMINATED moves you to the next hypothesis, INCONCLUSIVE needs either a better-scoped re-dispatch or a refocus with the user.
-
-Subagents never fix anything. They only gather evidence. The orchestrator holds the fix authority.
-
-### The Evidence Prompt
-
-Fill every placeholder: `[BUG_DESCRIPTION]` (expected vs actual behaviour), `[EVIDENCE_QUESTION]` (the one question this agent answers), `[SCOPE]` (the files or areas it may examine).
-
-```yaml
-Agent (general-purpose):
-  description: "Gather evidence: [EVIDENCE_QUESTION]"
-  prompt: |
-    You are gathering evidence about a bug during the scoped-evidence phase of
-    an investigation. No hypothesis exists yet, and forming one is not your
-    job. Report what is actually there, accurately and within scope, so the
-    orchestrator can rank hypotheses across several independent views of the
-    problem at once.
-
-    ## The Bug
-
-    [BUG_DESCRIPTION]
-
-    ## Your Question
-
-    [EVIDENCE_QUESTION]
-
-    ## Your Scope
-
-    [SCOPE]
-
-    ## How to Work
-
-    1. Answer only your assigned question. Another agent is answering the
-       others.
-    2. Read only files inside your assigned scope, and at most 5 of them.
-    3. Read-only commands are permitted where the question needs them
-       (`git log`, `git diff`, `git blame`, `grep`). Run nothing that changes
-       state: no writes, no installs, no migrations, no test runs that mutate
-       fixtures.
-    4. Do not attempt to fix anything.
-    5. Do not propose a root cause. "`user` is null at line 40" is evidence;
-       "`user` is null because the session expired" is a hypothesis. The
-       orchestrator owns hypotheses, and it can only rank them if it can tell
-       what you observed from what you inferred.
-
-    ## Output Format
-
-    ### Question
-
-    Restate the evidence question you were assigned.
-
-    ### Findings
-
-    One entry per observation. Cite the file path and line number, and quote
-    the exact code or command output rather than paraphrasing it. If the
-    question was about recent history, give commit hashes and dates.
-
-    ### Scope Notes
-
-    What you could not see from inside your scope. If something outside your
-    scope looked relevant, or something unrelated looked important, name it
-    here so the orchestrator can decide, but do not go and read it.
-```
-
-### The Investigator Prompt
-
-Fill every placeholder: `[BUG_DESCRIPTION]` (expected vs actual behaviour), `[HYPOTHESIS]` (the single hypothesis this agent tests), `[SCOPE]` (the files or areas it may examine).
-
-```yaml
-Agent (general-purpose):
-  description: "Test hypothesis: [HYPOTHESIS]"
-  prompt: |
-    You are investigating a specific hypothesis about a bug. Confirm or
-    eliminate it through targeted evidence gathering.
-
-    ## The Bug
-
-    [BUG_DESCRIPTION]
-
-    ## The Hypothesis
-
-    [HYPOTHESIS]
-
-    ## Your Scope
-
-    [SCOPE]
-
-    ## How to Work
-
-    1. Read only the files relevant to your hypothesis, at most 5, and stay
-       inside your assigned scope. If you believe the answer lies outside it,
-       say so in your report rather than expanding the search.
-    2. Look for the specific evidence that would confirm or eliminate the
-       hypothesis.
-    3. Read-only commands are permitted where testing it needs them
-       (`git log`, `git diff`, `git blame`, `grep`, running an existing test
-       to observe its output). Run nothing that changes state: no writes, no
-       installs, no migrations, no edits to tests or fixtures.
-    4. Do not attempt to fix anything.
-    5. Report what you found; do not speculate beyond the evidence.
-
-    ## Output Format
-
-    ### Hypothesis
-
-    Restate the hypothesis you were testing.
-
-    ### Verdict
-
-    CONFIRMED / ELIMINATED / INCONCLUSIVE
-
-    ### Evidence
-
-    The specific code, output, or observations supporting the verdict, each
-    citing file path and line number.
-
-    ### Explanation
-
-    If confirmed: the causal chain from this root cause to the observed
-    symptom. If eliminated: what evidence ruled it out and why. If
-    inconclusive: what you checked, why it was not enough to decide, and the
-    specific additional evidence, files, or commands that would resolve it.
-
-    ### Other Observations
-
-    Anything unrelated but potentially important, noted briefly and not
-    chased.
-```
 
 ## When the Bug Cannot Be Found
 
@@ -316,6 +155,5 @@ Every thought below means **stop and return to the procedure**:
 | "I can see other issues while I'm here, let me fix those too"     | One bug, one fix. Log other issues separately.                                                                                                         |
 | "I don't need to reproduce this, the error is clear"              | Reproduction is verification infrastructure. Without it, you cannot confirm your fix works.                                                            |
 | "I can't reproduce it, but the fix is obvious anyway"             | A non-reproducible bug cannot have a verified fix. Phase 2 is where that investigation stops, not a hurdle to route around.                            |
-| "A subagent read those files, not me, so the count is clear"      | The Refocus Rule binds the investigation, not your personal file list. Delegated, its trigger is the round: one sweep without a hypothesis means stop. |
 | "The fix is bigger than expected, but I already have the context" | A fix that outgrows the minimal fix principle is new work. Escalate to `design-grill-me` rather than spending saved context on an unapproved redesign. |
 | "It's a one-line fix, a code review would be ceremony"            | No exemption exists for small, simple, or obvious. Subtle bugs get small fixes; that is where review pays.                                             |
