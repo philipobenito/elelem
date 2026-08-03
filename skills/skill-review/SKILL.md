@@ -87,7 +87,7 @@ A fix is an edit to a procedure, and most fixes close a gap by adding an arm: an
 
    **The bound is three rounds per lens.** A lens still returning new findings in its third round is not dispatched a fourth time. Its criteria carry the verdicts its last round returned, its outstanding findings are reported like any others, and the report records the bound as reached with that lens still producing. A lens that cannot be exhausted in three readings of unchanged text is evidence the skill needs restructuring rather than repair, which is the escape hatch in step 8 and not a fourth round.
 
-   Resolve the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier. Reviewing a procedure for reachability and ambiguity is design judgement, which that file's tier table maps to High-capability, so escalation as far as that tier is available, one tier at a time and only on evidence.
+   Resolve the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Reviewing a procedure for reachability and ambiguity is design judgement, which that file's tier table maps to High-capability, so start there per its signal-driven default.
 
 4. **Reconcile before concluding.** Read every report in the round before acting on any of them, and check for the two failures `../_shared/subagent-dispatch.md` names:
 
@@ -114,7 +114,7 @@ A fix is an edit to a procedure, and most fixes close a gap by adding an arm: an
 
 ### When a Dispatch Fails
 
-A lens that returns no usable verdict, reports BLOCKED, or errors has reviewed nothing. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md`. A retry replaces the dispatch that failed and does not consume one of that lens's three rounds. If the retry also fails, the criteria that lens owns stay at FAIL with "not reviewed, dispatch failed" as their evidence, and the verdict is NOT SOUND. Report the dispatch failure as the reason. A criterion nobody reviewed has not passed.
+A lens that returns no usable verdict, reports BLOCKED, or errors has reviewed nothing. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md` where a higher tier remains, otherwise at the same tier. A retry replaces the dispatch that failed and does not consume one of that lens's three rounds. If the retry also fails, the criteria that lens owns stay at FAIL with "not reviewed, dispatch failed" as their evidence, and the verdict is NOT SOUND. Report the dispatch failure as the reason. A criterion nobody reviewed has not passed.
 
 A delta review that fails the same way is retried once on the same terms. If the retry fails, report the edits as applied but unverified rather than treating step 9 as passed.
 

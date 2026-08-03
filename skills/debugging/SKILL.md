@@ -124,7 +124,7 @@ Autonomous mode is the only mode in which subagents run. Phase 3 dispatches evid
 
 Provide each subagent with: the bug description (expected vs actual), its single assignment (the evidence question at Phase 3, the hypothesis at Phase 5), and the scoped list of files or areas it may examine.
 
-Start at the Low-cost default tier and escalate on the triggers stated in `../_shared/subagent-dispatch.md`, resolving every model identifier per that file.
+Start at the tier whose task signal matches the dispatch (gathering evidence against a stated question sits at the Low-cost default) and escalate on the triggers stated in `../_shared/subagent-dispatch.md`, resolving every model identifier per that file.
 
 Reconcile the returned reports yourself in the orchestrator context. Evidence reports feed Phase 4. Investigator verdicts route as follows: CONFIRMED advances you to Phase 6, ELIMINATED moves you to the next hypothesis, INCONCLUSIVE needs either a better-scoped re-dispatch or a refocus with the user.
 

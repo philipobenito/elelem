@@ -21,7 +21,7 @@ The one exception is a user who overrides a COMPLEX verdict, which the Return Co
 
 ### 1. Single Implementation Dispatch
 
-Dispatch one implementer with every change as a single batch, using `../_shared/implementer-prompt.md` with a task description covering the full scope of changes. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`. If the work is simple enough for this path, it is simple enough for the cheapest model.
+Dispatch one implementer with every change as a single batch, using `../_shared/implementer-prompt.md` with a task description covering the full scope of changes. Pick one concrete model at the Low-cost default tier, resolved per `../_shared/subagent-dispatch.md`. The SIMPLE classification is the task signal: a fully specified change across few files is exactly what that tier is for.
 
 #### Adapting the Shared Prompt
 

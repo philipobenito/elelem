@@ -50,7 +50,7 @@ Report every substantive fix when you return. The user approved text that no lon
 
 2. **Dispatch the reviewer** with `Agent`, following `../_shared/design-reviewer-prompt.md`. Paste the full summary into the prompt and pass no session history.
 
-   Resolve the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier. This skill's task signal is design judgement, which that file's tier table maps to High-capability, so escalation as far as that tier is available here. It is still one tier at a time and still only on evidence, per the no-pre-escalation rule: a dispatch that returned nothing but editorial noise, a dispatch that missed something you can see in the summary yourself, or a complexity signal that file's tier table already names.
+   Resolve the model per `../_shared/subagent-dispatch.md`, at dispatch time and every time. This skill's task signal is design judgement, which that file's tier table maps to High-capability, so start there. That is the signal-driven default applied, not pre-escalation: the reviewer is the only gate between a design summary and approval, and a reviewer that returns nothing but editorial noise costs a full review round without buying one.
 
 3. **Read the reviewer's status.**
    - **Approved**: go to step 7.
@@ -67,7 +67,7 @@ Report every substantive fix when you return. The user approved text that no lon
 
 ### When the Dispatch Fails
 
-A dispatch that returns no usable status, reports BLOCKED, or errors has reviewed nothing, so it spends no budget. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md`. If the retry returns a usable status, take it back to step 3. If the retry also fails, the review cannot be performed here: return **Issues outstanding** with the dispatch failure as the outstanding item, so the decision reaches a human rather than a third attempt.
+A dispatch that returns no usable status, reports BLOCKED, or errors has reviewed nothing, so it spends no budget. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md` where a higher tier remains, otherwise at the same tier. If the retry returns a usable status, take it back to step 3. If the retry also fails, the review cannot be performed here: return **Issues outstanding** with the dispatch failure as the outstanding item, so the decision reaches a human rather than a third attempt.
 
 ## Return Contract
 
@@ -151,7 +151,7 @@ Every thought below means stop:
 | Answering an undetermined issue yourself                            | The design never made that decision, so filling it in commits the user to a choice they have not seen. It goes back to the caller, who has the user.                 |
 | Treating a missing section as a precondition failure                | The precondition is that the summary stands alone, not that it is complete. Completeness is what the reviewer is for.                                                |
 | Continuing past three dispatches                                    | The budget exists to prevent endless polish loops. Past three, the caller and the human need to decide whether to redesign.                                          |
-| Counting a failed dispatch against the budget                       | A dispatch that errored reviewed nothing. Retry it once at the next tier; spending budget on it burns a review the design never got.                                 |
+| Counting a failed dispatch against the budget                       | A dispatch that errored reviewed nothing. Retry it once, a tier up where one remains; spending budget on it burns a review the design never got.                     |
 | Pre-escalating to the top tier because the task is design judgement | The signal permits the tier, it does not start you there. `../_shared/subagent-dispatch.md` still requires one tier at a time, on evidence.                          |
 | Treating advisory recommendations as blockers                       | Recommendations are advisory. Only Issues block.                                                                                                                     |
 | Dropping the recommendations because they are advisory              | The reviewer produced them from a fresh reading and they cost nothing to carry. Advisory means the caller decides, not that the output is discarded on the way back. |

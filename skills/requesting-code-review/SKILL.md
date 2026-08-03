@@ -44,7 +44,7 @@ If the diff is empty and no untracked files are listed, there is nothing to revi
 
 1. **Establish the range** per the section above. A precondition failure returns **Nothing to review** or **Range unknown** and spends no budget.
 
-2. **Resolve the model** per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the Low-cost default tier; a single-file change with a clear spec belongs there. Escalate one tier at a time and only on evidence: a change spanning several files whose correctness depends on how they interact, or a reviewer whose findings show it did not follow the change across files.
+2. **Resolve the model** per `../_shared/subagent-dispatch.md`, at dispatch time and every time. Start at the tier whose task signal matches the change under review, and never below the tier that produced it: a single-file change with a clear spec reviews at the Low-cost default, while a change spanning several files whose correctness depends on how they interact starts at Standard escalation. Escalate one tier at a time and only on evidence, such as a reviewer whose findings show it did not follow the change across files.
 
 3. **Fill the template** in `../_shared/code-reviewer-prompt.md` and dispatch. The template names its own placeholders; fill every one, and leave none unreplaced. Pass no session history: the reviewer reads the repository and the diff, and anything it needs from the conversation belongs in the template you fill.
 
@@ -69,7 +69,7 @@ The dispatch that returns Approved must be one that read the fixes. Code written
 
 ### When the Dispatch Fails
 
-A dispatch that returns no usable status, reports BLOCKED, or errors has reviewed nothing, so it spends no budget. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md`. If the retry also fails, return **Issues outstanding** with the dispatch failure as the outstanding item, so the decision reaches a human rather than a third attempt.
+A dispatch that returns no usable status, reports BLOCKED, or errors has reviewed nothing, so it spends no budget. Retry it once, escalating one tier per `../_shared/subagent-dispatch.md` where a higher tier remains, otherwise at the same tier. If the retry also fails, return **Issues outstanding** with the dispatch failure as the outstanding item, so the decision reaches a human rather than a third attempt.
 
 ## Return Contract
 
@@ -146,7 +146,7 @@ Every thought below means stop:
 | Passing session history to the reviewer                    | Violates context isolation. Anything the reviewer needs from the conversation goes in the template.                                              |
 | Fixing the reviewer's findings yourself in this context    | `../_shared/subagent-dispatch.md` forbids patching a subagent's output in the orchestrator context. Findings go through `receiving-code-review`. |
 | Accepting every finding because a reviewer produced it     | `../_shared/code-review.md` makes pushback mandatory where the reviewer is wrong. An unverified fix to a non-issue is a change nobody asked for. |
-| Counting a failed dispatch against the budget              | A dispatch that errored reviewed nothing. Retry once at the next tier; spending budget on it burns a review the change never got.                |
+| Counting a failed dispatch against the budget              | A dispatch that errored reviewed nothing. Retry once, a tier up where one remains; spending budget on it burns a review the change never got.    |
 | Pre-escalating to a high tier because the change feels big | Size is not the signal. `../_shared/subagent-dispatch.md` requires one tier at a time, on evidence.                                              |
 
 ## Template

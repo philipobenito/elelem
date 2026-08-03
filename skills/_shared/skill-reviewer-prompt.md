@@ -153,7 +153,7 @@ The inventory reports line counts. Treat size as a prompt to look, not as a find
 
 Dispatched once, at step 9 of `../skill-review/SKILL.md`, and its subject is the fixes that were just applied rather than the skill. It returns per-edit verdicts and no criterion verdicts, because the criteria table is already assembled by the time it runs.
 
-Resolve the model as for a lens. Judging edits against a whole skill is design judgement, so escalation as far as High-capability is available on the same terms.
+Resolve the model as for a lens. Judging edits against a whole skill is design judgement, so it starts at High-capability on the same terms.
 
 ```yaml
 Agent (Plan):

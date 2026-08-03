@@ -67,7 +67,7 @@ The full prompt templates live in `../_shared/committee-member-prompt.md`.
 
 ### Model Selection
 
-Read the `model` enum on the `Agent` tool schema to get values this harness will accept, and resolve the tier per `../_shared/subagent-dispatch.md`. Committee deliberation is a stated exception to that file's start-low-and-escalate sequence: begin at the **High-capability** tier rather than the low-cost default. This is an announced deviation, not pre-escalation. The tier table names design judgement explicitly, and a cheap model that produces three shallow positions costs more than it saves, because the whole design is built on top of them.
+Read the `model` enum on the `Agent` tool schema to get values this harness will accept, and resolve the tier per `../_shared/subagent-dispatch.md`. Committee deliberation is design judgement, the signal that file's tier table maps to the **High-capability** tier, so begin there. This is the signal-driven default applied, not a deviation from it: a cheap model that produces three shallow positions costs more than it saves, because the whole design is built on top of them.
 
 ### Keeping Members Read-Only
 

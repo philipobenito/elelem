@@ -21,7 +21,9 @@ Both types carry `Bash`, so a read-only boundary that matters **MUST** be stated
 
 ## Model Selection
 
-You **MUST** use the cheapest model capable of the task. This is cost and speed discipline, not a suggestion. Choose exactly one concrete model per dispatch.
+You **MUST** select the tier whose task signal matches the dispatch, using the tier table below, and choose exactly one concrete model per dispatch. The signal decides the starting tier: a clearly specified small change starts low, and design judgement starts high. Do not start every dispatch at the bottom to save per-call cost. A dispatch that fails for want of capability consumes a review, a fix round trip and a re-dispatch, which together cost more tokens and more wall-clock than starting where the signal points.
+
+A reviewer **MUST NOT** run at a lower tier than the work it is reviewing. A review is the last gate before the work is accepted, so a reviewer that misses a real defect is the most expensive failure a dispatch can produce, and no per-call saving covers it.
 
 ### Tier Table
 
@@ -40,12 +42,12 @@ Naming a tier is not the same as producing a value the harness will accept. Befo
 1. Always enumerate the models the current environment actually exposes by reading the `model` enum on the Agent tool schema, which is the set of values the harness will accept.
 2. Map the chosen tier to a concrete value from that enumeration.
 3. Never construct an identifier from a pattern. Recognising the shape of an identifier is not the same as confirming it exists.
-4. If no family listed in the tier table is exposed, order the available models from cheapest to most capable and take the cheapest one that is still capable of the task.
+4. If no family listed in the tier table is exposed, order the available models from least to most capable and take the one whose position matches the chosen tier.
 5. If enumeration is impossible, use the inherited session model and state in your response to the user that you did so. Never fall back silently.
 
 ### Escalation Triggers
 
-Start at the Low-cost default tier. Escalate exactly one tier at a time, and only on evidence: a failed attempt at the current tier, or a stated complexity signal from the task (multi-file integration, design judgement, broad codebase understanding). You **MUST NOT** pre-escalate on the assumption that a task might be hard. One failed inexpensive attempt costs less than always paying for the expensive model.
+Start at the tier the task signal names. Escalate exactly one tier at a time, and only on evidence: a failed attempt at the current tier, or a complexity signal the starting choice missed. Starting at the tier the signal names is not pre-escalation. Escalating beyond it on the assumption that a task might be hard is, and you **MUST NOT** do it: name the signal, or stay at the tier the named signal maps to.
 
 ### Rationalisation Prevention
 
@@ -56,7 +58,7 @@ Every thought below means **stop and re-run the resolution procedure**:
 | "I know the naming pattern, I can write the identifier" | Recognising the shape of an identifier is not confirming it exists. Constructing an identifier from a pattern is inventing it; enumerate the environment instead. |
 | "This was valid last month"                             | Catalogues change. Re-verify against the current environment before every dispatch, not from memory.                                                              |
 | "The table lists it, so it exists"                      | The tier table is a worked example, not an availability guarantee. Confirm the value against the enumerated list.                                                 |
-| "I will use the session model to be safe"               | That is pre-escalation. Sort by cost first and start at the cheapest tier.                                                                                        |
+| "I will use the session model to be safe"               | "To be safe" is not a task signal. Name the signal from the tier table that maps to the tier you chose, or drop to the tier your named signal maps to.            |
 
 ## Parallel Dispatch
 
