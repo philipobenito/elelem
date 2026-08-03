@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: "Runs a disciplined, evidence-driven investigation to reproduce a bug, identify its root cause, and deliver a minimal verified fix. You MUST use this before touching any code in response to a bug, an error, a crash, a failing or flaky test, a regression, or anything described as not working, including one-line fixes and changes that look like an obvious typo: the hard gate (no fix without a reproduction and an identified root cause) applies however simple the fix looks. Enforces scope discipline, the investigation budget, and the minimal fix principle, and takes its own approval for the fix approach so bugs do not go through the brainstorming router."
+description: "Runs a disciplined, evidence-driven investigation to reproduce a bug, identify its root cause, and deliver a minimal verified fix. You MUST use this before touching any code in response to a bug, an error, a crash, a failing or flaky test, a regression, or anything described as not working, including one-line fixes and changes that look like an obvious typo: the hard gate (no fix without a reproduction and an identified root cause) applies however simple the fix looks. Enforces scope discipline, the investigation budget, and the minimal fix principle, and takes its own approval for the fix approach so bugs do not go through the design step."
 ---
 
 # Debugging
@@ -105,9 +105,9 @@ State the root cause clearly, per the Root Cause, Not Symptom rule in `RULES.md`
 - **Why**: the causal chain from the root cause to the observed symptom
 - **Since when**: if determinable, when the bug was introduced (commit reference)
 
-Then check the fix against the Minimal Fix Principle in `RULES.md` before proposing it. If the confirmed root cause needs work that principle cannot contain (several genuinely separate changes rather than one change, a redesign, or a new interface), the work is no longer a bug fix and this skill stops here. Per `../../rules/common/workflow.md`, hand back to the `brainstorming` router carrying the root cause, the reproduction approach, and the modules that will change, which is exactly the payload `brainstorming-skip` expects from an escalation. Do not shrink the fix to fit inside this skill, and do not apply a large fix here on the grounds that you already have the context.
+Then check the fix against the Minimal Fix Principle in `RULES.md` before proposing it. If the confirmed root cause needs work that principle cannot contain (several genuinely separate changes rather than one change, a redesign, or a new interface), the work is no longer a bug fix and this skill stops here. Per `../../rules/common/workflow.md`, hand to `design-grill` carrying the root cause, the reproduction approach, and the modules that will change. Do not shrink the fix to fit inside this skill, and do not apply a large fix here on the grounds that you already have the context.
 
-Otherwise present the root cause and the proposed fix approach to the user for confirmation. Per `../../rules/common/workflow.md`, this is the approved design for the bug fix, and it is why a bug does not go back through the router. You **MUST** wait for explicit approval before moving to Phase 7.
+Otherwise present the root cause and the proposed fix approach to the user for confirmation. Per `../../rules/common/workflow.md`, this is the approved design for the bug fix, and it is why a bug does not go through the design step again. You **MUST** wait for explicit approval before moving to Phase 7.
 
 ### Phase 7: Fix
 
@@ -142,7 +142,7 @@ This skill terminates in one of four states. Say which one explicitly, because t
 
 **Fixed.** The root cause was confirmed and approved, the regression test went red then green, the review was processed, and the verification gate produced fresh evidence. Report the root cause, the test, and the cited evidence.
 
-**Escalated.** Phase 6 confirmed a root cause whose fix exceeds the Minimal Fix Principle. Hand to the `brainstorming` router with the root cause, the reproduction, and the affected modules. Nothing has been changed.
+**Escalated.** Phase 6 confirmed a root cause whose fix exceeds the Minimal Fix Principle. Hand to `design-grill` with the root cause, the reproduction, and the affected modules. Nothing has been changed.
 
 **Non-reproducible.** Phase 2 could not reproduce the bug. No fix has been attempted and none may be. The user owes you reproduction conditions.
 

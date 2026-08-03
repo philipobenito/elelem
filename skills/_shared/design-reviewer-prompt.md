@@ -4,7 +4,7 @@ Use this template when dispatching a design reviewer subagent.
 
 **Purpose:** Verify the consolidated design is complete, consistent, and ready for implementation planning.
 
-**Dispatch after:** The design summary has been consolidated by the calling brainstorming mode.
+**Dispatch after:** The design summary has been consolidated by the calling design skill.
 
 ## Selecting the Model
 

@@ -50,9 +50,9 @@ The reviewers find issues; this skill applies the ones the user accepts. That ma
 
 **Out of bounds:** every other file. A C2 finding often reads as though a sibling skill's description should change, and it may well be right, but editing a sibling to make the target pass is fixing the audit rather than the skill. Report it and let the user take it to that skill's own review. Renaming the target directory is out of bounds for a harder reason: the directory name is how the skill is invoked, so a rename breaks every caller that names it.
 
-**The escape hatch.** If the fixes the user accepted would restructure the procedure rather than repair it, adding or removing steps, changing the control flow, or replacing the skill's approach, stop before editing and route to `brainstorming` instead. That work needs a design, and this skill has not produced one.
+**The escape hatch.** If the fixes the user accepted would restructure the procedure rather than repair it, adding or removing steps, changing the control flow, or replacing the skill's approach, stop before editing and route to `design-grill` instead. That work needs a design, and this skill has not produced one.
 
-Applying accepted fixes without going through the `brainstorming` router is deliberate, and it follows the precedent `../../rules/common/workflow.md` already sets for `debugging` Phase 6. The fix is a consequence of evidence this skill has gathered and put in front of the user, the user approved each fix individually at step 7, and the only router mode that could apply would be skip. The escape hatch above is the line past which that argument stops holding.
+Applying accepted fixes without a separate design session is deliberate, and it follows the precedent `../../rules/common/workflow.md` already sets for `debugging` Phase 6. The fix is a consequence of evidence this skill has gathered and put in front of the user, and the user approved each fix individually at step 7, which is exactly the seen-and-approved design the workflow rules require. The escape hatch above is the line past which that argument stops holding.
 
 ## Applying Every Finding Is Not Automatically Correct
 

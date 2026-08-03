@@ -1,0 +1,21 @@
+[
+  {"query": "we're switching the auth flow from session cookies to short-lived JWTs with a refresh token. this touches the middleware, the login handler, and the mobile client's token store. use the committee for this one", "should_trigger": true},
+  {"query": "add webhook delivery for order events. i don't want to be involved in the design, come back when you have something for me to approve", "should_trigger": true},
+  {"query": "you decide how to structure the notifications system. don't ask me design questions, just show me the final design", "should_trigger": true},
+  {"query": "run the design committee on the multi-region failover plan, there are a few genuinely contested calls in there", "should_trigger": true},
+  {"query": "i trust you on the architecture here. deliberate it properly and bring me something to sign off: event sourcing vs plain CRUD for the order history", "should_trigger": true},
+  {"query": "no need for my input on the design, i'll review whatever you land on. migrating session storage from cookies to redis across web and mobile", "should_trigger": true},
+  {"query": "committee this: how should we shard the analytics tables, and what does that do to the nightly rollup jobs", "should_trigger": true},
+  {"query": "get the three-perspectives thing to hash out whether we split billing into its own service or keep it in the monolith", "should_trigger": true},
+
+  {"query": "lets design the permissions overhaul together, i want to be in the loop on every decision", "should_trigger": false},
+  {"query": "i've never touched this repo before and i need to add an audit log for admin actions. teach me the layout as we go please", "should_trigger": false},
+  {"query": "the committee reached consensus and you've written the summary up. put it through the design review step now, i don't want three agents agreeing with each other to be the only check", "should_trigger": false},
+  {"query": "add a committee approval feature to expenses: anything over 500 quid needs sign-off from the finance committee before it pays out", "should_trigger": false},
+  {"query": "you decide where this helper function lives, i really don't care, just move it out of utils.js", "should_trigger": false},
+  {"query": "come back when it's done: rename `data` to `payload` in src/lib/parse.js, don't ask me anything", "should_trigger": false},
+  {"query": "fix the flaky checkout test however you see fit, don't ask me questions about it", "should_trigger": false},
+  {"query": "work on #97 and don't ask me anything, the design is already on the parent epic", "should_trigger": false},
+  {"query": "can you set up a committee of reviewers for this PR? i want more than one pass over the diff", "should_trigger": false},
+  {"query": "what does the design committee actually do differently from the normal design conversation?", "should_trigger": false}
+]

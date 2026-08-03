@@ -1,6 +1,6 @@
 ---
 name: create-tickets
-description: Turns an approved design into tickets under a single parent epic whose body carries the full design, so a future session can recover it. Invoked by the brainstorming mode skills once a design is approved, and whenever the user asks to create tickets, file issues, break a plan or design into tickets, or set up a backlog. Handles GitHub Issues, Jira, GitLab and Linear, and falls back to a structured Markdown document when no ticketing system is available.
+description: Turns an approved design into tickets under a single parent epic whose body carries the full design, so a future session can recover it. Invoked by the design skills once a design is approved, and whenever the user asks to create tickets, file issues, break a plan or design into tickets, or set up a backlog. Handles GitHub Issues, Jira, GitLab and Linear, and falls back to a structured Markdown document when no ticketing system is available.
 ---
 
 # Create Tickets
@@ -15,7 +15,7 @@ Detection of which ticketing system is in use lives in `../_shared/ticketing-det
 
 An approved design must already exist in conversation context. "Approved" means one of the forms listed under "What Counts as an Approved Design" in `../../rules/common/workflow.md`. That list is canonical and is deliberately not repeated here: a second copy falls out of sync the moment a form is added to the canonical one.
 
-A design you have inferred from the request, or one the user has seen but not approved, does not qualify. If there is no approved design, stop and surface that rather than inventing one, and do not invoke `brainstorming` on the user's behalf: which mode to use is the user's choice, per the router's own rules.
+A design you have inferred from the request, or one the user has seen but not approved, does not qualify. If there is no approved design, stop and surface that rather than inventing one, and do not start a design session on the user's behalf: whether to design now, and how involved to be, is their choice.
 
 ## Procedure
 
@@ -161,7 +161,7 @@ This section is addressed to whichever skill or user invoked this one. It lives 
 
 **Partial creation.** The user receives the named failure and the partial state. Do not proceed to implementation against a partial tree: the tickets that failed are the ones whose absence the remaining work would silently assume.
 
-**No approved design.** Stop and surface it. Do not invent a design, and do not invoke `brainstorming` on the user's behalf.
+**No approved design.** Stop and surface it. Do not invent a design, and do not start a design session on the user's behalf.
 
 **Markdown fallback.** As for tickets created, except the artefact is a file. `work-on-ticket` handles pickup through its no-system branch.
 

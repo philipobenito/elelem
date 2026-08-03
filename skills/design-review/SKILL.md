@@ -1,6 +1,6 @@
 ---
 name: design-review
-description: "Reviews a consolidated design summary for completeness, consistency, clarity, scope, and YAGNI by dispatching a fresh reviewer subagent against the summary text alone. Invoked by `brainstorming-standard`, `brainstorming-guided`, and `brainstorming-committee` once the design is consolidated and before final user approval; `brainstorming-skip` deliberately does not use it. Returns an approved summary, the open decisions the design never made, or an escalation once its three-dispatch budget is spent. Not a standalone entry point; a design summary handed straight to Claude for review belongs to the design mode that owns it."
+description: "Reviews a consolidated design summary for completeness, consistency, clarity, scope, and YAGNI by dispatching a fresh reviewer subagent against the summary text alone. Invoked by `design-grill` and `design-committee` once the design is consolidated and before final user approval; the inline design path below the design threshold deliberately does not use it. Returns an approved summary, the open decisions the design never made, or an escalation once its three-dispatch budget is spent. Not a standalone entry point; a design summary handed straight to Claude for review belongs to the design skill that owns it."
 ---
 
 # Design Review
@@ -17,7 +17,7 @@ Before running the procedure below, read `../_shared/subagent-dispatch.md` with 
 
 Self-contained is the whole precondition. A summary missing a section is not a precondition failure, it is a Completeness issue and the reviewer's job to find. Checking sections off a list here would review the design twice and reach the reviewer's verdict without the reviewer.
 
-**A caller.** This skill runs as a step inside a design mode (`brainstorming-standard` step 6, `brainstorming-guided` step 6, `brainstorming-committee` step 9), never on its own and never against a design the user has not worked through. `brainstorming-skip` deliberately does not invoke it: the user chose a lightweight path and is themselves the reviewer.
+**A caller.** This skill runs as a step inside a design skill (`design-grill` step 6, `design-committee` step 8), never on its own and never against a design the user has not worked through. The inline design path below the design threshold deliberately does not invoke it: the user approves the short statement directly and is themselves the reviewer.
 
 ## What This Skill May Change
 
@@ -75,7 +75,7 @@ This section is addressed to whichever skill invoked this one, and it lives here
 
 **Approved.** The caller receives the design summary text, every substantive fix made during the review enumerated (or an explicit statement that there were none), and the reviewer's advisory recommendations. The caller continues. A substantive fix means the user approved a design this skill then altered, so the caller surfaces it before treating the design as settled. The recommendations travel unapplied: they are advisory by construction, and applying them would be this skill editing an approved design over things the reviewer did not consider issues.
 
-**Decision required.** The design has a hole only a person can fill. The caller receives the open decisions, the current summary, and any determined fixes already applied. The caller **MUST NOT** answer the decisions itself and **MUST NOT** re-invoke this skill against unchanged text, because a reviewer cannot supply what the design never contained. It takes them to the user, or in `brainstorming-committee` to a targeted deliberation round, then invokes this skill again against the revised summary.
+**Decision required.** The design has a hole only a person can fill. The caller receives the open decisions, the current summary, and any determined fixes already applied. The caller **MUST NOT** answer the decisions itself and **MUST NOT** re-invoke this skill against unchanged text, because a reviewer cannot supply what the design never contained. It takes them to the user, or in `design-committee` to a targeted deliberation round, then invokes this skill again against the revised summary.
 
 **Issues outstanding.** The three-dispatch budget is spent and issues remain, or the reviewer could not be dispatched. The caller receives those issues alongside the current summary, and **MUST NOT** invoke this skill again in the hope of a better verdict. The budget exists so that a design which will not converge reaches a human rather than a fourth reviewer. The caller stops and puts the decision to the user.
 
@@ -99,7 +99,7 @@ This table exists here so step 3 can categorise what comes back, and it is the c
 
 ## Worked Example: An Open Decision
 
-The caller (a brainstorming skill) consolidates a design for a new ingest pipeline and invokes this skill.
+The caller (a design skill) consolidates a design for a new ingest pipeline and invokes this skill.
 
 **Iteration 1** flags two issues.
 

@@ -18,7 +18,7 @@ Stories group the Tasks that group. An Epic **MAY** hold Stories and loose Tasks
 
 ## Epic Design Embedding
 
-When a design is broken into multiple tickets, there **MUST** be an epic or parent ticket, and the epic body **MUST** contain the full approved design under a `## Design` heading. The design section is the bridge between the brainstorming session and every future implementation session that picks up a child ticket.
+When a design is broken into multiple tickets, there **MUST** be an epic or parent ticket, and the epic body **MUST** contain the full approved design under a `## Design` heading. The design section is the bridge between the design session and every future implementation session that picks up a child ticket.
 
 The epic body **MUST** include, at minimum:
 
