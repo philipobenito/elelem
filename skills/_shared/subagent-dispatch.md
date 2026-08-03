@@ -25,13 +25,13 @@ You **MUST** use the cheapest model capable of the task. This is cost and speed 
 
 ### Tier Table
 
-| Tier                | Task signal                                    | Anthropic family                                                     | OpenAI family |
-|---------------------|------------------------------------------------|----------------------------------------------------------------------|---------------|
-| Low-cost default    | Clear spec, 1-3 files                          | Haiku                                                                | Luna          |
-| Standard escalation | Multi-file integration, judgement              | Sonnet                                                               | Terra         |
-| High-capability     | Design judgement, broad codebase understanding | Opus (the inherited session model is also an acceptable choice here) | Sol           |
+| Tier                | Task signal                                    | Anthropic family                                                              |
+|---------------------|------------------------------------------------|-------------------------------------------------------------------------------|
+| Low-cost default    | Clear spec, 1-3 files                          | Haiku                                                                         |
+| Standard escalation | Multi-file integration, judgement              | Sonnet                                                                        |
+| High-capability     | Design judgement, broad codebase understanding | Opus or Fable (the inherited session model is also an acceptable choice here) |
 
-The Anthropic and OpenAI columns are worked examples, not an allowlist. Some harnesses are provider-agnostic: they may expose providers from any vendor in any combination, so no table that enumerates vendors can ever be authoritative on its own. Treat the table as a guide to tiers and use the resolution procedure below to pick a concrete model for any provider the environment exposes, listed here or not.
+The Anthropic column is a worked example, not an allowlist. Model catalogues change faster than this file, so no column written in advance can be authoritative on its own. Treat the table as a guide to tiers and use the resolution procedure below to pick a concrete model from whatever the environment actually exposes, listed here or not.
 
 ### Resolution Procedure
 
