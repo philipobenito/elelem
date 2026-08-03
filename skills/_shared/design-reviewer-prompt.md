@@ -8,7 +8,7 @@ Use this template when dispatching a design reviewer subagent.
 
 ## Selecting the Model
 
-Resolve the model per `subagent-dispatch.md`. Start at the Low-cost default tier. Design judgement is that file's stated signal for the High-capability tier, so escalation as far as that tier is available for this dispatch, one tier at a time and only on evidence. Do not pre-escalate on the assumption that a design will be hard.
+Resolve the model per `subagent-dispatch.md`. Design judgement is that file's stated signal for the High-capability tier, so start there per its signal-driven default. That is the signal named, not pre-escalation.
 
 ## The Prompt
 

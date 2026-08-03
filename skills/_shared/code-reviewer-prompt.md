@@ -24,7 +24,7 @@ This file is the single source of truth for its own placeholders. Fill every one
 
 ## Selecting the Model
 
-Resolve the model per `subagent-dispatch.md`. Start at the Low-cost default tier: a change confined to a few files with clear acceptance criteria belongs there. Escalate one tier at a time and only on evidence, such as a change whose correctness depends on how several files interact, or a previous dispatch whose findings show it did not follow the change across file boundaries. Do not pre-escalate because the diff is long; line count is not the signal.
+Resolve the model per `subagent-dispatch.md`. Start at the tier whose task signal matches the change under review, and never below the tier that produced it: a change confined to a few files with clear acceptance criteria reviews at the Low-cost default, and a change whose correctness depends on how several files interact starts at Standard escalation. Escalate one tier at a time and only on evidence, such as a previous dispatch whose findings show it did not follow the change across file boundaries. A long diff is not by itself a signal; line count measures size, not judgement.
 
 ## The Prompt
 
