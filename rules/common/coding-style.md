@@ -1,82 +1,25 @@
 # Code Style
 
-## Self-Documenting Code
+## Comments
 
-You **MUST** prioritise writing descriptive, self-explanatory code over adding comments or docblocks.
+You **MUST NOT** add comments unless all three hold: the code works around an external bug or documents a measured optimisation; you have a ticket, issue, or benchmark reference to cite; and the workaround cannot be extracted into a well-named function. Code explains itself through naming and structure; when a comment feels needed, refactor first. Zero comments in test files except ticket references for regression tests. Docblocks only where a generator the project uses reads them, a published API needs examples, a framework requires them, or a type cannot express the contract (units, ranges, invariants).
 
-- Use meaningful, descriptive variable and function names
-- Keep functions small and focused on a single responsibility
-- Structure code to reveal intent through organisation and naming
-- Use explicit over implicit logic
+## Functions and Naming
 
-## Default Rule: Write Code Without Comments
+Keep functions under 20 lines of logic, at one level of abstraction, nameable with a single clear verb phrase. Exceeding 20 is permitted only for flat, unavoidable structures (a single switch, a configuration literal, straight-line integration-test setup). Use full words over abbreviations unless ubiquitous (`HTTP`, `ID`); booleans read as predicates (`isActive`, `hasPermission`).
 
-You **MUST NOT** add comments unless ALL of these conditions are met:
+## YAGNI
 
-1. The code implements a workaround for an external bug/limitation (e.g. browser quirk, library bug) **or** documents a non-obvious performance optimisation with a measurable benchmark
-2. You have a specific ticket/issue/benchmark reference to cite
-3. The workaround or optimisation cannot be extracted to a well-named function
+You **MUST NOT** build beyond what the current task requires: no unrequested options or flags, no error paths the task does not cover, no "while I am here" clean-ups, no speculative abstractions, compatibility shims, or helpers for one-time operations. Three similar lines beat a premature abstraction. Fold in only what the task cannot be completed correctly without; log or surface unrelated issues rather than fixing them in the current change. One task, one change.
 
-**Specifically forbidden:**
+## Consistency
 
-- Comments explaining what code does (code should be self-documenting)
-- Comments before function calls or variable assignments that just narrate the next line
-- Comments describing assertion intent in tests
-- "Step X" comments in tests, use the test name instead
-- Any comment that just repeats what the code says
+You **MUST** match the codebase's established patterns even when you would prefer another approach, and you **MUST NOT** unilaterally refactor a pattern: raise it, wait for approval, then apply the change at every site you touch. Use the project's formatters and linters as configured.
 
-**Absolute ban in test files.** Tests are documentation. Test names and assertions must be self-explanatory. Zero comments except ticket references for regression tests.
+## Dependencies
 
-When you think a comment is needed, refactor first: rename variables or functions, extract to a well-named method, simplify the logic. Only add a comment after refactoring has failed, and you have a ticket reference for a workaround.
+You **MUST NOT** add a runtime or development dependency without explicit user approval, stating why existing options are insufficient plus the package, version, licence, maintenance state, and approximate size. Prefer the standard library when a dependency would replace fewer than roughly 50 lines.
 
-## Docblocks
+## Security
 
-You **MUST** avoid docblocks where type systems and function signatures provide sufficient information.
-
-You **MAY ONLY** use docblocks when:
-
-- The project uses a documentation generator that reads them (e.g. phpDocumentor, TypeDoc, JSDoc, Sphinx, Rustdoc, Javadoc), check for a config file such as `phpdoc.xml`, `typedoc.json`, `jsdoc.json`, `docs/conf.py`, etc. before adding any
-- Providing usage examples for complex public APIs that are part of a published package
-- Documenting framework-specific annotations or decorators that the framework itself requires (e.g. Symfony attributes, NestJS decorators)
-- Type information alone cannot convey the contract (e.g. documenting units, ranges, or invariants a type cannot express)
-
-## Function and Method Length
-
-You **MUST** keep functions concise and focused. A function is too long when any of these apply:
-
-- It exceeds 20 lines of logic (excluding signature, braces, and blank lines)
-- It mixes multiple levels of abstraction
-- It cannot be named with a single clear verb phrase
-
-Exceeding 20 lines is permitted only when the body is a flat, unavoidable structure (e.g. a single `switch` or match statement, configuration object literal, or straight-line setup for an integration test). Decompose in all other cases.
-
-## Naming Conventions
-
-You **MUST** follow language-specific conventions while prioritising clarity:
-
-- Use full words over abbreviations unless the abbreviation is ubiquitous (e.g. `HTTP`, `URL`, `ID`)
-- Avoid single-letter variables except in narrow scopes (loop counters, mathematical formulae)
-- Boolean variables should read as predicates: `isActive`, `hasPermission`, `canExecute`
-
-## YAGNI: Build Only What Was Asked For
-
-You **MUST NOT** add features, refactor code, or make "improvements" beyond what the current task requires. This is the YAGNI principle (You Aren't Gonna Need It), and it applies to every change you make.
-
-**Specifically forbidden:**
-
-- Adding configurability, options, or flags the task did not ask for
-- Adding error handling for cases the task does not cover
-- Refactoring surrounding code that is not part of the task
-- "While I am here" clean-ups, even small ones
-- Designing for hypothetical future requirements
-- Creating helpers, utilities, or abstractions for one-time operations
-- Adding backwards-compatibility shims when you can change the code
-- Adding feature flags for changes that do not need them
-
-The right amount of complexity is what the task actually requires. No speculative abstractions, but no half-finished implementations either. Three similar lines of code are better than a premature abstraction.
-
-If you notice an unrelated issue while working on a task, log it separately (as a ticket, a note, or surface it to your human partner), but **MUST NOT** fix it inside the current change. One task, one change.
-
-The boundary between an improvement that belongs in the work and one that does not is whether the work can be completed correctly without it. Fold in only what the task cannot be built correctly against the existing code without. Anything the task could ship without touching is unrelated, however much better fixing it would make the result.
-
-YAGNI is referenced from `testing.md` (where it applies during the GREEN step of TDD) and `code-review.md` (where it applies when a reviewer suggests "implementing properly" something that nothing currently uses).
+Validate and sanitise input wherever data enters from outside its trust zone: HTTP handlers, CLI and environment input, file and deserialisation reads, user-writable database rows, queues, third-party responses, IPC. Use parameterised queries. You **MUST NOT** commit credentials, keys, or personal data; use environment variables or a secret store, and warn the user when a change risks committing secrets.

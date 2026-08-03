@@ -44,7 +44,7 @@ User-scope path-scoped rules have a known issue ([claude-code#21858](https://git
 │   ├── common/           Always-on rules (no frontmatter)
 │   │   ├── language.md
 │   │   ├── coding-style.md
-│   │   ├── code-organisation.md
+│   │   ├── verification.md
 │   │   └── ...
 │   └── python/           Path-scoped rules (with `globs:` frontmatter)
 │       ├── coding-style.md
