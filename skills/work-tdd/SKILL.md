@@ -5,9 +5,7 @@ description: Runs the red-green-refactor cycle. Writes a failing test, verifies 
 
 # Test-Driven Development
 
-This skill executes the red-green-refactor cycle. The iron-law rules (the iron law itself, when TDD applies, the verification requirement, YAGNI during GREEN, good-test criteria) live in `../../rules/common/testing.md` and apply throughout. The procedural rules that bind once this skill is running (the rationalisation table, the red-flags stop list) live in `RULES.md` alongside this file.
-
-Before running the cycle below, you **MUST** read `RULES.md` (sibling file in this skill directory) using the Read tool if you have not already read it in this session.
+Executes the red-green-refactor cycle: one failing test, watched failing for the right reason, the minimal code that passes it, then clean-up while everything stays green.
 
 ## The Cycle
 
@@ -206,7 +204,7 @@ Before claiming a cycle complete, confirm every box:
 - [ ] Tests exercise real code, mocks only at true boundaries
 - [ ] Edge cases and error paths covered
 
-If any box is unchecked, you skipped part of the cycle. The rules in `../../rules/common/testing.md` apply.
+If any box is unchecked, you skipped part of the cycle.
 
 ## When Stuck
 
@@ -216,6 +214,35 @@ If any box is unchecked, you skipped part of the cycle. The rules in `../../rule
 | Test is too complicated   | The design is too complicated. Simplify the interface.                       |
 | Must mock everything      | Code is too coupled. Use dependency injection.                               |
 | Test setup is huge        | Extract helpers. If still complex, simplify the design.                      |
+
+## Common Rationalisations
+
+You will be tempted to skip TDD. Every excuse below means **start over with a failing test**:
+
+| Excuse                                      | Reality                                                        |
+|---------------------------------------------|----------------------------------------------------------------|
+| "Too simple to test"                        | Simple code breaks. The test takes thirty seconds.             |
+| "I'll test after"                           | Tests passing immediately prove nothing.                       |
+| "I already manually tested it"              | Manual testing has no record and cannot be re-run.             |
+| "Deleting hours of work is wasteful"        | Sunk cost. Unverified code is technical debt.                  |
+| "Keep the code as reference"                | You will adapt it. That is testing after. Delete means delete. |
+| "The test is hard to write"                 | Hard to test means hard to use. Fix the design.                |
+| "I must mock everything"                    | Code is too coupled. Use dependency injection.                 |
+| "TDD will slow me down"                     | TDD is faster than debugging in production.                    |
+| "Existing code has no tests"                | You are improving it. Add the test.                            |
+| "Just this once" / "this case is different" | No.                                                            |
+
+## Red Flags: Stop and Start Over
+
+If any of the following is true, stop immediately and restart the cycle from a failing test:
+
+- You wrote code before a test
+- A test passed immediately on its first run
+- You cannot explain why a test failed
+- You are keeping code "as reference" or to "adapt"
+- You are about to say "just this once" or "this case is different"
+
+There are no exceptions without explicit permission from your human partner.
 
 ## Testing Anti-Patterns
 

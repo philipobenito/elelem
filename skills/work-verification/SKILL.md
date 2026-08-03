@@ -5,9 +5,7 @@ description: Runs the gate function that produces fresh verification evidence be
 
 # Verification Before Completion
 
-The iron-law rules (the iron law itself, what counts as a completion claim, when the rule fires) live in `../../rules/common/verification.md`. The procedural rules that bind once this skill is running (the common-failures table, the rationalisation prevention table, the red-flags stop list) live in `RULES.md` alongside this file. This skill is the procedure that produces the evidence those rules require.
-
-Before running the gate function below, you **MUST** read `RULES.md` (sibling file in this skill directory) using the Read tool if you have not already read it in this session.
+Runs the gate function that stands between a change and any claim about it: name the proving command, run it fresh, read the output, and state the claim only with the evidence cited.
 
 ## The Gate Function
 
@@ -45,8 +43,6 @@ Incorrect: "Linter passed, build should be fine." The linter is not the build.
 
 ### Regression Test for a Bug Fix
 
-See `../../rules/common/testing.md` for the full red-green rules. The verification-layer procedure is:
-
 1. Identify: the reproducing test command, and the fix revert step
 2. Run the test against the fix: must pass
 3. Revert the fix, run the test: must fail with the original symptom
@@ -63,7 +59,7 @@ A regression test that has only been observed to pass once has not been verified
 4. Compare: do the changes match the task spec, and do the verifications pass?
 5. State: "Subagent task complete: diff matches spec (N files, expected changes), `<verify command>` exit 0"
 
-You **MUST NOT** propagate a subagent's "success" report without running steps 2 and 3 yourself. See `../../rules/common/subagents.md`.
+You **MUST NOT** propagate a subagent's "success" report without running steps 2 and 3 yourself.
 
 ### Requirements Checklist
 
@@ -74,6 +70,18 @@ You **MUST NOT** propagate a subagent's "success" report without running steps 2
 5. State: either a full checklist with each criterion marked met with its evidence, or a gap report naming what is missing
 
 "Tests pass, so the requirements are met" is not enough. Tests verify the tests; the checklist verifies the requirements.
+
+## Common Failures
+
+| Claim                  | Required evidence                                             | Not sufficient                         |
+|------------------------|---------------------------------------------------------------|----------------------------------------|
+| Tests pass             | Test command output in this message, exit 0, 0 failures       | Previous run, "should pass", linter ok |
+| Linter clean           | Linter output in this message, 0 errors, 0 warnings           | Partial file check, extrapolation      |
+| Build succeeds         | Build command output in this message, exit 0                  | Linter passing, logs "look fine"       |
+| Bug fixed              | The reproducing test fails without the fix and passes with it | Code changed, assumed fixed            |
+| Regression test works  | The full revert-and-restore cycle executed                    | Test passed once after the fix         |
+| Subagent task complete | VCS diff inspected, verification commands re-run              | Subagent's own "success" report        |
+| Requirements met       | Line-by-line checklist against the approved design            | Tests passing in general               |
 
 ## Completion Gate
 
@@ -86,3 +94,31 @@ You have passed the gate for a given claim only if, in the current message:
 - You stated the claim with the evidence cited
 
 Any other state is a gate failure. On a gate failure, you **MUST NOT** make the claim. Fix the underlying issue, re-run the gate, or report the actual status honestly.
+
+## Rationalisation Prevention
+
+Every excuse below means **stop and run the verification**:
+
+| Excuse                                    | Reality                                               |
+|-------------------------------------------|-------------------------------------------------------|
+| "It should work now"                      | Run the verification. "Should" is not evidence.       |
+| "I'm confident"                           | Confidence is not evidence.                           |
+| "Just this once"                          | No exceptions.                                        |
+| "The linter passed"                       | The linter is not the compiler and not the tests.     |
+| "The subagent said it succeeded"          | Verify independently. Trust nothing.                  |
+| "I'm tired"                               | Exhaustion is not an exemption.                       |
+| "A partial check is enough"               | Partial checks prove nothing about the whole.         |
+| "I verified earlier in the session"       | Not fresh. Run it again after the last change.        |
+| "Different wording so the rule is moot"   | Spirit over letter. The rule applies to implications. |
+| "The change is too small to break things" | Small changes break things. Run the verification.     |
+
+## Red Flags: Stop Immediately
+
+If any of the following is true, you **MUST** stop, run verification, and only then continue:
+
+- You are about to write "should", "probably", "seems", "looks", or any hedged success wording
+- You are about to express satisfaction ("Great", "Perfect", "Done") without having just read verification output
+- You are about to commit, push, or open a PR without fresh verification in this message
+- You are about to trust a subagent's self-report without inspecting the diff
+- You are about to rely on verification output from earlier in the session
+- You are about to say "just this once" or "this case is different"

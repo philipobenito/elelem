@@ -84,6 +84,6 @@ In the GREEN step you **MUST** write only the minimal code required to pass the 
 
 You **MUST NOT** fix a bug without first writing a failing test that reproduces it. The test proves the fix works and prevents the bug from returning.
 
-### Procedural Rules
+### The Cycle Skill
 
-The procedural rules that bind once the `work-tdd` skill is running (the rationalisation table, the red-flags stop list) live in `../../skills/work-tdd/RULES.md` and load when the skill is invoked.
+The `work-tdd` skill is the executable red-green-refactor cycle these rules require, and it loads when invoked, carrying its own rationalisation table and red-flags stop list.

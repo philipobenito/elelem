@@ -33,6 +33,6 @@ You **MUST** run fresh verification before any of:
 - Accepting a subagent's report that it succeeded (see `subagents.md`: trust nothing, verify the diff)
 - Stating that a bug is fixed, a regression is closed, or a requirement is met
 
-## Procedural Rules and Procedure
+## The Gate Skill
 
-The procedural rules that bind once the `work-verification` skill is running, the common-failures table, the rationalisation prevention table, and the red-flags stop list, live in `skills/work-verification/RULES.md` and load when the skill is invoked. The executable Gate Function lives in `skills/work-verification/SKILL.md`.
+The `work-verification` skill is the executable Gate Function these rules require, and it loads when invoked, carrying its own common-failures table, rationalisation table, and red-flags stop list.
