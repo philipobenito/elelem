@@ -20,7 +20,7 @@ You **MUST** write the test before the production code and watch it fail before 
 
 ### When TDD Applies
 
-New features, bug fixes, and any change whose behaviour is externally visible. You **MAY** skip TDD in exactly two cases and no others. The first is throwaway prototypes, generated code, or configuration files, which additionally requires explicit approval from your human partner. The second is files the project provides no test framework for, where the project's own instructions define a proving command rather than a test suite; that qualifier is the whole permission, and a project that merely has no tests yet does not meet it.
+New features, bug fixes, and any change whose behaviour is externally visible. You **MAY** skip TDD in exactly two cases, and this rule grants no others. The first is throwaway prototypes, generated code, or configuration files, which additionally requires explicit approval from your human partner. The second is files the project provides no test framework for, where the project's own instructions define a proving command rather than a test suite; that qualifier is the whole permission, and a project that merely has no tests yet does not meet it. A waiver from your human partner is not a third case but an override of this rule, and `./workflow.md` governs it, including the requirement to confirm the scoped opt-out before acting on it.
 
 ### RED and GREEN Are Verified
 
