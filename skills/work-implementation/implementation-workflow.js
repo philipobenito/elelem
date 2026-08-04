@@ -16,14 +16,20 @@
 //                 concrete model names confirmed to exist in the environment;
 //                 the reviewer never runs at a lower tier than the implementer;
 //                 a task may override implementerModel with its own model field
-//   tasks         [{ id, name, files, blockedBy, spec, verifyCommand, model?, isolated?, codeless? }]
+//   tasks         [{ id, name, files, blockedBy, spec, verifyCommand, model?,
+//                    isolated?, codeless?, noTestFramework? }]
 //                 files are repo-relative and pairwise disjoint across tasks;
 //                 verifyCommand is the task-scoped test command;
 //                 isolated: true dispatches the implementer into its own git
 //                 worktree (repo must be the session repository root);
 //                 codeless: true marks a task whose files carry no production
 //                 code, so TDD does not apply and the task's proof is its
-//                 verifyCommand; inert when simple is true
+//                 verifyCommand; inert when simple is true;
+//                 noTestFramework: true marks a task whose files DO carry
+//                 production code, in a project that has no test framework for
+//                 them, so TDD does not apply and the proof is again the
+//                 verifyCommand; mutually exclusive with codeless, which
+//                 pre-flight enforces; inert when simple is true
 
 export const meta = {
   name: 'work-implementation',
@@ -51,6 +57,7 @@ The test is the shipping question: if a finding would leave you comfortable ship
 phase('Pre-flight')
 const owner = new Map()
 for (const t of tasks) {
+  if (t.codeless && t.noTestFramework) throw new Error(`pre-flight failure: task ${t.id} sets both codeless and noTestFramework`)
   for (const f of t.files) {
     if (owner.has(f)) throw new Error(`pre-flight failure: ${f} owned by both ${owner.get(f)} and ${t.id}`)
     owner.set(f, t.id)
@@ -156,6 +163,14 @@ const codelessBlock = `## Testing
 
 This task is marked codeless: its files carry no production code, so there is nothing for TDD to bind and you MUST NOT write tests. The existing suite must stay green; run the task's verification command before reporting. If completing the task requires introducing production code, that falsifies the codeless marking: describe that code in behaviour_introduced and report honestly rather than quietly writing it. On this task, report behaviour_introduced as exactly 'none' unless completing it forced production code; content changes to codeless files are not behaviour.`
 
+const noFrameworkBlock = `## Testing
+
+This task is marked noTestFramework: its files DO carry production code, but this project has no test framework for them, so there is nothing for TDD to bind and the task's proof is its verification command. You MUST NOT write tests and you MUST NOT introduce a test framework, a test runner, or a test dependency. Run the task's verification command before reporting.
+
+Production code IS expected from you here. Do not read this across from a codeless task: describe in behaviour_introduced whatever observable behaviour you introduce, as you would on any ordinary task.
+
+If you find that a test framework capable of hosting a test for these files does exist after all, that falsifies the marking. Report status DONE_WITH_CONCERNS and name the framework and where you found it in concerns, so the reviewer can adjudicate it. Do not quietly write tests in it, and do not quietly skip tests you could have written. The project's own proving command, the verification command you were given, is not itself such a framework.`
+
 function implPrompt(t) {
   return `You are a one-shot implementer. Work ONLY inside the git repository at ${repo}.${t.isolated ? ' You have been given an isolated worktree; your working directory IS your repository, work there and nowhere else.' : ''} All paths below are repo-relative.
 
@@ -170,7 +185,7 @@ ${t.files.map(f => '- ' + f).join('\n')}
 
 Other agents may be editing this tree concurrently and own the files you were not given. Do not create, edit, move or delete any path outside your list. If the task cannot be completed without another file, stop and report status BLOCKED with the reason in summary.
 
-${!simple && t.codeless ? codelessBlock : tddBlock}
+${!simple && t.codeless ? codelessBlock : !simple && t.noTestFramework ? noFrameworkBlock : tddBlock}
 
 Task verification command: ${t.verifyCommand}
 
@@ -208,10 +223,10 @@ Concerns: ${impl.concerns || 'none reported'}
 
 1. Spec compliance: every acceptance criterion is met. A missing criterion is Critical.
 2. Correctness: edge cases the spec names, and the ones it obviously implies.
-3. ${!simple && t.codeless ? `Verification: run the task's verification command yourself: ${t.verifyCommand}` : `Tests: they genuinely exercise the specified behaviours; run the task's verification command yourself: ${t.verifyCommand}`}
+3. ${!simple && (t.codeless || t.noTestFramework) ? `Verification: run the task's verification command yourself: ${t.verifyCommand}` : `Tests: they genuinely exercise the specified behaviours; run the task's verification command yourself: ${t.verifyCommand}`}
 4. Scope: nothing changed that the spec did not ask for.
 5. Quality: naming, clarity, consistency with the surrounding codebase.
-${simple ? `6. Sizing: this work was sized SIMPLE, meaning uniform mechanical change, no new logic, no new interfaces, no observable behaviour, under 40 substantive lines. You are reading the code the sizing predicted, so your evidence outranks the prediction. If any of that does not hold, including a new test appearing, return ISSUES_FOUND with a Critical finding whose description begins 'SIZING:' and names what does not hold. Absent new tests are correct on SIMPLE work; do not report their absence.` : t.codeless ? `6. Codeless: this task is marked codeless, meaning its files carry no production code and no tests. You are reading the diff the marking predicted, so your evidence outranks the prediction. If the diff introduces production code or tests, return ISSUES_FOUND with a Critical finding whose description begins 'CODELESS:' and names what appeared. Absent new tests are correct on a codeless task; do not report their absence.` : ''}
+${simple ? `6. Sizing: this work was sized SIMPLE, meaning uniform mechanical change, no new logic, no new interfaces, no observable behaviour, under 40 substantive lines. You are reading the code the sizing predicted, so your evidence outranks the prediction. If any of that does not hold, including a new test appearing, return ISSUES_FOUND with a Critical finding whose description begins 'SIZING:' and names what does not hold. Absent new tests are correct on SIMPLE work; do not report their absence.` : t.codeless ? `6. Codeless: this task is marked codeless, meaning its files carry no production code and no tests. You are reading the diff the marking predicted, so your evidence outranks the prediction. If the diff introduces production code or tests, return ISSUES_FOUND with a Critical finding whose description begins 'CODELESS:' and names what appeared. Absent new tests are correct on a codeless task; do not report their absence.` : t.noTestFramework ? `6. Test framework: this task is marked noTestFramework, meaning its files carry production code and this project has no test framework for them, so its verification command is its proof. You are reading the diff the marking predicted, so your evidence outranks the prediction. If the diff introduces tests, a test runner or a test dependency, or if you find an existing test framework in this project that could host a test for these files, return ISSUES_FOUND with a Critical finding whose description begins 'FRAMEWORK:' and names what you found. Two things this check is NOT. Absent new tests are correct on this task; do not report their absence. And the project's own proving command, including the verification command named above, is not itself a test framework; its existence does not falsify the marking. Production code IS expected on this task, unlike a codeless one, so do not report its presence as a problem.` : ''}
 
 ## Severity calibration
 
@@ -239,7 +254,7 @@ ${items}
 You may create or edit ONLY these paths:
 ${t.files.map(f => '- ' + f).join('\n')}
 
-Fix every finding. Keep the discipline that applies to this task: ${simple ? 'the work is sized SIMPLE, so introduce no new behaviour and no new tests; the suite stays green.' : t.codeless ? 'the task is marked codeless: introduce no production code and no tests; the verification command must pass.' : 'if a finding reveals untested behaviour, add the failing test first, observe RED, fix, observe GREEN.'} Run the task's verification command: ${t.verifyCommand}
+Fix every finding. Keep the discipline that applies to this task: ${simple ? 'the work is sized SIMPLE, so introduce no new behaviour and no new tests; the suite stays green.' : t.codeless ? 'the task is marked codeless: introduce no production code and no tests; the verification command must pass.' : t.noTestFramework ? 'the task is marked noTestFramework: production code is expected, but introduce no tests and no test framework; the verification command must pass.' : 'if a finding reveals untested behaviour, add the failing test first, observe RED, fix, observe GREEN.'} Run the task's verification command: ${t.verifyCommand}
 
 No git write commands, no sudo, leave changes uncommitted. Report via structured output as before.`
 }
@@ -288,7 +303,7 @@ async function runTask(t) {
   if (!simple && t.codeless && impl.behaviour_introduced !== 'none') {
     state[t.id].failed = true; tr.failure = `codeless falsified: implementer reports production code: ${impl.behaviour_introduced}`; tr.codelessFalsified = true; return
   }
-  if (!simple && !t.codeless && !impl.tdd_evidence.length) {
+  if (!simple && !t.codeless && !t.noTestFramework && !impl.tdd_evidence.length) {
     state[t.id].failed = true; tr.failure = 'no TDD evidence in report'; return
   }
 
@@ -296,11 +311,15 @@ async function runTask(t) {
   if (!review) { state[t.id].failed = true; tr.failure = 'reviewer dispatch died'; return }
   const sizingFinding = r => r.findings.find(f => f.description.startsWith('SIZING:'))
   const codelessFinding = r => r.findings.find(f => f.description.startsWith('CODELESS:'))
+  const frameworkFinding = r => r.findings.find(f => f.description.startsWith('FRAMEWORK:'))
   if (simple && sizingFinding(review)) {
     state[t.id].failed = true; tr.failure = `sizing falsified by reviewer: ${sizingFinding(review).description}`; tr.sizingFalsified = true; return
   }
   if (!simple && t.codeless && codelessFinding(review)) {
     state[t.id].failed = true; tr.failure = `codeless falsified by reviewer: ${codelessFinding(review).description}`; tr.codelessFalsified = true; return
+  }
+  if (!simple && t.noTestFramework && frameworkFinding(review)) {
+    state[t.id].failed = true; tr.failure = `noTestFramework falsified by reviewer: ${frameworkFinding(review).description}`; tr.frameworkFalsified = true; return
   }
   while (review.verdict === 'ISSUES_FOUND' && review.findings.some(f => f.severity !== 'Minor')) {
     if (fixBudget === 0) { state[t.id].failed = true; tr.failure = 'fix budget exhausted at review'; tr.lastReview = review; return }
@@ -317,6 +336,9 @@ async function runTask(t) {
     }
     if (!simple && t.codeless && codelessFinding(review)) {
       state[t.id].failed = true; tr.failure = `codeless falsified by reviewer: ${codelessFinding(review).description}`; tr.codelessFalsified = true; return
+    }
+    if (!simple && t.noTestFramework && frameworkFinding(review)) {
+      state[t.id].failed = true; tr.failure = `noTestFramework falsified by reviewer: ${frameworkFinding(review).description}`; tr.frameworkFalsified = true; return
     }
   }
   tr.review = review
@@ -375,6 +397,7 @@ return {
   unreachedTasks: unreached,
   sizingFalsified: tasks.some(t => results[t.id] && results[t.id].sizingFalsified),
   codelessFalsified: tasks.some(t => results[t.id] && results[t.id].codelessFalsified),
+  frameworkFalsified: tasks.some(t => results[t.id] && results[t.id].frameworkFalsified),
   reconcile: recon,
   rogueChanges: rogue,
   outputTokensSpent: budget.spent(),
