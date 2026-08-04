@@ -17,11 +17,62 @@ _fail() {
   (( failed++ )) || true
 }
 
+# Lexically resolves "." and ".." in PATH and prints the result. No component
+# needs to exist, which is the whole job: a broken reference resolves to the
+# path it would have had. This is "realpath -m", except that -m is a GNU
+# coreutils extension and the BSD realpath macOS ships rejects the flag.
+#
+# Segments are peeled off by prefix rather than split on IFS, because an
+# unquoted split would also glob: a checkout under a path containing [, * or ?
+# would silently resolve to something else. Written without arrays because
+# macOS is still on bash 3.2, where expanding an empty array under "set -u" is
+# an unbound-variable error.
+_normalise_path() {
+  local path="$1"
+  local leading="" out="" part last
+
+  case "$path" in
+    /*) leading="/" ;;
+  esac
+
+  while [[ -n "$path" ]]; do
+    if [[ "$path" == */* ]]; then
+      part="${path%%/*}"
+      path="${path#*/}"
+    else
+      part="$path"
+      path=""
+    fi
+
+    case "$part" in
+      ''|'.')
+        ;;
+      '..')
+        last="${out##*/}"
+        if [[ -n "$out" && "$last" != ".." ]]; then
+          if [[ "$out" == */* ]]; then out="${out%/*}"; else out=""; fi
+        elif [[ -z "$leading" ]]; then
+          out="${out:+$out/}.."
+        fi
+        ;;
+      *)
+        out="${out:+$out/}$part"
+        ;;
+    esac
+  done
+
+  if [[ -n "$leading" ]]; then
+    printf '%s%s\n' "$leading" "$out"
+  else
+    printf '%s\n' "${out:-.}"
+  fi
+}
+
 # Resolves a reference string against the directory of the file that cites it.
 _resolve_reference() {
   local citing_file="$1"
   local ref="$2"
-  realpath -m "$(dirname "$citing_file")/$ref"
+  _normalise_path "$(dirname "$citing_file")/$ref"
 }
 
 # Prints every dot-relative (./ or ../) markdown cross-reference written in FILE,
@@ -91,6 +142,23 @@ test_resolve_reference_uses_citing_files_own_directory_not_cwd() {
     _pass "$name"
   else
     _fail "$name" "expected $base/rules/common/testing.md, got '$resolved'"
+  fi
+}
+
+test_resolve_reference_normalises_a_reference_whose_target_is_missing() {
+  local name="resolve_reference_normalises_a_reference_whose_target_is_missing"
+  local base resolved
+  base="$(mktemp -d)"
+  trap "rm -rf '$base'" RETURN
+
+  mkdir -p "$base/skills/alpha"
+
+  resolved="$(_resolve_reference "$base/skills/alpha/SKILL.md" "../../rules/common/absent.md")"
+
+  if [[ "$resolved" == "$base/rules/common/absent.md" ]]; then
+    _pass "$name"
+  else
+    _fail "$name" "expected $base/rules/common/absent.md, got '$resolved'"
   fi
 }
 
@@ -222,6 +290,7 @@ $matches"
 }
 
 test_resolve_reference_uses_citing_files_own_directory_not_cwd
+test_resolve_reference_normalises_a_reference_whose_target_is_missing
 test_broken_dot_relative_reference_is_reported
 test_valid_dot_relative_reference_is_not_reported
 test_uncited_shared_file_is_reported
