@@ -1,0 +1,22 @@
+[
+  {"query": "design-dialogue this one: i want the CSV export to stream rather than buffering the whole result set in memory. i know exactly what i want, just capture it and pressure-test it", "should_trigger": true},
+  {"query": "I'd like to introduce a caching layer in front of the pricing service. Redis is already in the stack for sessions. Walk me through how the pricing code is currently structured before we decide anything, I only joined last week", "should_trigger": true},
+  {"query": "i want to add a retry queue for the outbound webhooks in src/webhooks/, i wrote most of that package so you don't need to explain anything, and please push back on your own suggestion rather than giving me a menu", "should_trigger": true},
+  {"query": "we need admins to bulk-invite users from a csv, there's a single-invite endpoint in src/api/invites.ts already. lets design this one together, i want to talk the partial failure handling through with you", "should_trigger": true},
+  {"query": "grill me on my plan for proration: charge the difference on the spot when someone downgrades mid-cycle and skip the credit note entirely", "should_trigger": true},
+  {"query": "i've got a plan for splitting InvoiceTotals apart, four of us keep conflicting in that file. pressure-test it with me before i start moving anything", "should_trigger": true},
+  {"query": "run the design dialogue on the rate limiting work, per-key sliding window across our 3 app servers. ask me your questions one at a time", "should_trigger": true},
+  {"query": "i want to work through the notifications design with you interactively, email and in-app first. propose something and then argue against it, i've never touched that part of the codebase", "should_trigger": true},
+  {"query": "product wants cancelled orders in the export and that changes what every customer already sees. talk me through the options and push back on my instinct to just flip the filter in the query", "should_trigger": true},
+
+  {"query": "lets build out the notifications system. email + in-app to start, slack later maybe. no idea how you'd structure it tbh, i've never touched that part of the codebase", "should_trigger": false},
+  {"query": "need to add rate limiting to the public api. per-key, sliding window, and it has to work across our 3 app servers", "should_trigger": false},
+  {"query": "just quickly add a healthcheck endpoint at /healthz that returns 200 and the git sha. should take you 2 minutes", "should_trigger": false},
+  {"query": "the export job times out on large accounts. started happening after tuesday's deploy. logs just show a 504 from the proxy, nothing in the app logs", "should_trigger": false},
+  {"query": "test_invoice_rounding is failing on CI but passes locally every time. can you work out what's going on", "should_trigger": false},
+  {"query": "work on #482", "should_trigger": false},
+  {"query": "reviewer left a bunch of comments on the PR, mostly about the error handling in the webhook consumer. can you go through them", "should_trigger": false},
+  {"query": "how does the retry logic in src/queue/worker.go decide the backoff interval? just trying to understand it, not changing anything", "should_trigger": false},
+  {"query": "you decide on this one, i don't want to be involved. come back when you've got a design for the webhook delivery work", "should_trigger": false},
+  {"query": "the design's approved and written up in the epic body already, go ahead and cut the child tickets for it", "should_trigger": false}
+]
