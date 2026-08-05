@@ -1,4 +1,4 @@
-// The implementation workflow shipped with skills/work-implementation/SKILL.md.
+// The implementation workflow shipped with skills/work-swarm/SKILL.md.
 // The skill constructs the args value; this script owns the control flow and
 // enforces the coordination invariants as code: the pre-flight disjointness
 // assertion throws, the scheduler treats only verified as satisfied, the fix
@@ -32,7 +32,7 @@
 //                 pre-flight enforces; inert when simple is true
 
 export const meta = {
-  name: 'work-implementation',
+  name: 'work-swarm',
   description: 'Implement an approved design as file-disjoint tasks with per-task review and verification',
   phases: [
     { title: 'Pre-flight', detail: 'file-disjointness assertion over the whole decomposition' },

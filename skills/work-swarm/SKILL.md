@@ -1,6 +1,6 @@
 ---
-name: work-implementation
-description: Implements an approved design by sizing it against six evidence criteria, decomposing it into file-disjoint tasks, and running implementation, per-task review and verification concurrently through the workflow script shipped with this skill, with the lead keeping sole authority over commits, the checkpoint drain and the final feature-level review. Use this once a design is approved and it is time to build it, whether the user points at a committed specification, a design settled earlier in the conversation, or one recovered from a ticket, and asks to implement, build, or start on it. Invoked by the design skills when the user chooses to start implementation after approving a design. Covers everything from a uniformly simple batch of edits to a multi-task feature; without an approved design, capture one first. Stops and reports when a required capability is unavailable.
+name: work-swarm
+description: "Implements an approved design by sizing it against six evidence criteria, decomposing it into file-disjoint tasks, and running implementation, per-task review and verification concurrently through the workflow script shipped with this skill, with the lead keeping sole authority over commits, the checkpoint drain and the final feature-level review. Offered as one of the options whenever implementation of an approved design begins, and triggered directly by an explicit orchestration request, the user asking to swarm the work, to parallelise the implementation across agents, or to run the orchestrated implementation process. Requires an approved design in hand; without one, capture the design first. Stops and reports when a required capability is unavailable."
 ---
 
 # Orchestrated Implementation
