@@ -1,9 +1,9 @@
 ---
-name: design-grill-me
-description: "Turns an idea into an approved design through interactive dialogue: explores the affected code, asks one question at a time, proposes one approach and argues against it, presents the design in sections, has the consolidated summary design-reviewed, and takes explicit approval before any hand-off. The default design step for building features, adding functionality, or refactoring, whatever the user's familiarity with the codebase; scales from quickly capturing a design the user already holds to walking a newcomer through the area while designing. Not for bugs (debug-investigation takes its own fix approval), not for tickets already carrying an approved design, not for trivial changes below the design threshold, and not when the user asks for hands-off deliberation, which is design-committee's job."
+name: design-dialogue
+description: "Turns an idea into an approved design through interactive dialogue: explores the affected code, asks one question at a time, proposes one approach and argues against it, presents the design in sections, has the consolidated summary design-reviewed, and takes explicit approval before any hand-off. Offered as an option whenever design work above the design threshold begins, and triggers directly on an explicit request for interactive design: to design it together, to be walked through the design, to have an idea grilled or pressure-tested, or for you to push back on your own proposal. Scales from quickly capturing a design the user already holds to walking a newcomer through the area while designing. Not for bugs (debug-investigation takes its own fix approval), not for tickets already carrying an approved design, not for trivial changes below the design threshold, and not when the user asks for hands-off deliberation, which is design-committee's job."
 ---
 
-# Design Grill Me
+# Design Dialogue
 
 Interactive design dialogue. The conversation is the design medium; nothing is written to disk while designing. The centre of the skill is the grill: propose the approach you actually believe in, then make the strongest case against it, and let whoever can answer that case, the user or the code, settle it. A design that has survived one real objection is worth more than one that was merely agreed to.
 
@@ -53,7 +53,7 @@ At walkthrough depth, every claim traces to a file the user can check, conventio
 
 7. **Take explicit final approval.** Present the reviewed summary and ask directly; "looks fine" is not approval. A response that changes the summary's meaning is text no reviewer has seen, so return to step 6 with it. Once they approve, release plan mode via `ExitPlanMode` carrying the approved summary; approval came from the question just asked, so the call releases the session rather than asking again.
 
-8. **Ask what happens next**, via `AskUserQuestion` with two options: "Create tickets first" and "Start implementation". Then do what they chose. An answer outside that pair is new instruction, so it goes back to the user rather than being mapped onto one of them.
+8. **Ask what happens next**, via `AskUserQuestion` offering "Create tickets first", "Implement directly", and one option per available skill whose description claims implementation of an approved design as its job. Construct those options per the routing rule in `../../rules/common/workflow.md`, which is their canonical definition. Then do what they chose. An answer outside the offered options is new instruction, so it goes back to the user rather than being mapped onto one of them.
 
 ## Working in Existing Codebases
 
