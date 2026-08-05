@@ -96,7 +96,7 @@ Distinguish the symptom from the root cause before fixing. "The function returns
 
 Then check the fix against the **Minimal Fix Principle** before proposing it. The fix changes only what is necessary to address the root cause: no refactoring surrounding code, no adding features you noticed were missing, no fixing unrelated issues you spotted, no "improving" things that are not broken. Unrelated issues you noticed during the investigation are logged separately, as tickets or notes, never fixed inside the debugging change. If the fix touches more than three locations, stop and verify that you are fixing one root cause, not patching the same symptom in several places: one bug is one fix.
 
-If it genuinely is one root cause but the fix it needs cannot be contained (several genuinely separate changes rather than one change, a redesign, or a new interface), the work has stopped being a bug fix and this skill stops here. Hand to `design-grill-me` carrying the root cause, the reproduction approach, and the modules that will change. Do not shrink the fix to fit inside this skill, and do not apply a large fix here on the grounds that you already have the context: shrinking leaves the root cause in place, and applying it anyway ships a redesign under a bug-fix approval the user never gave.
+If it genuinely is one root cause but the fix it needs cannot be contained (several genuinely separate changes rather than one change, a redesign, or a new interface), the work has stopped being a bug fix and this skill stops here. Hand to the design stage, routed per the design-start ask in ../../rules/common/workflow.md, carrying the root cause, the reproduction approach, and the modules that will change. Do not shrink the fix to fit inside this skill, and do not apply a large fix here on the grounds that you already have the context: shrinking leaves the root cause in place, and applying it anyway ships a redesign under a bug-fix approval the user never gave.
 
 Otherwise present the root cause and the proposed fix approach to the user for confirmation. This is the approved design for the bug fix, and it is why a bug does not go through the design step again. You **MUST** wait for explicit approval before moving to Phase 7.
 
@@ -121,7 +121,7 @@ This skill terminates in one of four states. Say which one explicitly, because t
 
 **Fixed.** The root cause was confirmed and approved, the regression test went red then green, the review was processed, and the verification gate produced fresh evidence. Report the root cause, the test, and the cited evidence.
 
-**Escalated.** Phase 6 confirmed a root cause whose fix exceeds the Minimal Fix Principle. Hand to `design-grill-me` with the root cause, the reproduction, and the affected modules. Nothing has been changed.
+**Escalated.** Phase 6 confirmed a root cause whose fix exceeds the Minimal Fix Principle. Hand to the design stage, routed per the design-start ask in ../../rules/common/workflow.md, with the root cause, the reproduction, and the affected modules. Nothing has been changed.
 
 **Non-reproducible.** Phase 2 could not reproduce the bug. No fix has been attempted and none may be. The user owes you reproduction conditions.
 
@@ -147,18 +147,18 @@ An unchecked box means one of the four return states above is the honest one, no
 
 Every thought below means **stop and return to the procedure**:
 
-| You might think...                                                | Reality                                                                                                                                                |
-|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| "The error message tells me exactly what's wrong"                 | Error messages describe symptoms. Reproduce and find the root cause.                                                                                   |
-| "This is obviously a simple typo or missing null check"           | If it is obvious, reproduction and root cause identification will be fast. Skip nothing.                                                               |
-| "Let me just try this quick fix and see if it works"              | That is shotgun debugging. It wastes time when it fails and masks root causes when it works.                                                           |
-| "I've been investigating for a while, let me just try something"  | That is the investigation budget telling you to refocus, not to start guessing.                                                                        |
-| "I need to read more code to understand the system"               | You need scoped evidence, not system understanding. Read what the bug touches, not everything.                                                         |
-| "Let me check a few more files to be thorough"                    | Thoroughness without direction is waste. Form a hypothesis first, then read files to test it.                                                          |
-| "The fix is so small it doesn't need a regression test"           | Small fixes for subtle bugs are exactly what regression tests exist for.                                                                               |
-| "I can see other issues while I'm here, let me fix those too"     | One bug, one fix. Log other issues separately.                                                                                                         |
-| "I don't need to reproduce this, the error is clear"              | Reproduction is verification infrastructure. Without it, you cannot confirm your fix works.                                                            |
-| "I can't reproduce it, but the fix is obvious anyway"             | A non-reproducible bug cannot have a verified fix. Phase 2 is where that investigation stops, not a hurdle to route around.                            |
-| "The fix is bigger than expected, but I already have the context" | A fix that outgrows the minimal fix principle is new work. Escalate to `design-grill-me` rather than spending saved context on an unapproved redesign. |
-| "It's a one-line fix, a code review would be ceremony"            | No exemption exists for small, simple, or obvious. Subtle bugs get small fixes; that is where review pays.                                             |
-| "I'll dispatch agents to gather evidence in parallel"             | That is the refocus spiral executed at scale.                                                                                                          |
+| You might think...                                                | Reality                                                                                                                                               |
+|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| "The error message tells me exactly what's wrong"                 | Error messages describe symptoms. Reproduce and find the root cause.                                                                                  |
+| "This is obviously a simple typo or missing null check"           | If it is obvious, reproduction and root cause identification will be fast. Skip nothing.                                                              |
+| "Let me just try this quick fix and see if it works"              | That is shotgun debugging. It wastes time when it fails and masks root causes when it works.                                                          |
+| "I've been investigating for a while, let me just try something"  | That is the investigation budget telling you to refocus, not to start guessing.                                                                       |
+| "I need to read more code to understand the system"               | You need scoped evidence, not system understanding. Read what the bug touches, not everything.                                                        |
+| "Let me check a few more files to be thorough"                    | Thoroughness without direction is waste. Form a hypothesis first, then read files to test it.                                                         |
+| "The fix is so small it doesn't need a regression test"           | Small fixes for subtle bugs are exactly what regression tests exist for.                                                                              |
+| "I can see other issues while I'm here, let me fix those too"     | One bug, one fix. Log other issues separately.                                                                                                        |
+| "I don't need to reproduce this, the error is clear"              | Reproduction is verification infrastructure. Without it, you cannot confirm your fix works.                                                           |
+| "I can't reproduce it, but the fix is obvious anyway"             | A non-reproducible bug cannot have a verified fix. Phase 2 is where that investigation stops, not a hurdle to route around.                           |
+| "The fix is bigger than expected, but I already have the context" | A fix that outgrows the minimal fix principle is new work. Escalate to the design stage rather than spending saved context on an unapproved redesign. |
+| "It's a one-line fix, a code review would be ceremony"            | No exemption exists for small, simple, or obvious. Subtle bugs get small fixes; that is where review pays.                                            |
+| "I'll dispatch agents to gather evidence in parallel"             | That is the refocus spiral executed at scale.                                                                                                         |

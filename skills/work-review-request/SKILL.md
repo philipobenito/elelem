@@ -1,6 +1,6 @@
 ---
 name: work-review-request
-description: "Dispatches a code reviewer subagent against the work under review, applies severity discipline to its verdict, and owns the fix-and-re-review loop until no Critical or Important issue remains. Use this whenever a change is about to be committed to main, opened as a pull request, handed back as complete, or declared done, and whenever the user asks for a branch, a diff, or their changes to be looked over before shipping. Invoked by `work-implementation` for the feature-level review and by `debug-investigation` after a fix. No change is exempt for being small, simple, obvious, or locally tested."
+description: "Dispatches a code reviewer subagent against the work under review, applies severity discipline to its verdict, and owns the fix-and-re-review loop until no Critical or Important issue remains. Use this whenever a change is about to be committed to main, opened as a pull request, handed back as complete, or declared done, and whenever the user asks for a branch, a diff, or their changes to be looked over before shipping. Invoked by `work-swarm` for the feature-level review and by `debug-investigation` after a fix. No change is exempt for being small, simple, obvious, or locally tested."
 ---
 
 # Requesting Code Review

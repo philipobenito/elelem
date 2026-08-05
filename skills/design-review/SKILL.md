@@ -1,6 +1,6 @@
 ---
 name: design-review
-description: "Reviews a consolidated design summary for completeness, consistency, clarity, scope, and YAGNI by dispatching a fresh reviewer subagent against the summary text alone. Invoked by `design-grill-me` and `design-committee` once the design is consolidated and before final user approval; the inline design path below the design threshold deliberately does not use it. Returns an approved summary, the open decisions the design never made, or an escalation once its three-dispatch budget is spent. Not a standalone entry point; a design summary handed straight to Claude for review belongs to the design skill that owns it."
+description: "Reviews a consolidated design summary for completeness, consistency, clarity, scope, and YAGNI by dispatching a fresh reviewer subagent against the summary text alone. Invoked by `design-dialogue` and `design-committee` once the design is consolidated and before final user approval; the inline design path below the design threshold deliberately does not use it. Returns an approved summary, the open decisions the design never made, or an escalation once its three-dispatch budget is spent. Not a standalone entry point; a design summary handed straight to Claude for review belongs to the design skill that owns it."
 ---
 
 # Design Review
@@ -13,7 +13,7 @@ Runs a holistic pass over a consolidated design summary, catches what section-by
 
 Self-contained is the whole precondition. A summary missing a section is not a precondition failure, it is a Completeness issue and the reviewer's job to find. Checking sections off a list here would review the design twice and reach the reviewer's verdict without the reviewer.
 
-**A caller.** This skill runs as a step inside a design skill (`design-grill-me` step 6, `design-committee` step 8), never on its own and never against a design the user has not worked through. The inline design path below the design threshold deliberately does not invoke it: the user approves the short statement directly and is themselves the reviewer.
+**A caller.** This skill runs as a step inside a design skill (`design-dialogue` step 6, `design-committee` step 8), never on its own and never against a design the user has not worked through. The inline design path below the design threshold deliberately does not invoke it: the user approves the short statement directly and is themselves the reviewer.
 
 ## What This Skill May Change
 

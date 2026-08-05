@@ -38,7 +38,7 @@ The user has asked to be hands-off, and the work holds at least two meaningful d
 
 9. **Take explicit final approval.** Present the reviewed summary and ask directly; "looks fine" is not approval. A user revision is taken as-is: the user overrules the deliberation, no targeted round, and the revised summary is text no reviewer has seen, so it returns to step 8. Once they approve, release plan mode via `ExitPlanMode` carrying the approved summary.
 
-10. **Ask what happens next**, via `AskUserQuestion` with two options: "Create tickets first" and "Start implementation", then do what they chose. An answer outside that pair is new instruction and goes back to the user.
+10. **Ask what happens next**, via `AskUserQuestion` with "Create tickets first", "Implement directly", plus one option per available skill whose description claims implementation of an approved design as its job, constructed per the routing rule in ../../rules/common/workflow.md, then do what they chose. An answer outside the offered options is new instruction and goes back to the user.
 
 ## Worked Example
 

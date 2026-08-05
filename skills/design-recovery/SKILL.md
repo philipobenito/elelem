@@ -42,7 +42,7 @@ The user has referenced a specific artefact: a ticket number or key, or a design
 
 7. **Confirm with `AskUserQuestion`**, with three options: "Looks good, proceed", "Adjust scope", and "Need more context". Plain-text assent is not confirmation. Adjustments fold in and the scope is re-presented; more context means fetching or reading further, then re-presenting. Only "Looks good, proceed" continues.
 
-8. **Start implementation**, with the approved input assembled from the recovered design (the architectural intent), the scope of this specific ticket or section, its acceptance criteria, and the codebase observations. Implementation runs as its own workflow with its own gates; recovery's job ends at delivering it a design the user has confirmed.
+8. **Ask how to build it**, via `AskUserQuestion` with "Implement directly" plus one option per available skill whose description claims implementation of an approved design as its job, constructed per the routing rule in ../../rules/common/workflow.md; there is no tickets option here because the work is already persisted on the artefact being recovered. Hand off the approved input assembled from the recovered design (the architectural intent), the scope of this specific ticket or section, its acceptance criteria, and the codebase observations. Implementation runs as its own workflow with its own gates; recovery's job ends at delivering it a design the user has confirmed.
 
 ## Handling Multiple Tickets
 
