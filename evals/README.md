@@ -39,19 +39,20 @@ It splits the set 60/40 into train and held-out test, runs each query three time
 
 Every skill in `skills/` has a set.
 
-| File                               | Skill                 | Discriminates against                                                                                                              |
-|------------------------------------|-----------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| `debug-investigation-trigger.json` | `debug-investigation` | `design-dialogue`, `work-review-receive`, `work-tdd` mid-cycle, `work-verification`, ticket pickup, mechanical dependency bumps    |
-| `design-dialogue-trigger.json`     | `design-dialogue`     | `debug-investigation`, `design-recovery`, `design-committee`, below-threshold trivial edits, read-only questions                   |
-| `design-committee-trigger.json`    | `design-committee`    | `design-dialogue`, `debug-investigation`, `design-recovery`, hands-off phrasing on trivial work, "committee" as feature vocabulary |
-| `design-review-trigger.json`       | `design-review`       | `work-review-request`, visual and UI design critique, ADR review, `design-dialogue` itself                                         |
-| `design-handoff-trigger.json`      | `design-handoff`      | `design-recovery`, `work-swarm`, tracker housekeeping, "ticketing system" as feature vocabulary                                    |
-| `design-recovery-trigger.json`     | `design-recovery`     | `design-handoff`, `work-swarm`, `debug-investigation` via bug tickets, triage questions, design-less tickets                       |
-| `work-swarm-trigger.json`          | `work-swarm`          | `design-dialogue`, `design-recovery`, `design-handoff`, `debug-investigation`, "fast path" as code vocabulary                      |
-| `work-review-request-trigger.json` | `work-review-request` | `work-review-receive`, reviewing somebody else's PR, `design-review`, `debug-investigation`, reading unfamiliar code               |
-| `work-review-receive-trigger.json` | `work-review-receive` | `work-review-request`, `debug-investigation` a red PR, code review as a process question, "review" and "feedback" outside code     |
-| `work-tdd-trigger.json`            | `work-tdd`            | `work-verification`, `debug-investigation`, test tooling set-up, explicit TDD opt-outs, reviewing tests                            |
-| `work-verification-trigger.json`   | `work-verification`   | `work-review-request`, `work-tdd`, `work-review-receive`'s own item verification, "verify" as feature vocabulary                   |
+| File                               | Skill                 | Discriminates against                                                                                                                                 |
+|------------------------------------|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `debug-investigation-trigger.json` | `debug-investigation` | `design-dialogue`, `work-review-receive`, `work-tdd` mid-cycle, `work-verification`, ticket pickup, mechanical dependency bumps                       |
+| `design-dialogue-trigger.json`     | `design-dialogue`     | `debug-investigation`, `design-recovery`, `design-committee`, below-threshold trivial edits, read-only questions                                      |
+| `design-committee-trigger.json`    | `design-committee`    | `design-dialogue`, `debug-investigation`, `design-recovery`, hands-off phrasing on trivial work, "committee" as feature vocabulary                    |
+| `design-review-trigger.json`       | `design-review`       | `work-review-request`, visual and UI design critique, ADR review, `design-dialogue` itself                                                            |
+| `design-handoff-trigger.json`      | `design-handoff`      | `design-recovery`, `work-swarm`, tracker housekeeping, "ticketing system" as feature vocabulary                                                       |
+| `design-recovery-trigger.json`     | `design-recovery`     | `design-handoff`, `work-swarm`, `debug-investigation` via bug tickets, triage questions, design-less tickets                                          |
+| `work-swarm-trigger.json`          | `work-swarm`          | `design-dialogue`, `design-recovery`, `design-handoff`, `debug-investigation`, "fast path" as code vocabulary                                         |
+| `work-review-request-trigger.json` | `work-review-request` | `work-review-receive`, reviewing somebody else's PR, `design-review`, `debug-investigation`, reading unfamiliar code                                  |
+| `work-review-receive-trigger.json` | `work-review-receive` | `work-review-request`, `debug-investigation` a red PR, code review as a process question, "review" and "feedback" outside code                        |
+| `review-branch-trigger.json`       | `review-branch`       | `work-review-request`, `work-review-receive`, replying to review comments, catching up on a branch, automated PR comment bots, comment-writing advice |
+| `work-tdd-trigger.json`            | `work-tdd`            | `work-verification`, `debug-investigation`, test tooling set-up, explicit TDD opt-outs, reviewing tests                                               |
+| `work-verification-trigger.json`   | `work-verification`   | `work-review-request`, `work-tdd`, `work-review-receive`'s own item verification, "verify" as feature vocabulary                                      |
 
 ## Boundary Notes
 
@@ -60,6 +61,8 @@ Both design sets trigger on explicit vocabulary rather than on the shape of the 
 `design-review` inverts the polarity: it is a step inside a design mode with no standing on its own, because it needs a consolidated summary a caller produced and a caller to return its verdict to. Its positives are therefore all mid-flow, and its hardest negatives are the two collisions its name invites: visual critique belongs to `frontend-design`, and a hand-written ADR nobody consolidated belongs to `design-dialogue`. One behavioural negative asks for a fourth dispatch after the three-dispatch budget is spent, which the Return Contract forbids.
 
 Two pairs discriminate against each other on direction of travel rather than vocabulary, and each carries the other's positives as its hardest negatives. The review pair splits on whether the change is awaiting a look (`work-review-request`) or somebody has already looked and said something (`work-review-receive`). The ticket pair splits on whether an approved design is being persisted (`design-handoff`) or picked back up from an artefact (`design-recovery`); `design-recovery` additionally refuses two artefact-shaped near-misses, a bug-report ticket that belongs behind `debug-investigation`'s gate and a one-line ticket carrying no design at all, which is a fresh design conversation.
+
+`review-branch` adds a third direction to the review pair: the user is the reviewer, and the output is comments for somebody else. It fires on its name or on a request for review comments to leave on a branch, whoever wrote the branch, so its discriminator is the output asked for rather than the author. Its hardest negatives are the two that share its vocabulary: "review it and fix anything that's wrong" is `work-review-request`, because a fix loop is asked for, and "work through the comments" is `work-review-receive`, because the comments already exist. A pull request named only by number, such as the "PR 442 from Sam" negative in the `work-review-request` set, is a positive in neither set, because `review-branch` takes a branch and not a PR number.
 
 `debug-investigation` appears as a hard negative in nearly every other set, so its own set works the other way around: its negatives are the rest of the corpus. The queries the description most has to hold against are the failing test that is TDD RED rather than a defect, the reviewer comment that arrives as feedback rather than a bug, and the feature request dressed in defect language ("deliveries just vanish, that's by design today but it shouldn't be"). Its positives include the obvious-typo one-liner and the hands-off "fix it however you see fit", because the hard gate applies regardless of how simple the fix looks and hands-off phrasing on a bug is not a committee ask.
 

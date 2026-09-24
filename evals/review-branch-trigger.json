@@ -1,0 +1,20 @@
+[
+  {"query": "/review-branch VAN3-111", "should_trigger": true},
+  {"query": "sam asked me to review feature/invoice-rounding. can you go through it and give me comments i can leave on the PR", "should_trigger": true},
+  {"query": "i've got priya's branch checked out, what review comments should i leave on it? keep them short, she's senior", "should_trigger": true},
+  {"query": "review the branch for PAY-482 against release/3.1 and write up comments for the author, focus on the migration", "should_trigger": true},
+  {"query": "can you do a review of this branch and give me line comments i can paste into github, i'll decide which ones to post", "should_trigger": true},
+  {"query": "i'm reviewing a stacked PR, it sits on top of feature/auth-tokens. give me comments for just the top branch", "should_trigger": true},
+  {"query": "before my teammate looks at it, give me review comments on my own branch so i can see what they're likely to pick up on. don't change anything", "should_trigger": true},
+  {"query": "i need to leave a review on tom's webhook retry branch by end of day. find the problems and word them as comments for him", "should_trigger": true},
+  {"query": "run a review of origin/feature/csv-export and give me file and line comments, i don't have it checked out", "should_trigger": true},
+  {"query": "just finished the retry logic on the webhook consumer, can you give it a once over before i open the PR against main", "should_trigger": false},
+  {"query": "the auth refactor on my branch is done, review it and fix anything that's wrong before i merge", "should_trigger": false},
+  {"query": "sam left 6 comments on my PR, can you work through them and fix what needs fixing", "should_trigger": false},
+  {"query": "reply to the review comments on PR 318 explaining why we kept the legacy path", "should_trigger": false},
+  {"query": "review the design summary we just put together before we start cutting tickets for it", "should_trigger": false},
+  {"query": "can you explain what this branch changes? i've been off for a week and need to catch up before standup", "should_trigger": false},
+  {"query": "set up a github action that leaves automated review comments on every pull request", "should_trigger": false},
+  {"query": "rebase my branch onto main and sort out the conflicts in the invoice service", "should_trigger": false},
+  {"query": "what makes a good code review comment? our juniors write essays and nobody reads them", "should_trigger": false}
+]
