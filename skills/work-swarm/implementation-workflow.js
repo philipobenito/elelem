@@ -11,6 +11,9 @@
 //   baseSha       the commit the whole feature is measured against
 //   suiteCommand  full-suite command run once at reconcile (e.g. "npm test")
 //   severityTable optional; overrides the severity calibration embedded below
+//   testValueRule the Meaningful Assertions section of rules/common/testing.md,
+//                 pasted whole; required when any task prunes, and deliberately
+//                 without an embedded default so the rule keeps one home
 //   simple        true when the sizing verdict was SIMPLE (one task, no new behaviour)
 //   implementerModel / reviewerModel / verifierModel
 //                 concrete model names confirmed to exist in the environment;
@@ -37,6 +40,7 @@ export const meta = {
   phases: [
     { title: 'Pre-flight', detail: 'file-disjointness assertion over the whole decomposition' },
     { title: 'Implement', detail: 'one implementer per ready task, waves by blockedBy' },
+    { title: 'Prune', detail: 'fresh audit removes tests that catch no defect another test misses' },
     { title: 'Review', detail: 'per-task reviewer, integer fix budget of two' },
     { title: 'Verify', detail: 'task-scoped verification commands' },
     { title: 'Reconcile', detail: 'tree-level ownership check and full suite' },
@@ -48,6 +52,8 @@ const { repo, baseSha, suiteCommand, simple, tasks } = input
 const implementerModel = input.implementerModel
 const reviewerModel = input.reviewerModel
 const verifierModel = input.verifierModel
+const testValueRule = input.testValueRule
+const isTddTask = t => !simple && !t.codeless && !t.noTestFramework
 
 const severityTable = input.severityTable || `Critical: broken behaviour, data loss, a security hole, or a violated acceptance criterion; the work cannot ship.
 Important: must be fixed before this commits; real correctness or maintainability damage a reviewer should not wave through.
@@ -63,6 +69,7 @@ for (const t of tasks) {
     owner.set(f, t.id)
   }
 }
+if (tasks.some(isTddTask) && !testValueRule) throw new Error('pre-flight failure: testValueRule is required when any task prunes')
 const ids = new Set(tasks.map(t => t.id))
 for (const t of tasks) for (const d of t.blockedBy) {
   if (!ids.has(d)) throw new Error(`task ${t.id} blockedBy unknown task ${d}`)
@@ -94,6 +101,45 @@ const IMPL_SCHEMA = {
     test_exit_code: { type: 'integer' },
     working_directory: { type: 'string', description: 'absolute path of the tree actually worked in' },
     concerns: { type: 'string' },
+  },
+}
+
+const PRUNE_SCHEMA = {
+  type: 'object',
+  required: ['baseline_exit_code', 'verdicts', 'withheld', 'uncovered_behaviours', 'files_changed', 'verify_exit_code', 'working_directory'],
+  properties: {
+    baseline_exit_code: { type: 'integer', description: 'exit code of the verification command run before any removal' },
+    verdicts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['file', 'test_name', 'verdict', 'reason'],
+        properties: {
+          file: { type: 'string' },
+          test_name: { type: 'string' },
+          verdict: { enum: ['KEEP', 'REMOVE'] },
+          reason: { type: 'string' },
+          surviving_test: { type: 'string', description: "required on REMOVE, absent on KEEP: 'file :: test name', or 'none' when the removed test could not fail" },
+          removed_source: { type: 'string', description: 'required on REMOVE, absent on KEEP: the removed test case, verbatim, so the removal can be reversed' },
+        },
+      },
+    },
+    withheld: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['file', 'test_name', 'surviving_test'],
+        properties: {
+          file: { type: 'string' },
+          test_name: { type: 'string' },
+          surviving_test: { type: 'string' },
+        },
+      },
+    },
+    uncovered_behaviours: { type: 'array', items: { type: 'string' } },
+    files_changed: { type: 'array', items: { type: 'string' } },
+    verify_exit_code: { type: 'integer' },
+    working_directory: { type: 'string', description: 'absolute path of the tree actually worked in' },
   },
 }
 
@@ -200,6 +246,103 @@ Task verification command: ${t.verifyCommand}
 Return structured output. files_changed MUST list exactly the repo-relative paths you created or edited and MUST be a subset of the owned list. behaviour_introduced is exactly 'none' or a description of observable behaviour you introduced. working_directory is the absolute path of the tree you worked in (run pwd). Status: DONE, DONE_WITH_CONCERNS (completed but doubtful, say why in concerns), BLOCKED (cannot complete), NEEDS_CONTEXT (the spec is missing a decision; never guess one).`
 }
 
+function prunePrompt(t, impl) {
+  const scope = impl.files_changed
+  const otherTasksFiles = tasks.filter(o => o.id !== t.id).flatMap(o => o.files)
+  return `You are a one-shot test auditor. Work ONLY inside the git repository at ${treeFor(t)}. All paths below are repo-relative. Every test in scope must earn its place.
+
+## Task ${t.id}: ${t.name}
+
+${t.spec}
+
+## What the implementer built
+
+Behaviour introduced: ${impl.behaviour_introduced}
+
+Tests the implementer wrote for it:
+${impl.tdd_evidence.map(e => `- ${e.test_name}: ${e.behaviour}`).join('\n')}
+
+## The rule
+
+${testValueRule}
+
+## Files in scope
+
+Audit every test in these files, whether the implementer added it or it existed before:
+${scope.map(f => '- ' + f).join('\n')}
+
+## Baseline
+
+Before removing anything, run the task's verification command and report its exit code as baseline_exit_code: ${t.verifyCommand}
+
+If it is non-zero, stop there. A pruned suite can only be judged against a green one. Remove nothing, and report empty verdicts, withheld, uncovered_behaviours and files_changed, with verify_exit_code equal to baseline_exit_code. The reviewer picks up the failing suite.
+
+## For each test
+
+1. Name the concrete defect in the production code that makes this test fail. If you cannot name one, the test cannot fail: its verdict is REMOVE with surviving_test 'none'.
+2. Look for another test that also fails on that defect.
+3. If one exists, the verdict is REMOVE, with that test as surviving_test in the form 'file :: test name'. Otherwise the verdict is KEEP, with the defect only this test catches as reason.
+
+A surviving test is valid only when it is a KEEP in this audit, sits in a file outside the files in scope that no other task in this run owns, or is 'none' because the removed test cannot fail. These files belong to other tasks, which are pruning at the same time, so they are NEVER valid survivors:
+${otherTasksFiles.length ? otherTasksFiles.map(f => '- ' + f).join('\n') : '- none'}
+
+Check every REMOVE against that rule before applying anything. Two duplicates that each name the other cannot both be removed: keep one.
+
+## Applying the verdicts
+
+Apply every REMOVE by deleting that test case. Before deleting it, copy the whole test case verbatim into removed_source, so the removal can be reversed without touching anything else in the file. Edit ONLY the files in scope above. Remove test code only: write no new tests and change no production behaviour. An inline test module inside a production file is test code. Never delete a file. If removing a test would leave its file with no tests, do not remove it: list it in withheld instead, and leave it out of verdicts.
+
+Then run the task's verification command and report its exit code as verify_exit_code: ${t.verifyCommand}
+
+## Coverage
+
+Map the behaviour introduced to the tests that still cover it after your removals. List every behaviour with no covering test in uncovered_behaviours. Do not write a test for it: the reviewer sends it back to the implementer.
+
+## Hard rules
+
+- No git commands that write state: no commit, branch, stash, restore, checkout. Read-only git is fine.
+- No sudo, no elevated privileges.
+- Leave every change uncommitted.
+
+## Report
+
+Return structured output. verdicts lists every test you audited except the withheld ones. surviving_test and removed_source are required on every REMOVE and absent on every KEEP. files_changed MUST list exactly the repo-relative paths you edited. working_directory is the absolute path of the tree you worked in (run pwd).`
+}
+
+function testAuditSection(t) {
+  const tr = results[t.id]
+  if (!tr || !tr.prune) return ''
+  const removed = tr.prune.verdicts.filter(v => v.verdict === 'REMOVE')
+  const list = items => items.length ? items.join('\n') : '- none'
+  const uncoveredInstruction = tr.rounds === 0
+    ? 'The orchestrator raises each of these as an Important finding on this review, so do not report them yourself.'
+    : 'Raise an Important finding for each of these that still has no covering test.'
+  return `
+
+## The test audit
+
+A fresh auditor pruned the tests in this task's changed files before this review. Every remaining test should catch a defect no other test catches.
+
+Removed tests, each with the surviving test it relied on:
+${list(removed.map(v => `- ${v.file} :: ${v.test_name}, survivor ${v.surviving_test}`))}
+
+For each removed test with a named survivor, check that the survivor exists and fails on the same defect. For each test removed with survivor 'none', check that the removed test genuinely could not fail. If either check does not hold, the behaviour is untested: raise an Important finding. The tests listed above as removed are gone on purpose. Do not report them as missing.
+
+Withheld, because removing them would have left their file with no tests:
+${list(tr.prune.withheld.map(w => `- ${w.file} :: ${w.test_name}, survivor ${w.surviving_test}`))}
+
+Behaviours the auditor found with no covering test:
+${list(tr.prune.uncovered_behaviours.map(b => '- ' + b))}
+
+${uncoveredInstruction}`
+}
+
+function withUncoveredFindings(review, prune) {
+  if (!prune || !prune.uncovered_behaviours.length) return review
+  const uncovered = prune.uncovered_behaviours.map(b => ({ severity: 'Important', description: `UNCOVERED: the test prune left no test for this behaviour: ${b}` }))
+  return { ...review, verdict: 'ISSUES_FOUND', findings: [...review.findings, ...uncovered] }
+}
+
 function reviewPrompt(t, impl) {
   return `You are a code reviewer, the last gate before this work is accepted. The repository to review is at ${treeFor(t)}.
 
@@ -226,7 +369,7 @@ Concerns: ${impl.concerns || 'none reported'}
 3. ${!simple && (t.codeless || t.noTestFramework) ? `Verification: run the task's verification command yourself: ${t.verifyCommand}` : `Tests: they genuinely exercise the specified behaviours; run the task's verification command yourself: ${t.verifyCommand}`}
 4. Scope: nothing changed that the spec did not ask for.
 5. Quality: naming, clarity, consistency with the surrounding codebase.
-${simple ? `6. Sizing: this work was sized SIMPLE, meaning uniform mechanical change, no new logic, no new interfaces, no observable behaviour, under 40 substantive lines. You are reading the code the sizing predicted, so your evidence outranks the prediction. If any of that does not hold, including a new test appearing, return ISSUES_FOUND with a Critical finding whose description begins 'SIZING:' and names what does not hold. Absent new tests are correct on SIMPLE work; do not report their absence.` : t.codeless ? `6. Codeless: this task is marked codeless, meaning its files carry no production code and no tests. You are reading the diff the marking predicted, so your evidence outranks the prediction. If the diff introduces production code or tests, return ISSUES_FOUND with a Critical finding whose description begins 'CODELESS:' and names what appeared. Absent new tests are correct on a codeless task; do not report their absence.` : t.noTestFramework ? `6. Test framework: this task is marked noTestFramework, meaning its files carry production code and this project has no test framework for them, so its verification command is its proof. You are reading the diff the marking predicted, so your evidence outranks the prediction. If the diff introduces tests, a test runner or a test dependency, or if you find an existing test framework in this project that could host a test for these files, return ISSUES_FOUND with a Critical finding whose description begins 'FRAMEWORK:' and names what you found. Two things this check is NOT. Absent new tests are correct on this task; do not report their absence. And the project's own proving command, including the verification command named above, is not itself a test framework; its existence does not falsify the marking. Production code IS expected on this task, unlike a codeless one, so do not report its presence as a problem.` : ''}
+${simple ? `6. Sizing: this work was sized SIMPLE, meaning uniform mechanical change, no new logic, no new interfaces, no observable behaviour, under 40 substantive lines. You are reading the code the sizing predicted, so your evidence outranks the prediction. If any of that does not hold, including a new test appearing, return ISSUES_FOUND with a Critical finding whose description begins 'SIZING:' and names what does not hold. Absent new tests are correct on SIMPLE work; do not report their absence.` : t.codeless ? `6. Codeless: this task is marked codeless, meaning its files carry no production code and no tests. You are reading the diff the marking predicted, so your evidence outranks the prediction. If the diff introduces production code or tests, return ISSUES_FOUND with a Critical finding whose description begins 'CODELESS:' and names what appeared. Absent new tests are correct on a codeless task; do not report their absence.` : t.noTestFramework ? `6. Test framework: this task is marked noTestFramework, meaning its files carry production code and this project has no test framework for them, so its verification command is its proof. You are reading the diff the marking predicted, so your evidence outranks the prediction. If the diff introduces tests, a test runner or a test dependency, or if you find an existing test framework in this project that could host a test for these files, return ISSUES_FOUND with a Critical finding whose description begins 'FRAMEWORK:' and names what you found. Two things this check is NOT. Absent new tests are correct on this task; do not report their absence. And the project's own proving command, including the verification command named above, is not itself a test framework; its existence does not falsify the marking. Production code IS expected on this task, unlike a codeless one, so do not report its presence as a problem.` : ''}${testAuditSection(t)}
 
 ## Severity calibration
 
@@ -281,6 +424,29 @@ function reconPrompt() {
 pass is true only if the exit code is 0 and failed is 0. Do not edit any file.`
 }
 
+async function runPrune(t, impl, tr) {
+  const fail = failure => { state[t.id].failed = true; tr.failure = failure; return false }
+  const prune = await agent(prunePrompt(t, impl), { label: `prune:${t.id}`, phase: 'Prune', schema: PRUNE_SCHEMA, model: reviewerModel })
+  if (!prune) return fail('prune dispatch died')
+  const strayPrune = prune.files_changed.filter(p => !t.files.includes(p))
+  if (strayPrune.length) {
+    tr.prune = prune
+    return fail(`ownership violation in prune: ${strayPrune.join(', ')}`)
+  }
+  if (prune.baseline_exit_code !== 0 && prune.files_changed.length) {
+    tr.prune = prune
+    return fail(`prune edited files despite a red baseline: ${prune.files_changed.join(', ')}`)
+  }
+  if (prune.baseline_exit_code !== 0) {
+    tr.pruneSkipped = `suite red before the prune: exit code ${prune.baseline_exit_code}`
+    return true
+  }
+  tr.prune = prune
+  if (prune.verdicts.some(v => v.verdict === 'REMOVE' && !(v.surviving_test && v.removed_source))) return fail('prune verdict incomplete: a REMOVE lacks surviving_test or removed_source')
+  if (prune.verify_exit_code !== 0) return fail(`verification failed after prune: exit code ${prune.verify_exit_code}`)
+  return true
+}
+
 async function runTask(t) {
   let fixBudget = 2
   const tr = { taskId: t.id, rounds: 0 }
@@ -303,9 +469,10 @@ async function runTask(t) {
   if (!simple && t.codeless && impl.behaviour_introduced !== 'none') {
     state[t.id].failed = true; tr.failure = `codeless falsified: implementer reports production code: ${impl.behaviour_introduced}`; tr.codelessFalsified = true; return
   }
-  if (!simple && !t.codeless && !t.noTestFramework && !impl.tdd_evidence.length) {
+  if (isTddTask(t) && !impl.tdd_evidence.length) {
     state[t.id].failed = true; tr.failure = 'no TDD evidence in report'; return
   }
+  if (isTddTask(t) && !(await runPrune(t, impl, tr))) return
 
   let review = await agent(reviewPrompt(t, impl), { label: `review:${t.id}`, phase: 'Review', schema: REVIEW_SCHEMA, model: reviewerModel })
   if (!review) { state[t.id].failed = true; tr.failure = 'reviewer dispatch died'; return }
@@ -321,6 +488,7 @@ async function runTask(t) {
   if (!simple && t.noTestFramework && frameworkFinding(review)) {
     state[t.id].failed = true; tr.failure = `noTestFramework falsified by reviewer: ${frameworkFinding(review).description}`; tr.frameworkFalsified = true; return
   }
+  review = withUncoveredFindings(review, tr.prune)
   while (review.verdict === 'ISSUES_FOUND' && review.findings.some(f => f.severity !== 'Minor')) {
     if (fixBudget === 0) { state[t.id].failed = true; tr.failure = 'fix budget exhausted at review'; tr.lastReview = review; return }
     fixBudget--

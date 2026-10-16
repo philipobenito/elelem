@@ -94,7 +94,7 @@ Distinguish the symptom from the root cause before fixing. "The function returns
 - **Why**: the causal chain from the root cause to the observed symptom
 - **Since when**: if determinable, when the bug was introduced (commit reference)
 
-Then check the fix against the **Minimal Fix Principle** before proposing it. The fix changes only what is necessary to address the root cause: no refactoring surrounding code, no adding features you noticed were missing, no fixing unrelated issues you spotted, no "improving" things that are not broken. Unrelated issues you noticed during the investigation are logged separately, as tickets or notes, never fixed inside the debugging change. If the fix touches more than three locations, stop and verify that you are fixing one root cause, not patching the same symptom in several places: one bug is one fix.
+Then check the fix against the **Minimal Fix Principle** before proposing it. The fix changes only what is necessary to address the root cause: no refactoring surrounding code, no adding features you noticed were missing, no fixing unrelated issues you spotted, no "improving" things that are not broken. Unrelated issues you noticed during the investigation are logged separately, as tickets or notes, never fixed inside the debugging change. The test prune in Phase 7 is the one exception. Its removals are part of the fix, including removals of older tests in the touched files. If the fix touches more than three locations, stop and verify that you are fixing one root cause, not patching the same symptom in several places: one bug is one fix.
 
 If it genuinely is one root cause but the fix it needs cannot be contained (several genuinely separate changes rather than one change, a redesign, or a new interface), the work has stopped being a bug fix and this skill stops here. Hand to the design stage, routed per the design-start ask in ../../rules/common/workflow.md, carrying the root cause, the reproduction approach, and the modules that will change. Do not shrink the fix to fit inside this skill, and do not apply a large fix here on the grounds that you already have the context: shrinking leaves the root cause in place, and applying it anyway ships a redesign under a bug-fix approval the user never gave.
 
@@ -104,10 +104,12 @@ Otherwise present the root cause and the proposed fix approach to the user for c
 
 Once the user has approved the root cause and the fix approach:
 
-1. **Write the failing regression test first**, through the red-green cycle: the test reproduces the bug, it **MUST** fail before the fix and pass after, and you watch it fail for the right reason.
-2. **Implement the minimal fix** per the Minimal Fix Principle above. Do not refactor, do not add features, do not fix unrelated issues.
-3. **Request a code review** of the fix and its regression test. No exemption exists for a change that is small, simple, obvious, or locally tested, and a minimal bug fix is the change most likely to claim one. The fix is still uncommitted at this point, because this skill commits only after the Completion Gate; the review diffs against the base rather than across a commit range for exactly this reason, so the uncommitted work is what gets reviewed. The review skill owns the fix-and-re-review loop and processes findings itself, so do not run that loop here. An **Issues outstanding** return means the fix did not pass review, and none of the four return states below is Fixed until it does.
-4. **Verify before claiming completion**: run the full relevant test suite fresh, confirm the regression test passes, confirm no other tests broke, and cite the evidence before claiming the fix complete.
+1. **Record the base** before writing any test. Read "Before the First RED: Record the Base" in `../work-tdd/SKILL.md` and follow it. This skill runs its own red-green cycle and does not load that skill, so it records the base itself.
+2. **Write the failing regression test first**, through the red-green cycle: the test reproduces the bug, it **MUST** fail before the fix and pass after, and you watch it fail for the right reason.
+3. **Implement the minimal fix** per the Minimal Fix Principle above. Do not refactor, do not add features, do not fix unrelated issues.
+4. **Prune the tests.** Read "PRUNE: Every Test Earns Its Place" in `../work-tdd/SKILL.md` and follow it, using the base recorded in step 1. The regression test earns its place like any other test.
+5. **Request a code review** of the fix and the tests that survived the prune. No exemption exists for a change that is small, simple, obvious, or locally tested, and a minimal bug fix is the change most likely to claim one. The fix is still uncommitted at this point, because this skill commits only after the Completion Gate; the review diffs against the base rather than across a commit range for exactly this reason, so the uncommitted work is what gets reviewed. The review skill owns the fix-and-re-review loop and processes findings itself, so do not run that loop here. An **Issues outstanding** return means the fix did not pass review, and none of the four return states below is Fixed until it does.
+6. **Verify before claiming completion**: run the full relevant test suite fresh, confirm the regression test, or the surviving test the prune named for it, passes, confirm no other tests broke, and cite the evidence before claiming the fix complete.
 
 ## When the Bug Cannot Be Found
 
@@ -138,6 +140,7 @@ Before claiming a bug fixed, confirm every box:
 - [ ] The user explicitly approved the root cause and the fix approach
 - [ ] A regression test was watched failing for the right reason before the fix
 - [ ] The fix changes only what the root cause requires
+- [ ] The prune ran over the touched files
 - [ ] A code review ran and its findings were processed
 - [ ] Verification ran fresh in the current message and the evidence was cited
 

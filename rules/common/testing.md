@@ -10,6 +10,8 @@ You **MUST NOT** mock the code under test, pure functions, or internal collabora
 
 A test exists to catch a genuine regression in the behaviour it names; if you cannot name the defect an assertion would catch, narrow or drop it. Assert the specific behaviour the name promises, never incidental structure: no collection-size assertions unless the behaviour is about the count, no full-object or snapshot equality unless it is about the object's complete shape. A test **MUST NOT** fail because unrelated code changed.
 
+A test earns its place only when it catches a defect that no other test catches. Remove a test in only two cases. Another test fails on the same defect, or the test can fail on no defect at all. Never remove the last test that can catch a defect in a behaviour.
+
 ## Test-Driven Development
 
 ### The Iron Law

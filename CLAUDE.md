@@ -8,15 +8,16 @@ This file governs how to author elelem's own content, the rules and skills under
 
 ## The Load Model
 
-Every file in this repository is in context under exactly one condition. Nothing is in context by default.
+Nothing is in context by default. Each file class enters context only under the condition listed below.
 
-| File class                      | In context when                                        |
-|---------------------------------|--------------------------------------------------------|
-| `CLAUDE.md`                     | Always, in this repository                             |
-| `rules/common/*.md`             | Always, once installed                                 |
-| `rules/<lang>/*.md`             | A file matching its `globs:` frontmatter is read       |
-| `skills/<name>/SKILL.md`        | That skill is invoked                                  |
-| Sibling files in a skill folder | `SKILL.md` instructs a Read, or launches a script file |
+| File class                              | In context when                                        |
+|-----------------------------------------|--------------------------------------------------------|
+| `CLAUDE.md`                             | Always, in this repository                             |
+| `rules/common/*.md`                     | Always, once installed                                 |
+| `rules/<lang>/*.md`                     | A file matching its `globs:` frontmatter is read       |
+| `skills/<name>/SKILL.md`                | That skill is invoked                                  |
+| Sibling files in a skill folder         | `SKILL.md` instructs a Read, or launches a script file |
+| A section of another skill's `SKILL.md` | The citing `SKILL.md` instructs a Read of that section |
 
 ## Canonical Home and Duplication
 
@@ -25,18 +26,19 @@ Content has exactly one canonical home. Finding the same content in two or more 
 - **Duplication**, the same content in two or more homes, is a defect whether or not sync notes link the copies. Fix it: pick the canonical home and make every other occurrence a reference to it.
 - **Load-bearing structure**, two files sharing a shape (a heading layout, a table skeleton) but carrying different content, is not duplication at all and needs no reconciling.
 
-Where canonical content must reach a dispatched agent, the prompt template carries a fill-at-dispatch placeholder naming the canonical source to paste from, never a synced copy. A skill that dispatches with `Agent` embeds its prompt templates in its own `SKILL.md` and pastes shared content from a sibling section at dispatch (`design-review` does this with its category table), which leaves no second file to drift; a skill that ships a workflow script embeds its prompts and calibration defaults in the script. One cross-file placeholder exists: `[SEVERITY_TABLE]` in the reviewer prompts embedded in `skills/work-review-request/SKILL.md` and `skills/review-branch/SKILL.md`, pasted from the severity table in `rules/common/code-review.md`. That canonical source is an always-on rule file, in context by definition, so the paste can neither drift nor fail on an installed tree.
+Where canonical content must reach a dispatched agent, the prompt template carries a fill-at-dispatch placeholder naming the canonical source to paste from, never a synced copy. A skill that dispatches with `Agent` embeds its prompt templates in its own `SKILL.md` and pastes shared content from a sibling section at dispatch (`design-review` does this with its category table), which leaves no second file to drift; a skill that ships a workflow script embeds its prompts and calibration defaults in the script. Two cross-file pastes exist. `[SEVERITY_TABLE]` sits in the reviewer prompts embedded in `skills/work-review-request/SKILL.md` and `skills/review-branch/SKILL.md`, pasted from the severity table in `rules/common/code-review.md`. `[TEST_VALUE_RULE]` sits in the auditor prompt embedded in `skills/work-tdd/SKILL.md`, and the `testValueRule` arg of `skills/work-swarm/implementation-workflow.js` carries the same text. Both are pasted from the Meaningful Assertions section of `rules/common/testing.md`. Each canonical source is an always-on rule file, in context by definition, so the paste can neither drift nor fail on an installed tree. Unlike `severityTable`, `testValueRule` deliberately has no default embedded in the script: a default would be a second copy of the rule.
 
 ## Where New Content Belongs
 
-| New content is...                                    | It belongs in...                                          |
-|------------------------------------------------------|-----------------------------------------------------------|
-| An iron law, binding on every repo that installs it  | `rules/common/`                                           |
-| A procedure, the steps a skill runs                  | `skills/<name>/SKILL.md`                                  |
-| Procedural rules that bind only while one skill runs | that skill's own `SKILL.md`, at the step where they bite  |
-| Anything two or more skills need                     | `rules/common/`, whose always-on presence serves them all |
-| Text pasted verbatim into a dispatched agent         | a prompt template embedded in the dispatching `SKILL.md`  |
-| Reference material a skill needs only sometimes      | a sibling file in that skill's folder, read on demand     |
+| New content is...                                       | It belongs in...                                              |
+|---------------------------------------------------------|---------------------------------------------------------------|
+| An iron law, binding on every repo that installs it     | `rules/common/`                                               |
+| A procedure, the steps a skill runs                     | `skills/<name>/SKILL.md`                                      |
+| Procedural rules that bind only while one skill runs    | that skill's own `SKILL.md`, at the step where they bite      |
+| A procedure one skill owns that another skill also runs | the owning `SKILL.md`, which the other skill Reads by section |
+| Anything else two or more skills need                   | `rules/common/`, whose always-on presence serves them all     |
+| Text pasted verbatim into a dispatched agent            | a prompt template embedded in the dispatching `SKILL.md`      |
+| Reference material a skill needs only sometimes         | a sibling file in that skill's folder, read on demand         |
 
 ## Installer Blast Radius
 
