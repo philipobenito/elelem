@@ -54,15 +54,17 @@ Resolve the model at dispatch time, every time:
 3. **Fill the prompt template** below and dispatch with `Agent`. The placeholder table names every placeholder; fill every one, and leave none unreplaced. Pass no session history: the reviewer reads the repository and the diff, and anything it needs from the conversation belongs in the template you fill.
 
 4. **Read the status.**
-   - **Approved**: go to step 7.
-   - **Issues Found**: go to step 5.
+   - **Approved** with no issues listed: go to step 7.
+   - **Approved** with Minor issues listed, or **Issues Found**: go to step 5.
    - **Neither, or the dispatch failed**: see "When the Dispatch Fails" below.
 
 5. **Process the findings through `work-review-receive`.** That skill verifies each item, pushes back where the reviewer is wrong, and implements what survives in severity order. Pushback is a legitimate outcome: an item the reviewer got wrong is closed by the reasoning, not by a change to the code.
 
+   Minor issues go through that skill with the rest. Minor is a tier, not a verdict: each Minor item is fixed where the fix makes sense, or pushed back with a stated reason. An accepted Minor fix made in the same round as the blocking fixes costs nothing extra, because the re-dispatch in step 6 covers it. An accepted Minor fix made after an Approved also needs step 6, because Approved covers the exact diff that was reviewed. Where no dispatch remains to cover the fix, the item is declined with that as its reason and the Approved stands.
+
    Only its **Applied** return continues this loop. **Clarification required** and **Escalated** both need a person, so carry them to the user and stop; re-dispatching a reviewer cannot supply what it never had. **Pushback pending** needs an answer from whoever produced the feedback before the batch closes.
 
-6. **Re-dispatch** against the updated range and return to step 4. At most three dispatches in this invocation. When the third returns anything other than Approved, stop and return **Issues outstanding**.
+6. **Re-dispatch** against the updated range and return to step 4. If step 5 changed no code, because every Minor item on an Approved was pushed back, there is nothing new to review: go to step 7 instead. At most three dispatches in this invocation. When the third returns anything other than Approved, stop and return **Issues outstanding**.
 
 7. **Return** per the Return Contract.
 
@@ -194,7 +196,7 @@ This skill is the template's only call site: per-task reviews inside orchestrate
 
 This section is addressed to whichever skill or user invoked this one. It lives here because invoking this skill is what loads the file, so the caller has the text at the moment it needs it.
 
-**Approved.** The most recent dispatch found no Critical or Important issues. The caller receives the range reviewed, any Minor issues left deferred, and the reviewer's recommendations. The caller continues. Minor issues and recommendations travel unapplied by design: deferring a Minor issue is a permitted response to it, and acting on recommendations here would expand a change the review had already cleared.
+**Approved.** The most recent dispatch found no Critical or Important issues. The caller receives the range reviewed, every Minor issue that was declined with its reason, and the reviewer's recommendations. The caller continues. Accepted Minor fixes are inside the reviewed range. Recommendations travel unapplied by design: acting on them here would expand a change the review had already cleared.
 
 **Issues outstanding.** The three-dispatch budget is spent with Critical or Important issues remaining, or the reviewer could not be dispatched. The caller receives those issues and **MUST NOT** invoke this skill again in the hope of a better verdict. The budget exists so that a change which will not converge reaches a human rather than a fourth reviewer. The caller stops and puts it to the user.
 
@@ -223,11 +225,11 @@ The diff is non-empty and `repair.ts` is untracked, so the reviewer is told to r
 - Minor: magic number (100) for the reporting interval; no progress indicator on long runs
 - Status: Issues Found
 
-`work-review-receive` verifies the Important item, confirms the swallowed failure is real, and fixes it. The two Minor items are logged and deferred.
+`work-review-receive` verifies the Important item, confirms the swallowed failure is real, and fixes it. It assesses the two Minor items in the same round. The magic number is accepted: the interval is read in two places, so a named constant is fixed alongside the Important item. The progress indicator is pushed back: Task 2 did not ask for one, so it is a feature request on a change that did not include it.
 
-**Dispatch 2** reads the fix and returns Approved with a recommendation about extracting the interval as a named constant. Return **Approved**, carrying the two deferred Minor issues and the recommendation. Task 3 may begin.
+**Dispatch 2** reads both fixes and returns Approved with a recommendation about logging the repair count. Return **Approved**, carrying the declined Minor item with its reason and the recommendation. Task 3 may begin.
 
-Note what the Minor items did not do: they did not block, and they did not get fixed on the way past. Note also that the second dispatch was not optional. The fix to `repairIndex()` was new, unreviewed code touching an error path, which is where a fix for one issue most often introduces another.
+Note what the Minor items did: they were assessed, not waved past. One was fixed inside the round the Important item already needed, so the re-review covered it at no extra dispatch. One was declined with a reason that travels in the return. Neither blocked. Note also that the second dispatch was not optional. The fix to `repairIndex()` was new, unreviewed code touching an error path, which is where a fix for one issue most often introduces another.
 
 ## Completion Gate
 
@@ -236,7 +238,7 @@ You **MUST NOT** return Approved unless all of these are true:
 - The most recent dispatch **in this invocation** returned Approved. A previous Approved from earlier in the session, or your own reading of the fixes, does not count.
 - That dispatch reviewed a range that included every fix made during this invocation.
 - Every Critical and Important issue raised across every dispatch is either fixed in the code you are returning, or was pushed back through `work-review-receive` with technical reasoning the reviewer did not contest.
-- Every deferred Minor issue is enumerated in the return.
+- Every Minor issue raised across every dispatch is either fixed inside the reviewed range or enumerated in the return with the reason it was declined.
 - The reviewer's recommendations travel with the return.
 
 If any one is false, one of the other three return states is the honest one.
@@ -249,7 +251,8 @@ Every thought below means stop:
 - "The fix was small, so it does not need re-reviewing." The re-review is the dispatch that earns the Approved. Skipping it means no reviewer ever read the code you are shipping.
 - "This is close enough to Approved." The verdict comes from a dispatch, not from you.
 - "One more dispatch and it will converge." The budget is the answer to that thought, not an obstacle to it.
-- "I will just fix this Minor one while I am here." Deferring is the permitted response. Fixing it expands a change that was already cleared, and nothing re-reviews it.
+- "The dispatch said Approved, so I will quietly fix this Minor one and ship." A fix applied after Approved is code no reviewer has read. Re-dispatch, or decline the item with the reason.
+- "It is only Minor, so it travels deferred." Minor is a tier, not a verdict. Each Minor item is fixed where the fix makes sense or declined with a stated reason.
 - You are reading the diff and forming your own verdict rather than dispatching. That is the orchestrator reviewing its own work, which is what the second pair of eyes exists to prevent.
 
 ## Common Mistakes
