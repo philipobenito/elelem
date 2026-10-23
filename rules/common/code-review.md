@@ -20,7 +20,7 @@ Every finding carries a tier; a tier is a commitment, not a description of how s
 
 - **Critical** issues **MUST** be fixed before any further progress
 - **Important** issues **MUST** be fixed before the work advances: the next task, a merge, or a completion claim
-- **Minor** issues may be deferred, but where a fix makes sense it **MUST** be applied
+- **Minor** issues do not block, but each one **MUST** be fixed where the fix makes sense or declined with a stated reason
 
 You **MUST NOT** mark a task complete, proceed, or merge while Critical or Important issues remain unfixed. The failure to guard against when assigning tiers is inflation, because it looks conscientious while it stalls the work: an Important tier is a blocker, so calling a naming preference Important commits you to fixing it before anything else proceeds.
 

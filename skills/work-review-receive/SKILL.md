@@ -31,7 +31,7 @@ Where a suggestion conflicts with an architectural decision your human partner p
 
 3. **Verify each item against the codebase**, applying the source trust rules above. Restate each item in your own words as you go: if you cannot, you have not understood it yet, and that is worth knowing now rather than after you have changed code. Check that the suggestion is correct for this stack, version, and platform, that it does not break existing behaviour, that it does not conflict with a prior decision, and that it does not build out code nothing calls.
 
-4. **Sort each item** into one of three outcomes: accept and implement, push back with technical reasoning, or genuinely unclear. "When Pushback Is Not Optional" below sets out the conditions under which the second is mandatory.
+4. **Sort each item** into one of three outcomes: accept and implement, push back with technical reasoning, or genuinely unclear. "When Pushback Is Not Optional" below sets out the conditions under which the second is mandatory. These three outcomes apply at every tier. Minor is a tier, not a verdict: a Minor item is assessed on its merits like any other, and "logged" or "deferred" is not a fourth outcome. A Minor item you do not fix is pushed back, with its reason stated.
 
    Verification comes before this sort on purpose. Until you have read the code, an item that is simply wrong about the codebase is indistinguishable from one you have failed to understand, and the two take opposite routes: one gets pushback, the other gets a question. Sorting first means guessing which.
 
@@ -50,7 +50,7 @@ You **MUST** push back when any of the following is true:
 - The code path is unused and the suggestion violates YAGNI
 - The suggestion is technically incorrect for this stack, framework, or runtime version
 
-Pushback **MUST** be grounded in technical reasoning: cite the file, the test, the version constraint, or the prior decision. Defensive or emotional pushback is forbidden, and so is silence: you **MUST NOT** implement a suggestion you believe is wrong without pushing back first.
+Pushback **MUST** be grounded in technical reasoning, and the evidence bar is the one thing the severity tier changes. On a Critical or Important item, cite the file, the test, the version constraint, or the prior decision. On a Minor item, a stated reason the reader can check is enough: the fix sits outside this change's scope, or the current form matches the surrounding code. Defensive or emotional pushback is forbidden at every tier, and so is silence: you **MUST NOT** implement a suggestion you believe is wrong without pushing back first.
 
 The YAGNI case has a mandatory first step. When a reviewer suggests implementing a feature "properly", "fully", or "the right way", grep the codebase for actual usage of the code in question before doing anything else. If nothing calls it, the correct response is to propose removal, not to build out the suggested feature. Only when usage exists do you implement the suggestion.
 
@@ -64,7 +64,7 @@ When replying to an inline review comment on a GitHub pull request, reply in the
 
 This skill is usually invoked by `work-review-request` inside its fix-and-re-review loop, and that loop needs to know which of these it got.
 
-**Applied.** Every accepted item is implemented and individually verified; every pushed-back item is closed with reasoning the reviewer did not contest. The caller re-reviews the result.
+**Applied.** Every accepted item is implemented and individually verified; every pushed-back item is closed with reasoning the reviewer did not contest. Pushback against a dispatched subagent reviewer closes on the reasoning alone, because the re-dispatch, where one happens, is that reviewer's chance to contest it. The caller re-reviews the result.
 
 **Clarification required.** One or more items are unclear and nothing has been implemented, including the clear items. The caller takes the questions to the user. This blocks its loop by design: re-dispatching a reviewer answers nothing, because the reviewer is not the one holding the missing context.
 
@@ -102,7 +102,15 @@ Correct: "I understand items 1, 2, 3, 6. I need clarification on items 4 and 5 b
 
 A bot leaves three comments with no severities: a swallowed write error, an inconsistent variable name, and a new function with no test.
 
-Correct: "Assigning severity before starting. The swallowed error at `repair.ts:64` is Important: it works today but reports success on a failed write, so the next run trusts a bad index. The missing test on `verifyIndex()` is Important: new behaviour, nothing covering it. The naming inconsistency is Minor. Fixing the two Important items now, logging the Minor one."
+Correct: "Assigning severity before starting. The swallowed error at `repair.ts:64` is Important: it works today but reports success on a failed write, so the next run trusts a bad index. The missing test on `verifyIndex()` is Important: new behaviour, nothing covering it. The naming inconsistency at `repair.ts:12` is Minor: `idx` beside three siblings named `index`. The rename makes sense, so it is accepted. Fixing the two Important items first, then the rename."
+
+### Minor Pushed Back
+
+Reviewer, Minor: "Add a progress indicator to `repairIndex()` for long runs."
+
+Correct: "Pushing back. The task did not ask for one, and nothing in this change makes a run longer than before. That is a feature request on a change that did not include it, not a finding about the change."
+
+A Minor item needs a stated reason, not a cited test or version constraint. "It is only Minor" is not a reason.
 
 ### Gracefully Correcting Your Own Pushback
 
@@ -127,18 +135,20 @@ Every thought below means stop:
 - "I will implement the ones I understand and ask about the rest." That is the partial implementation the procedure exists to prevent.
 - "The reviewer is probably right, it is faster to just do it." Faster only if it is right. An unverified fix to a non-issue is a change nobody asked for, and it now needs reviewing too.
 - "Pushing back will look like I am making excuses." Silence on a suggestion you believe is wrong is forbidden. Cite the file, the test, or the version constraint and the reasoning stands on its own.
-- "This one is obviously Minor, I will fix it while I am here." Fix it or defer it, but say which. Silent scope growth is what the severity tiers exist to make visible.
+- "This one is obviously Minor, I will fix it while I am here." Say so: name the item and the fix. Silent scope growth is what the severity tiers exist to make visible.
+- "It is only Minor, so it can wait." Minor lowers the evidence bar for pushback. It does not make deferral the default. Assess the item: fix it where the fix makes sense, otherwise push back and state the reason.
 - You are about to write "good catch", "great point", or any form of thanks. Delete it and state the fix instead. The fix in the code is the acknowledgement.
 
 ## Common Mistakes
 
-| Mistake                                                           | Why it is wrong                                                                                                                          |
-|-------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| Sorting items as unclear before verifying them                    | An item that is wrong about the code looks identical to one you have not understood. They take opposite routes: pushback, or a question. |
-| Implementing a subagent or bot suggestion without checking it     | External feedback is a suggestion to evaluate, not an order to execute.                                                                  |
-| Verifying feedback from your human partner                        | The partner is trusted. Clarify scope where it is unclear, but do not audit the instruction.                                             |
-| Treating uncategorised feedback as though it had no severity      | Order still matters. Assign the tiers yourself and say what you assigned, so it can be corrected.                                        |
-| Fixing everything at once and testing at the end                  | When something breaks you cannot tell which fix did it, and the batch has to be unpicked.                                                |
-| Building out a feature a reviewer called for on unused code       | The YAGNI check comes first: grep for callers. If nothing calls it, propose removal rather than expansion.                               |
-| Implementing both sides of a conflict with a prior decision       | That is not a fix, it is a second decision made without the person who made the first. Escalate.                                         |
-| Answering a review item by changing what the reviewer asked about | Answer what was raised. Rewriting the surrounding code to make the finding moot is scope growth wearing a fix as a disguise.             |
+| Mistake                                                             | Why it is wrong                                                                                                                            |
+|---------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| Sorting items as unclear before verifying them                      | An item that is wrong about the code looks identical to one you have not understood. They take opposite routes: pushback, or a question.   |
+| Implementing a subagent or bot suggestion without checking it       | External feedback is a suggestion to evaluate, not an order to execute.                                                                    |
+| Verifying feedback from your human partner                          | The partner is trusted. Clarify scope where it is unclear, but do not audit the instruction.                                               |
+| Treating uncategorised feedback as though it had no severity        | Order still matters. Assign the tiers yourself and say what you assigned, so it can be corrected.                                          |
+| Fixing everything at once and testing at the end                    | When something breaks you cannot tell which fix did it, and the batch has to be unpicked.                                                  |
+| Building out a feature a reviewer called for on unused code         | The YAGNI check comes first: grep for callers. If nothing calls it, propose removal rather than expansion.                                 |
+| Implementing both sides of a conflict with a prior decision         | That is not a fix, it is a second decision made without the person who made the first. Escalate.                                           |
+| Answering a review item by changing what the reviewer asked about   | Answer what was raised. Rewriting the surrounding code to make the finding moot is scope growth wearing a fix as a disguise.               |
+| Setting a Minor item aside without a reason                         | Minor lowers the evidence bar for pushback, not the default outcome. Every item ends fixed, pushed back with a reason, or as a question.   |

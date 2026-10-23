@@ -101,6 +101,18 @@ const IMPL_SCHEMA = {
     test_exit_code: { type: 'integer' },
     working_directory: { type: 'string', description: 'absolute path of the tree actually worked in' },
     concerns: { type: 'string' },
+    minor_outcomes: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['finding', 'outcome', 'reason'],
+        properties: {
+          finding: { type: 'string' },
+          outcome: { enum: ['FIXED', 'DECLINED'] },
+          reason: { type: 'string' },
+        },
+      },
+    },
   },
 }
 
@@ -361,6 +373,7 @@ Status: ${impl.status}
 Summary: ${impl.summary}
 Behaviour introduced: ${impl.behaviour_introduced}
 Concerns: ${impl.concerns || 'none reported'}
+Minor findings declined, each with the implementer's reason, which you may accept or contest at a higher severity: ${(impl.minor_outcomes || []).filter(o => o.outcome === 'DECLINED').map(o => `${o.finding} (${o.reason})`).join('; ') || 'none'}
 
 ## What to check
 
@@ -375,11 +388,13 @@ ${simple ? `6. Sizing: this work was sized SIMPLE, meaning uniform mechanical ch
 
 ${severityTable}
 
-Verdict is APPROVED only when there are no Critical and no Important findings. Minor findings may accompany an APPROVED verdict; do not inflate severity to force a fix round.`
+Verdict is APPROVED only when there are no Critical and no Important findings. Minor findings may accompany an APPROVED verdict; do not inflate severity to charge the fix budget.`
 }
 
 function fixPrompt(t, review) {
-  const items = review.findings.filter(f => f.severity !== 'Minor').map(f => `- [${f.severity}] ${f.description}`).join('\n')
+  const line = f => `- [${f.severity}] ${f.description}`
+  const blocking = review.findings.filter(f => f.severity !== 'Minor').map(line).join('\n')
+  const minor = review.findings.filter(f => f.severity === 'Minor').map(line).join('\n')
   return `You are a one-shot implementer fixing review findings. Work ONLY inside the git repository at ${treeFor(t)}.
 
 ## Task ${t.id}: ${t.name} (fix round)
@@ -388,16 +403,16 @@ The original specification:
 
 ${t.spec}
 
-A reviewer examined the current uncommitted state of the owned files and rejected it:
+A reviewer examined the current uncommitted state of the owned files and ${blocking ? 'rejected it' : 'approved it with Minor findings'}:
 
-${items}
+${[blocking, minor].filter(Boolean).join('\n')}
 
 ## Files you own
 
 You may create or edit ONLY these paths:
 ${t.files.map(f => '- ' + f).join('\n')}
 
-Fix every finding. Keep the discipline that applies to this task: ${simple ? 'the work is sized SIMPLE, so introduce no new behaviour and no new tests; the suite stays green.' : t.codeless ? 'the task is marked codeless: introduce no production code and no tests; the verification command must pass.' : t.noTestFramework ? 'the task is marked noTestFramework: production code is expected, but introduce no tests and no test framework; the verification command must pass.' : 'if a finding reveals untested behaviour, add the failing test first, observe RED, fix, observe GREEN.'} Run the task's verification command: ${t.verifyCommand}
+Fix every Critical and Important finding. Minor findings are assessed on merit, not deferred: fix each one where the fix makes sense inside the files you own, otherwise decline it and state the reason. "It is only Minor" is not a reason. Report every Minor finding in minor_outcomes as FIXED or DECLINED with its reason, quoting the finding text verbatim. Keep the discipline that applies to this task: ${simple ? 'the work is sized SIMPLE, so introduce no new behaviour and no new tests; the suite stays green.' : t.codeless ? 'the task is marked codeless: introduce no production code and no tests; the verification command must pass.' : t.noTestFramework ? 'the task is marked noTestFramework: production code is expected, but introduce no tests and no test framework; the verification command must pass.' : 'if a finding reveals untested behaviour, add the failing test first, observe RED, fix, observe GREEN.'} Run the task's verification command: ${t.verifyCommand}
 
 No git write commands, no sudo, leave changes uncommitted. Report via structured output as before.`
 }
@@ -489,14 +504,27 @@ async function runTask(t) {
     state[t.id].failed = true; tr.failure = `noTestFramework falsified by reviewer: ${frameworkFinding(review).description}`; tr.frameworkFalsified = true; return
   }
   review = withUncoveredFindings(review, tr.prune)
-  while (review.verdict === 'ISSUES_FOUND' && review.findings.some(f => f.severity !== 'Minor')) {
-    if (fixBudget === 0) { state[t.id].failed = true; tr.failure = 'fix budget exhausted at review'; tr.lastReview = review; return }
-    fixBudget--
+  tr.minorOutcomes = []
+  const minorFed = new Set()
+  let minorAssessed = false
+  const minorOf = r => r.findings.filter(f => f.severity === 'Minor')
+  const needsFixRound = r => r.verdict === 'ISSUES_FOUND' && r.findings.some(f => f.severity !== 'Minor')
+  const needsMinorRound = r => !minorAssessed && fixBudget > 0 && minorOf(r).length > 0
+  while (needsFixRound(review) || needsMinorRound(review)) {
+    const minorOnly = !needsFixRound(review)
+    if (!minorOnly) {
+      if (fixBudget === 0) { state[t.id].failed = true; tr.failure = 'fix budget exhausted at review'; tr.lastReview = review; return }
+      fixBudget--
+    }
+    if (minorOf(review).length) minorAssessed = true
+    minorOf(review).forEach(f => minorFed.add(f.description))
     tr.rounds++
     const fix = await agent(fixPrompt(t, review), { label: `fix:${t.id}:r${tr.rounds}`, phase: 'Review', schema: IMPL_SCHEMA, model: t.model || implementerModel })
     if (!fix) { state[t.id].failed = true; tr.failure = 'fix dispatch died'; return }
     const strayFix = fix.files_changed.filter(p => !t.files.includes(p))
     if (strayFix.length) { state[t.id].failed = true; tr.failure = `ownership violation in fix: ${strayFix.join(', ')}`; return }
+    tr.minorOutcomes.push(...(fix.minor_outcomes || []))
+    if (minorOnly && fix.files_changed.length === 0) break
     review = await agent(reviewPrompt(t, fix), { label: `re-review:${t.id}:r${tr.rounds}`, phase: 'Review', schema: REVIEW_SCHEMA, model: reviewerModel })
     if (!review) { state[t.id].failed = true; tr.failure = 'reviewer dispatch died on re-review'; return }
     if (simple && sizingFinding(review)) {
@@ -510,7 +538,13 @@ async function runTask(t) {
     }
   }
   tr.review = review
-  tr.deferredMinor = review.findings.filter(f => f.severity === 'Minor')
+  const findingKey = s => s.replace(/^-?\s*\[Minor\]\s*/, '').trim()
+  const reported = new Set(tr.minorOutcomes.map(o => findingKey(o.finding)))
+  const unassessedReason = d => minorFed.has(d) ? 'fed to a fix round, no outcome reported'
+    : minorAssessed ? 'raised after this task\'s one Minor assessment'
+    : 'no fix budget left to cover a re-review'
+  const minorSeen = new Set([...minorFed, ...minorOf(review).map(f => f.description)])
+  tr.minorOutcomes.push(...[...minorSeen].filter(d => !reported.has(findingKey(d))).map(d => ({ finding: d, outcome: 'UNASSESSED', reason: unassessedReason(d) })))
 
   let verify = await agent(verifyPrompt(t), { label: `verify:${t.id}`, phase: 'Verify', schema: VERIFY_SCHEMA, model: verifierModel })
   if (!verify) { state[t.id].failed = true; tr.failure = 'verify dispatch died'; return }
