@@ -1,13 +1,10 @@
 # elelem
 
-Rules and skills for Claude Code, with an interactive installer.
+Rules and skills for Claude Code and OpenCode, with an interactive installer.
 
-### Breaking change: OpenCode and Codex support removed
+### Codex support removed
 
-This repository previously supported OpenCode and Codex alongside Claude Code. That support has been removed; elelem now targets Claude Code only. If you have an existing OpenCode or Codex installation from an earlier version of this repo:
-
-- It is no longer managed by this repo. The `.elelem-manifest-opencode` / `.elelem-manifest-codex` manifest files and the files they list are orphaned; `uninstall.sh` only reads `.elelem-manifest-claude` and will not touch them.
-- Remove the orphaned files manually (using the old manifest as a guide to what was installed), or stay on an older tag of this repo if you still need OpenCode or Codex support.
+This repository previously supported Codex as well. That support has been removed. If you have an existing Codex installation from an earlier version of this repo, the `.elelem-manifest-codex` manifest file and the files it lists are orphaned: `uninstall.sh` does not read them. Remove those files by hand (using the old manifest as a guide), or stay on an older tag of this repo if you still need Codex.
 
 ## Quick start
 
@@ -15,11 +12,13 @@ This repository previously supported OpenCode and Codex alongside Claude Code. T
 ./install.sh
 ```
 
-`install.sh` is the only entry point; it prompts for scope and selections directly.
+`install.sh` is the only entry point. It asks which harness to install for (Claude Code or OpenCode), then prompts for scope, language packs and skills.
+
+Common rules always install in full. Language packs start unselected. Skills are chosen one by one and start selected; deselect any you do not want. Re-running the installer against the same target removes anything you previously installed but have now deselected.
 
 ## Claude Code
 
-The installer prompts for scope (user `~/.claude/` or project `<project>/.claude/`) and language pack selections. It installs:
+The installer prompts for scope (user `~/.claude/` or project `<project>/.claude/`), language packs and skills. It installs:
 
 - Rules under `~/.claude/rules/` or `<project>/.claude/rules/`
 - Skills under `~/.claude/skills/` or `<project>/.claude/skills/`
@@ -32,12 +31,30 @@ After installing, verify inside Claude Code with `/memory`.
 
 User-scope path-scoped rules have a known issue ([claude-code#21858](https://github.com/anthropics/claude-code/issues/21858)) where `globs:` frontmatter is not honoured under `~/.claude/rules/`. Common rules (no frontmatter) are unaffected. Prefer project scope if you rely on language packs.
 
+## OpenCode
+
+The installer prompts for scope (user `~/.config/opencode/` or project `<project>/.opencode/`), language packs and skills. It requires `jq` and `perl`. It installs:
+
+- Rules under `<base>/rules/`, listed in the `instructions` array of `<base>/opencode.json`
+- Skills under `<base>/skills/`
+- An `AGENTS.md` index of the installed rules at `<base>/AGENTS.md`
+
+What differs from Claude Code:
+
+- Tool names are rewritten as the files are copied: `AskUserQuestion` becomes `question`, `Agent` becomes `task`, and so on. The plan-mode steps become instructions to switch between the Plan and Build agents with Tab, because OpenCode has no plan-mode tools. The substitution table is in `install.sh`; a test fails if a Claude Code tool name survives it.
+- OpenCode has no path-based rule activation, so a selected language pack loads in every session.
+- `design-committee` and `work-swarm` call a `Workflow` tool that OpenCode does not have. Their existing fallback (sequential `task` dispatch) applies until an OpenCode equivalent exists.
+- `opencode.json` is merged, never replaced: the installer adds and removes only its own `rules/...` entries and leaves every other key and instruction alone. It is not recorded in the manifest, so uninstalling never deletes it.
+- An existing `AGENTS.md` that elelem did not write is left untouched.
+
+OpenCode also reads `~/.claude/` as a fallback. If you have installed for Claude Code as well, set `OPENCODE_DISABLE_CLAUDE_CODE=1` in your shell so OpenCode does not load both copies.
+
 ## Layout
 
 ```text
 .
-├── install.sh            Installer; prompts for scope and selections
-├── uninstall.sh           Reads .elelem-manifest-claude and removes the install
+├── install.sh            Installer; prompts for harness, scope and selections
+├── uninstall.sh           Reads the manifests and removes the installs
 ├── _tests/                Test scripts and fixtures for the installers
 ├── rules/
 │   ├── common/           Always-on rules (no frontmatter)
@@ -54,7 +71,8 @@ User-scope path-scoped rules have a known issue ([claude-code#21858](https://git
 │   │   ├── SKILL.md      The procedure
 │   │   └── ...
 │   └── ...
-└── .elelem-manifest-claude   Written by install.sh; read by uninstall.sh
+├── .elelem-manifest-claude     Written by install.sh for Claude Code; read by uninstall.sh
+└── .elelem-manifest-opencode   Written by install.sh for OpenCode; read by uninstall.sh
 ```
 
 - `rules/common/` rules have no frontmatter and load unconditionally.
@@ -69,7 +87,7 @@ User-scope path-scoped rules have a known issue ([claude-code#21858](https://git
 ./uninstall.sh
 ```
 
-`uninstall.sh` reads `.elelem-manifest-claude`, which records the install base and every file `install.sh` wrote there. It shows the planned removal (files to delete and directories to prune if they end up empty), asks for confirmation, then deletes the listed files, prunes any directories left empty, and removes the manifest file itself. Files not recorded in the manifest are left untouched.
+`uninstall.sh` reads `.elelem-manifest-claude` and `.elelem-manifest-opencode`, whichever exist. Each records the install base and every file `install.sh` wrote there. For each one it shows the planned removal (files to delete and directories to prune if they end up empty), asks for confirmation, then deletes the listed files, prunes any directories left empty, and removes the manifest file itself. For OpenCode it also removes elelem's entries from `opencode.json`, keeping everything else in it. Files not recorded in the manifest are left untouched.
 
 ## Writing a new language pack
 
@@ -119,4 +137,4 @@ paths:
 After any change to rules or skills:
 
 1. Run `./install.sh` against a test project.
-2. Open Claude Code in that project and run `/memory` to confirm expected files are listed.
+2. For Claude Code, open it in that project and run `/memory` to confirm expected files are listed. For OpenCode, check that `<project>/.opencode/opencode.json` lists the rules and that the skills appear in a session.

@@ -42,16 +42,20 @@ Where canonical content must reach a dispatched agent, the prompt template carri
 
 ## Installer Blast Radius
 
-`install.sh` copies every file it finds under `skills/`, with no extension filter. Anything placed inside a skill folder ships to a user's install, whatever its name or purpose. This is why `evals/` sits outside `skills/`: eval fixtures exercise skills in this repository and MUST NOT be copied out alongside them.
+`install.sh` copies every file it finds under each selected skill folder, with no extension filter. Anything placed inside a skill folder ships to a user's install, whatever its name or purpose. This is why `evals/` sits outside `skills/`: eval fixtures exercise skills in this repository and MUST NOT be copied out alongside them.
 
 ## Verification
 
 There is no test runner for markdown content; a change here is proven by a command, not a test suite.
 
 - A change to a rule or a skill: run `_tests/run_reference_tests.sh`.
-- A change to the installer: run `_tests/run_install_claude_tests.sh`.
+- A change to the installer: run `_tests/run_install_claude_tests.sh` and `_tests/run_install_opencode_tests.sh`.
 
 The reference checker only resolves cross-references written as relative paths (`./` or `../`). A bare-prefix reference, for example `rules/common/code-review.md` written without a leading `../`, is invisible to it: a broken one passes silently. The checker is a guard against one class of broken reference, not a complete one.
+
+## OpenCode Tool Names
+
+`rules/` and `skills/` are written against Claude Code's tool names. The OpenCode install rewrites them in installed markdown through the substitution table in `install.sh` (`OPENCODE_SUBST_FROM` / `OPENCODE_SUBST_TO`), matching literal text. Rewording a sentence that mentions `AskUserQuestion`, `Agent`, `EnterPlanMode`, `ExitPlanMode` or `ToolSearch`, or the model-enumeration step in `work-review-request`, can stop its entry matching; `_tests/run_install_opencode_tests.sh` fails when that happens. Update the table in the same change.
 
 ## Authoring Conventions No Installed Rule Enforces
 

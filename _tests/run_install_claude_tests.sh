@@ -84,7 +84,7 @@ test_full_install_to_tmp_target() {
   local manifest_entries=()
   local common_selected=("coding-style" "testing")
   local lang_selected=("python")
-  local skills_selected=("Install skills")
+  local skills_selected=("debug-investigation")
 
   run_claude_install "$base" "$rules_target" "$skills_target" "$manifest_file" manifest_entries common_selected lang_selected skills_selected
 
@@ -176,10 +176,101 @@ test_reinstall_prunes_stale_file_but_preserves_user_created_file() {
   _pass "$name"
 }
 
+test_skill_basenames_returns_every_skill_folder() {
+  local name="skill_basenames_returns_every_skill_folder"
+  local result=()
+
+  skill_basenames result
+
+  local expected=()
+  local _d
+  while IFS= read -r _d; do
+    expected+=("$(basename "$_d")")
+  done < <(find "$SKILLS_SOURCE" -mindepth 1 -maxdepth 1 -type d | sort)
+
+  local sorted_result sorted_expected
+  sorted_result="$(printf '%s\n' "${result[@]+"${result[@]}"}" | sort)"
+  sorted_expected="$(printf '%s\n' "${expected[@]+"${expected[@]}"}" | sort)"
+
+  if [[ -n "$sorted_expected" ]] && [[ "$sorted_result" == "$sorted_expected" ]]; then
+    _pass "$name"
+  else
+    _fail "$name" "expected [$sorted_expected], got [$sorted_result]"
+  fi
+}
+
+test_only_selected_skills_are_installed_with_all_their_files() {
+  local name="only_selected_skills_are_installed_with_all_their_files"
+  local base
+  base="$(mktemp -d)"
+  trap "rm -rf '$base'" RETURN
+
+  local manifest_entries=()
+  local no_common=()
+  local no_lang=()
+  local skills_selected=("work-tdd" "design-committee")
+
+  run_claude_install "$base" "$base/rules" "$base/skills" "$base/.elelem-manifest-claude" manifest_entries no_common no_lang skills_selected
+
+  local expected
+  for expected in work-tdd/SKILL.md work-tdd/testing-anti-patterns.md design-committee/SKILL.md design-committee/design-workflow.js; do
+    if [[ ! -f "$base/skills/$expected" ]]; then
+      _fail "$name" "expected skills/$expected to be installed"
+      return
+    fi
+  done
+
+  local installed
+  installed="$(find "$base/skills" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort | tr '\n' ' ')"
+  if [[ "$installed" != "design-committee work-tdd " ]]; then
+    _fail "$name" "expected only the two selected skills, found: $installed"
+    return
+  fi
+
+  if grep -qF "skills/debug-investigation/" "$base/.elelem-manifest-claude"; then
+    _fail "$name" "manifest records a skill that was not selected"
+    return
+  fi
+
+  _pass "$name"
+}
+
+test_deselecting_a_skill_on_reinstall_prunes_it() {
+  local name="deselecting_a_skill_on_reinstall_prunes_it"
+  local base
+  base="$(mktemp -d)"
+  trap "rm -rf '$base'" RETURN
+
+  local no_common=()
+  local no_lang=()
+  local first_entries=()
+  local first_skills=("work-tdd" "debug-investigation")
+  run_claude_install "$base" "$base/rules" "$base/skills" "$base/.elelem-manifest-claude" first_entries no_common no_lang first_skills
+
+  local second_entries=()
+  local second_skills=("work-tdd")
+  run_claude_install "$base" "$base/rules" "$base/skills" "$base/.elelem-manifest-claude" second_entries no_common no_lang second_skills
+
+  if [[ -e "$base/skills/debug-investigation" ]]; then
+    _fail "$name" "debug-investigation should have been pruned once deselected"
+    return
+  fi
+
+  if [[ ! -f "$base/skills/work-tdd/SKILL.md" ]]; then
+    _fail "$name" "work-tdd should still be installed"
+    return
+  fi
+
+  _pass "$name"
+}
+
 test_install_dot_sh_exists
 test_install_dot_sh_executable
 test_common_rule_basenames_returns_all_common_md_files
+test_skill_basenames_returns_every_skill_folder
 test_full_install_to_tmp_target
+test_only_selected_skills_are_installed_with_all_their_files
+test_deselecting_a_skill_on_reinstall_prunes_it
 test_reinstall_prunes_stale_file_but_preserves_user_created_file
 
 total=$(( passed + failed ))

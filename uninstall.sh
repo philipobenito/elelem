@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #
-# Removes the elelem install by reading the manifest file written by install.sh.
+# Removes the elelem installs by reading the manifest files written by install.sh
+# (.elelem-manifest-claude and .elelem-manifest-opencode, whichever exist).
 #
-# The script builds a removal plan (files to delete and empty directories to
+# For each manifest the script builds a removal plan (files to delete and empty directories to
 # prune), shows it to the user, and executes it after a final confirmation.
 #
 # No CLI flags. No dry-run mode. Run from anywhere; the script is
@@ -176,30 +177,18 @@ prune_empty_dirs() {
   done
 }
 
-# ---------------------------------------------------------------------------
-# Main body - guarded so this file is sourceable for testing
-# ---------------------------------------------------------------------------
+# Plans, confirms and performs the removal for one manifest.
+# Usage: uninstall_manifest manifest_file
+uninstall_manifest() {
+  local manifest_file="$1"
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-
-  if ! { : >/dev/tty; } 2>/dev/null; then
-    say_err "this script requires an interactive terminal (/dev/tty is not accessible)."
-    exit 1
-  fi
-
-  manifest_file="$SCRIPT_DIR/.elelem-manifest-claude"
-  if [[ ! -f "$manifest_file" ]]; then
-    say_info "Nothing to uninstall."
-    exit 0
-  fi
-
-  manifest_base=""
-  manifest_files=()
-  manifest_gone=()
+  local manifest_base=""
+  local manifest_files=()
+  local manifest_gone=()
 
   if ! parse_manifest "$manifest_file" manifest_base manifest_files manifest_gone; then
-    say_err "could not parse $(basename "$manifest_file"); aborting."
-    exit 1
+    say_err "could not parse $(basename "$manifest_file"); skipping."
+    return 1
   fi
 
   say_step "Planned removal:"
@@ -211,6 +200,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     say_warn "  $manifest_base does not exist (already removed)."
   fi
 
+  local _f _g _d
   for _f in "${manifest_files[@]+"${manifest_files[@]}"}"; do
     say_info "  delete: ${_f#"$manifest_base/"}"
   done
@@ -219,7 +209,16 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     say_info "  (already gone): $_g"
   done
 
-  combined_entries=()
+  local is_opencode=0 opencode_prefix=""
+  if [[ "$(basename "$manifest_file")" == ".elelem-manifest-opencode" ]]; then
+    is_opencode=1
+    opencode_prefix="$(opencode_instruction_prefix "$manifest_base")"
+    if [[ -f "$manifest_base/opencode.json" ]]; then
+      say_info "  edit: opencode.json (remove the \"${opencode_prefix}rules/...\" instructions; nothing else is touched)"
+    fi
+  fi
+
+  local combined_entries=()
   for _f in "${manifest_files[@]+"${manifest_files[@]}"}"; do
     combined_entries+=("$_f")
   done
@@ -227,7 +226,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     combined_entries+=("$manifest_base/$_g")
   done
 
-  all_dirs=()
+  local all_dirs=()
   collect_dirs_to_prune "$manifest_base" combined_entries all_dirs
 
   if (( ${#all_dirs[@]} > 0 )); then
@@ -240,13 +239,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   echo
 
-  confirm_items=("Proceed with removal")
-  confirm_defaults=(0)
+  local confirm_items=("Proceed with removal")
+  local confirm_defaults=(0)
+  local confirm_selected=()
   multiselect confirm_selected confirm_items confirm_defaults
 
   if (( ${#confirm_selected[@]} == 0 )); then
-    say_info "Aborted. No changes made."
-    exit 0
+    say_info "Aborted. No changes made to $(basename "$manifest_file")."
+    return 0
   fi
 
   for _f in "${manifest_files[@]+"${manifest_files[@]}"}"; do
@@ -255,9 +255,42 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   prune_empty_dirs all_dirs
 
+  if (( is_opencode )); then
+    if command -v jq > /dev/null 2>&1; then
+      remove_opencode_instructions "$manifest_base/opencode.json" "$opencode_prefix" \
+        || say_warn "could not edit $manifest_base/opencode.json; remove the \"${opencode_prefix}rules/...\" instructions yourself."
+    elif [[ -f "$manifest_base/opencode.json" ]]; then
+      say_warn "jq is not installed, so $manifest_base/opencode.json was left as is; remove the \"${opencode_prefix}rules/...\" instructions yourself."
+    fi
+  fi
+
   rm -f "$manifest_file"
   say_ok "removed $(basename "$manifest_file")"
+}
 
-  echo
+# ---------------------------------------------------------------------------
+# Main body - guarded so this file is sourceable for testing
+# ---------------------------------------------------------------------------
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+
+  if ! { : >/dev/tty; } 2>/dev/null; then
+    say_err "this script requires an interactive terminal (/dev/tty is not accessible)."
+    exit 1
+  fi
+
+  found_any=0
+  for manifest_file in "$SCRIPT_DIR/.elelem-manifest-claude" "$SCRIPT_DIR/.elelem-manifest-opencode"; do
+    [[ -f "$manifest_file" ]] || continue
+    found_any=1
+    uninstall_manifest "$manifest_file" || true
+    echo
+  done
+
+  if (( found_any == 0 )); then
+    say_info "Nothing to uninstall."
+    exit 0
+  fi
+
   say_ok "Done."
 fi
