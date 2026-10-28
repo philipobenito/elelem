@@ -101,6 +101,19 @@ const IMPL_SCHEMA = {
     test_exit_code: { type: 'integer' },
     working_directory: { type: 'string', description: 'absolute path of the tree actually worked in' },
     concerns: { type: 'string' },
+    complex_fixes: {
+      type: 'array',
+      description: 'fix rounds only: every fix that is not simple, empty only when every fix is mechanical, local and confidently correct',
+      items: {
+        type: 'object',
+        required: ['finding', 'location', 'reason'],
+        properties: {
+          finding: { type: 'string' },
+          location: { type: 'string', description: 'file:line of the fix' },
+          reason: { type: 'string' },
+        },
+      },
+    },
     minor_outcomes: {
       type: 'array',
       items: {
@@ -355,13 +368,37 @@ function withUncoveredFindings(review, prune) {
   return { ...review, verdict: 'ISSUES_FOUND', findings: [...review.findings, ...uncovered] }
 }
 
-function reviewPrompt(t, impl) {
+function isRealFix(fix) {
+  const completed = fix.status === 'DONE' || fix.status === 'DONE_WITH_CONCERNS'
+  return completed && fix.files_changed.length > 0 && Array.isArray(fix.complex_fixes)
+}
+
+function scopeOf(fix) {
+  return isRealFix(fix) && fix.complex_fixes.length ? fix.complex_fixes : null
+}
+
+function needsReview(fix) {
+  return !isRealFix(fix) || fix.complex_fixes.length > 0
+}
+
+function rereviewScopeSection(scope) {
+  if (!scope) return ''
+  return `
+
+## Re-review scope
+
+This is a re-review. An earlier round reviewed the rest of this work and cleared it, and fixes that were mechanical and local were not sent to you. Judge ONLY the fixes listed here, and apply the checks below to those fixes alone. Do not raise findings on other code in the scoped files unless a listed fix interacts with that code and breaks it.
+
+${scope.map(c => `- ${c.location}: ${c.reason} (answers: ${c.finding})`).join('\n')}`
+}
+
+function reviewPrompt(t, impl, scope = null) {
   return `You are a code reviewer, the last gate before this work is accepted. The repository to review is at ${treeFor(t)}.
 
 Review the UNCOMMITTED working-tree state scoped to exactly these files (repo-relative):
 ${t.files.map(f => '- ' + f).join('\n')}
 
-New files are untracked, and untracked files are invisible to plain "git diff": run git status --porcelain -uall -- <the files> to see what exists, git diff -- <the files> for tracked changes, and READ every scoped file in full.
+New files are untracked, and untracked files are invisible to plain "git diff": run git status --porcelain -uall -- <the files> to see what exists, git diff -- <the files> for tracked changes, and READ every scoped file in full.${rereviewScopeSection(scope)}
 
 ## The task specification the work must satisfy
 
@@ -414,6 +451,8 @@ ${t.files.map(f => '- ' + f).join('\n')}
 
 Fix every Critical and Important finding. Minor findings are assessed on merit, not deferred: fix each one where the fix makes sense inside the files you own, otherwise decline it and state the reason. "It is only Minor" is not a reason. Report every Minor finding in minor_outcomes as FIXED or DECLINED with its reason, quoting the finding text verbatim. Keep the discipline that applies to this task: ${simple ? 'the work is sized SIMPLE, so introduce no new behaviour and no new tests; the suite stays green.' : t.codeless ? 'the task is marked codeless: introduce no production code and no tests; the verification command must pass.' : t.noTestFramework ? 'the task is marked noTestFramework: production code is expected, but introduce no tests and no test framework; the verification command must pass.' : 'if a finding reveals untested behaviour, add the failing test first, observe RED, fix, observe GREEN.'} Run the task's verification command: ${t.verifyCommand}
 
+Report complex_fixes. List every fix that adds logic or behaviour beyond what its finding names, changes an interface, touches error handling, concurrency or a security path, spans more than one file, or that you are not confident resolves its finding. Each entry gives the finding verbatim, the file:line of the fix and the reason. Return an empty list only when every fix is mechanical and local and you are confident that each one resolves its finding. If you are unsure, list the fix. Only the listed fixes go back to a reviewer.
+
 No git write commands, no sudo, leave changes uncommitted. Report via structured output as before.`
 }
 
@@ -464,7 +503,7 @@ async function runPrune(t, impl, tr) {
 
 async function runTask(t) {
   let fixBudget = 2
-  const tr = { taskId: t.id, rounds: 0 }
+  const tr = { taskId: t.id, rounds: 0, unreviewedFixes: [] }
   results[t.id] = tr
 
   const implOpts = { label: `impl:${t.id}`, phase: 'Implement', schema: IMPL_SCHEMA, model: t.model || implementerModel }
@@ -525,7 +564,12 @@ async function runTask(t) {
     if (strayFix.length) { state[t.id].failed = true; tr.failure = `ownership violation in fix: ${strayFix.join(', ')}`; return }
     tr.minorOutcomes.push(...(fix.minor_outcomes || []))
     if (minorOnly && fix.files_changed.length === 0) break
-    review = await agent(reviewPrompt(t, fix), { label: `re-review:${t.id}:r${tr.rounds}`, phase: 'Review', schema: REVIEW_SCHEMA, model: reviewerModel })
+    if (!needsReview(fix)) {
+      tr.unreviewedFixes.push({ round: tr.rounds, summary: fix.summary, files: fix.files_changed })
+      review = { verdict: 'APPROVED', findings: [], notes: 'every fix reported simple, so none was re-reviewed' }
+      continue
+    }
+    review = await agent(reviewPrompt(t, fix, scopeOf(fix)), { label: `re-review:${t.id}:r${tr.rounds}`, phase: 'Review', schema: REVIEW_SCHEMA, model: reviewerModel })
     if (!review) { state[t.id].failed = true; tr.failure = 'reviewer dispatch died on re-review'; return }
     if (simple && sizingFinding(review)) {
       state[t.id].failed = true; tr.failure = `sizing falsified by reviewer: ${sizingFinding(review).description}`; tr.sizingFalsified = true; return
@@ -554,10 +598,14 @@ async function runTask(t) {
     tr.rounds++
     const fix = await agent(fixPrompt(t, { findings: [{ severity: 'Critical', description: `verification failed: ${verify.command} exited ${verify.exit_code} with ${verify.failed} failing` }] }), { label: `fix:${t.id}:verify`, phase: 'Verify', schema: IMPL_SCHEMA, model: t.model || implementerModel })
     if (!fix) { state[t.id].failed = true; tr.failure = 'fix dispatch died at verification'; return }
-    // Every fix re-enters at code review; unreviewed code never reaches the gate.
-    const reReview = await agent(reviewPrompt(t, fix), { label: `re-review:${t.id}:verify`, phase: 'Verify', schema: REVIEW_SCHEMA, model: reviewerModel })
-    if (!reReview || (reReview.verdict === 'ISSUES_FOUND' && reReview.findings.some(f => f.severity !== 'Minor'))) {
-      state[t.id].failed = true; tr.failure = 'post-verification fix failed re-review'; return
+    // A complex fix re-enters at code review. A simple one goes straight to re-verification, which is its check.
+    if (needsReview(fix)) {
+      const reReview = await agent(reviewPrompt(t, fix, scopeOf(fix)), { label: `re-review:${t.id}:verify`, phase: 'Verify', schema: REVIEW_SCHEMA, model: reviewerModel })
+      if (!reReview || (reReview.verdict === 'ISSUES_FOUND' && reReview.findings.some(f => f.severity !== 'Minor'))) {
+        state[t.id].failed = true; tr.failure = 'post-verification fix failed re-review'; return
+      }
+    } else {
+      tr.unreviewedFixes.push({ round: tr.rounds, summary: fix.summary, files: fix.files_changed })
     }
     verify = await agent(verifyPrompt(t), { label: `re-verify:${t.id}`, phase: 'Verify', schema: VERIFY_SCHEMA, model: verifierModel })
     if (!verify || !verify.pass) { state[t.id].failed = true; tr.failure = 'verification failed after fix'; tr.verify = verify; return }

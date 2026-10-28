@@ -1,6 +1,6 @@
 ---
 name: work-review-request
-description: "Dispatches a code reviewer subagent against the work under review, applies severity discipline to its verdict, and owns the fix-and-re-review loop until no Critical or Important issue remains. Use this whenever a change is about to be committed to main, opened as a pull request, handed back as complete, or declared done, and whenever the user asks for a branch, a diff, or their changes to be looked over before shipping. Invoked by `work-swarm` for the feature-level review and by `debug-investigation` after a fix. No change is exempt for being small, simple, obvious, or locally tested."
+description: "Dispatches a code reviewer subagent against the work under review, applies severity discipline to its verdict, and owns the fix loop until no Critical or Important issue remains, sending only complex fixes back to the reviewer. Use this whenever a change is about to be committed to main, opened as a pull request, handed back as complete, or declared done, and whenever the user asks for a branch, a diff, or their changes to be looked over before shipping. Invoked by `work-swarm` for the feature-level review and by `debug-investigation` after a fix. No change is exempt for being small, simple, obvious, or locally tested."
 ---
 
 # Requesting Code Review
@@ -60,19 +60,43 @@ Resolve the model at dispatch time, every time:
 
 5. **Process the findings through `work-review-receive`.** That skill verifies each item, pushes back where the reviewer is wrong, and implements what survives in severity order. Pushback is a legitimate outcome: an item the reviewer got wrong is closed by the reasoning, not by a change to the code.
 
-   Minor issues go through that skill with the rest. Minor is a tier, not a verdict: each Minor item is fixed where the fix makes sense, or pushed back with a stated reason. An accepted Minor fix made in the same round as the blocking fixes costs nothing extra, because the re-dispatch in step 6 covers it. An accepted Minor fix made after an Approved also needs step 6, because Approved covers the exact diff that was reviewed. Where no dispatch remains to cover the fix, the item is declined with that as its reason and the Approved stands.
+   Minor issues go through that skill with the rest. Minor is a tier, not a verdict: each Minor item is fixed where the fix makes sense, or pushed back with a stated reason. An accepted Minor fix goes through the same classification in step 6 as every other fix. A simple Minor fix made after an Approved needs no dispatch, and the return lists it. A complex Minor fix made after an Approved needs a dispatch. Where no dispatch remains to cover it, the item is declined with that as its reason and the Approved stands.
 
    Only its **Applied** return continues this loop. **Clarification required** and **Escalated** both need a person, so carry them to the user and stop; re-dispatching a reviewer cannot supply what it never had. **Pushback pending** needs an answer from whoever produced the feedback before the batch closes.
 
-6. **Re-dispatch** against the updated range and return to step 4. If step 5 changed no code, because every Minor item on an Approved was pushed back, there is nothing new to review: go to step 7 instead. At most three dispatches in this invocation. When the third returns anything other than Approved, stop and return **Issues outstanding**.
+6. **Decide which fixes go back to the reviewer.** Classify every fix from step 5 per "Deciding Which Fixes Go Back" below.
+   - If step 5 changed no code, there is nothing new to review: go to step 7.
+   - If every fix is simple, run the project's proving command fresh per `work-verification`. When it passes, go to step 7. No reviewer needs to read a fix that is mechanical, local and confidently correct.
+   - If any fix is complex, run the proving command fresh, then re-dispatch against the updated range with the complex fixes named in the prompt, and return to step 4. The simple fixes in that round are covered by the proving command.
+
+   At most three dispatches in this invocation. When the third returns anything other than Approved, stop and return **Issues outstanding**.
 
 7. **Return** per the Return Contract.
 
-The loop lives here rather than in the callers on purpose. A caller that reviews, fixes, and then decides for itself whether to re-review ends up either skipping the re-review, as a bug fix easily does once the fix looks obviously right, or running this whole cycle a second time around the outside. Neither is what the caller wanted, and both are invisible from inside the caller.
+The loop lives here rather than in the callers on purpose. A caller that reviews, fixes, and then decides for itself whether to re-review applies no shared criteria. It ends up either skipping a re-review that a complex fix needed, or running this whole cycle a second time around the outside. Neither is what the caller wanted, and both are invisible from inside the caller.
 
-### Why Fixes Get Re-Reviewed
+### Deciding Which Fixes Go Back
 
-The dispatch that returns Approved must be one that read the fixes. Code written in response to a review is ordinary new code: it was not reviewed when it was written, it is written under pressure to close a finding, and it is exactly where a fix for one issue introduces another. An Approved verdict from before the fixes describes code that no longer exists.
+A fix is **simple** when all of these hold:
+
+- It is mechanical and local. Examples are a rename, a named constant, a missing test, a removal, or a wording change.
+- It adds no logic or behaviour beyond what the finding names.
+- It leaves error handling, concurrency, security paths and public interfaces as they were.
+- You are confident that it resolves the finding, and you can say why from the code.
+
+A fix that fails any one of these is **complex**. If you are unsure, the fix is complex.
+
+The proving command is the check on your confidence. A fix that fails it is not simple, whatever it looks like.
+
+### Why Only Complex Fixes Go Back
+
+A fresh review of the whole change tends to find something new each time. A loop that re-reviews every fix therefore rarely ends, and each round costs a dispatch and a round of fixes.
+
+The risk that a re-review covers is code that was written under pressure to close a finding and that adds new behaviour, which is where a fix for one issue introduces another. A complex fix carries that risk. A simple fix does not, because it adds nothing new for a reviewer to find.
+
+An Approved verdict from before a complex fix describes code that no longer exists. An Approved verdict from before a simple fix still describes the code that matters, and the return lists the simple fix so the caller can see it.
+
+The re-dispatch is scoped to the complex fixes. The reviewer judges those fixes and does not re-open code that an earlier round cleared.
 
 ### When the Dispatch Fails
 
@@ -91,6 +115,7 @@ Fill every placeholder; leave none unreplaced in the dispatched prompt.
 | `[REVIEW_TARGET]`        | `the working tree, which contains uncommitted changes` or `commit <sha>`.                                                                                                                                                                           |
 | `[UNTRACKED_FILES]`      | Paths from `git status --porcelain` that the diff cannot show, or `none`.                                                                                                                                                                           |
 | `[PREVIOUS_ROUND]`       | On a re-dispatch: your previous findings and what changed in response. Omit the section on the first review.                                                                                                                                        |
+| `[FIXES_TO_REVIEW]`      | On a re-dispatch: each complex fix with its file:line and the finding it answers. Omit the whole section, heading and paragraph included, on the first review.                                                                                      |
 | `[SEVERITY_TABLE]`       | The severity table from the always-on code review rules, pasted whole. That table is the canonical copy and this template deliberately does not restate it, so an edit there reaches every dispatched reviewer with no second copy to keep in sync. |
 
 ```yaml
@@ -110,6 +135,12 @@ Agent (general-purpose):
     ## Previous Review Round
 
     [PREVIOUS_ROUND]
+
+    ## Fixes To Review
+
+    [FIXES_TO_REVIEW]
+
+    On a re-review, judge only the fixes listed above. The rest of the change was reviewed in an earlier round and cleared, and simple fixes that were not listed have been checked by other means. Do not raise findings on code outside the listed fixes unless a listed fix interacts with it and breaks it. Check that each listed fix resolves the finding it answers and does not introduce a new problem.
 
     ## The Change
 
@@ -196,7 +227,7 @@ This skill is the template's only call site: per-task reviews inside orchestrate
 
 This section is addressed to whichever skill or user invoked this one. It lives here because invoking this skill is what loads the file, so the caller has the text at the moment it needs it.
 
-**Approved.** The most recent dispatch found no Critical or Important issues. The caller receives the range reviewed, every Minor issue that was declined with its reason, and the reviewer's recommendations. The caller continues. Accepted Minor fixes are inside the reviewed range. Recommendations travel unapplied by design: acting on them here would expand a change the review had already cleared.
+**Approved.** The most recent dispatch found no Critical or Important issues. The caller receives the range reviewed, every simple fix that was not re-reviewed with the reason it was judged simple, every Minor issue that was declined with its reason, and the reviewer's recommendations. The caller continues. Accepted Minor fixes are either inside the reviewed range or listed as simple fixes. Recommendations travel unapplied by design: acting on them here would expand a change the review had already cleared.
 
 **Issues outstanding.** The three-dispatch budget is spent with Critical or Important issues remaining, or the reviewer could not be dispatched. The caller receives those issues and **MUST NOT** invoke this skill again in the hope of a better verdict. The budget exists so that a change which will not converge reaches a human rather than a fourth reviewer. The caller stops and puts it to the user.
 
@@ -204,7 +235,7 @@ This section is addressed to whichever skill or user invoked this one. It lives 
 
 **Range unknown.** The base could not be established and the user has not supplied one. Nothing was reviewed. The caller obtains the base and invokes this skill again.
 
-**Invoking again after the code changes.** Approved covers the exact diff that was reviewed. If the code then changes, the Approved no longer describes what the caller is holding, and the caller invokes this skill again against the new range with a full budget. That is a first review of code no reviewer has seen, not budget evasion. The distinction that matters is what prompted the new invocation: new code, or an unwelcome verdict on unchanged code.
+**Invoking again after the code changes.** Approved covers the diff that was reviewed, plus the simple fixes the return lists. If the code then changes in any other way, the Approved no longer describes what the caller is holding, and the caller invokes this skill again against the new range with a full budget. That is a first review of code no reviewer has seen, not budget evasion. The distinction that matters is what prompted the new invocation: new code, or an unwelcome verdict on unchanged code.
 
 ## Worked Example
 
@@ -227,18 +258,23 @@ The diff is non-empty and `repair.ts` is untracked, so the reviewer is told to r
 
 `work-review-receive` verifies the Important item, confirms the swallowed failure is real, and fixes it. It assesses the two Minor items in the same round. The magic number is accepted: the interval is read in two places, so a named constant is fixed alongside the Important item. The progress indicator is pushed back: Task 2 did not ask for one, so it is a feature request on a change that did not include it.
 
-**Dispatch 2** reads both fixes and returns Approved with a recommendation about logging the repair count. Return **Approved**, carrying the declined Minor item with its reason and the recommendation. Task 3 may begin.
+Classify the fixes. The named constant is simple: it is mechanical, local and adds no behaviour. The fix to `repairIndex()` is complex: it changes error handling.
 
-Note what the Minor items did: they were assessed, not waved past. One was fixed inside the round the Important item already needed, so the re-review covered it at no extra dispatch. One was declined with a reason that travels in the return. Neither blocked. Note also that the second dispatch was not optional. The fix to `repairIndex()` was new, unreviewed code touching an error path, which is where a fix for one issue most often introduces another.
+Run the proving command fresh. It passes, so the named constant is checked.
+
+**Dispatch 2** names only the `repairIndex()` fix. It reads that fix and returns Approved with a recommendation about logging the repair count. Return **Approved**, carrying the named constant as a simple fix not re-reviewed, the declined Minor item with its reason, and the recommendation. Task 3 may begin.
+
+Note what each item did. The constant was fixed and listed, and cost no dispatch. The progress indicator was declined with a reason that travels in the return. Neither blocked. Note also that the second dispatch was necessary. The fix to `repairIndex()` was new, unreviewed code touching an error path, which is where a fix for one issue most often introduces another. Had the only finding been the named constant, the loop would have ended after the first dispatch.
 
 ## Completion Gate
 
 You **MUST NOT** return Approved unless all of these are true:
 
 - The most recent dispatch **in this invocation** returned Approved. A previous Approved from earlier in the session, or your own reading of the fixes, does not count.
-- That dispatch reviewed a range that included every fix made during this invocation.
+- That dispatch reviewed a range that included every complex fix made during this invocation.
+- Every simple fix that was not re-reviewed is listed in the return with the reason it was judged simple, and the proving command passed fresh after the last of them.
 - Every Critical and Important issue raised across every dispatch is either fixed in the code you are returning, or was pushed back through `work-review-receive` with technical reasoning the reviewer did not contest.
-- Every Minor issue raised across every dispatch is either fixed inside the reviewed range or enumerated in the return with the reason it was declined.
+- Every Minor issue raised across every dispatch is either fixed (inside the reviewed range, or listed as a simple fix) or enumerated in the return with the reason it was declined.
 - The reviewer's recommendations travel with the return.
 
 If any one is false, one of the other three return states is the honest one.
@@ -248,25 +284,29 @@ If any one is false, one of the other three return states is the honest one.
 Every thought below means stop:
 
 - "The diff came back empty, so the change must be clean." An empty diff means you are pointing at the wrong place. Nothing was reviewed.
-- "The fix was small, so it does not need re-reviewing." The re-review is the dispatch that earns the Approved. Skipping it means no reviewer ever read the code you are shipping.
+- "The fix was small, so I will call it simple." Size is not the test. A three-line change to an error path is complex. Apply the criteria in "Deciding Which Fixes Go Back".
+- "I will re-dispatch to be safe." A re-dispatch for a simple fix is the loop this skill exists to end. The criteria decide, not caution.
 - "This is close enough to Approved." The verdict comes from a dispatch, not from you.
 - "One more dispatch and it will converge." The budget is the answer to that thought, not an obstacle to it.
-- "The dispatch said Approved, so I will quietly fix this Minor one and ship." A fix applied after Approved is code no reviewer has read. Re-dispatch, or decline the item with the reason.
+- "The dispatch said Approved, so I will quietly fix this Minor one and ship." A fix applied after Approved is code no reviewer has read. Re-dispatch if the fix is complex. If it is simple, list it in the return. Never apply it silently.
 - "It is only Minor, so it travels deferred." Minor is a tier, not a verdict. Each Minor item is fixed where the fix makes sense or declined with a stated reason.
 - You are reading the diff and forming your own verdict rather than dispatching. That is the orchestrator reviewing its own work, which is what the second pair of eyes exists to prevent.
 
 ## Common Mistakes
 
-| Mistake                                                    | Why it is wrong                                                                                                                                                 |
-|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Defaulting the base to `HEAD~1`                            | Right only for single-commit work. On a multi-task feature it reviews the last task and reports on the whole thing.                                             |
-| Reviewing `BASE..HEAD` when the tree is dirty              | Excludes the working tree, so the reviewer reads the previous commit and none of the work. A bug fix reaches this skill in exactly that state.                  |
-| Forgetting untracked files                                 | A new file that was never added shows in `git status` but not in `git diff`. The reviewer will report on a change with its main file missing.                   |
-| Treating **Nothing to review** as an approval              | The mandatory review has not happened. The empty range is a bug in the range, not evidence about the code.                                                      |
-| Returning Approved on the verdict that preceded the fixes  | That verdict described code that no longer exists.                                                                                                              |
-| Letting the caller decide whether to re-review             | The loop belongs to this skill. Callers that own it either skip it or run it twice.                                                                             |
-| Passing session history to the reviewer                    | Violates context isolation. Anything the reviewer needs from the conversation goes in the template.                                                             |
-| Fixing the reviewer's findings yourself in this context    | Patching a subagent's output in the orchestrator context destroys the isolation that makes the evidence trustworthy. Findings go through `work-review-receive`. |
-| Accepting every finding because a reviewer produced it     | Pushback is mandatory where the reviewer is wrong. An unverified fix to a non-issue is a change nobody asked for.                                               |
-| Counting a failed dispatch against the budget              | A dispatch that errored reviewed nothing. Retry once, a tier up where one remains; spending budget on it burns a review the change never got.                   |
-| Pre-escalating to a high tier because the change feels big | Size is not the signal. Escalate one tier at a time, on evidence a lower tier missed something.                                                                 |
+| Mistake                                                       | Why it is wrong                                                                                                                                                 |
+|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Defaulting the base to `HEAD~1`                               | Right only for single-commit work. On a multi-task feature it reviews the last task and reports on the whole thing.                                             |
+| Reviewing `BASE..HEAD` when the tree is dirty                 | Excludes the working tree, so the reviewer reads the previous commit and none of the work. A bug fix reaches this skill in exactly that state.                  |
+| Forgetting untracked files                                    | A new file that was never added shows in `git status` but not in `git diff`. The reviewer will report on a change with its main file missing.                   |
+| Treating **Nothing to review** as an approval                 | The mandatory review has not happened. The empty range is a bug in the range, not evidence about the code.                                                      |
+| Returning Approved on the verdict that preceded a complex fix | That verdict described code that no longer exists.                                                                                                              |
+| Re-dispatching after a simple fix                             | It restarts a loop that the criteria say is finished, and a fresh full review tends to find something new.                                                      |
+| Skipping the re-dispatch without a fresh proving command      | The proving command is the check on your confidence. A simple fix is only simple if it passes.                                                                  |
+| Re-dispatching without naming the complex fixes               | The reviewer re-reads the whole change and re-opens findings that were already cleared.                                                                         |
+| Letting the caller decide whether to re-review                | The loop belongs to this skill. Callers that own it either skip it or run it twice.                                                                             |
+| Passing session history to the reviewer                       | Violates context isolation. Anything the reviewer needs from the conversation goes in the template.                                                             |
+| Fixing the reviewer's findings yourself in this context       | Patching a subagent's output in the orchestrator context destroys the isolation that makes the evidence trustworthy. Findings go through `work-review-receive`. |
+| Accepting every finding because a reviewer produced it        | Pushback is mandatory where the reviewer is wrong. An unverified fix to a non-issue is a change nobody asked for.                                               |
+| Counting a failed dispatch against the budget                 | A dispatch that errored reviewed nothing. Retry once, a tier up where one remains; spending budget on it burns a review the change never got.                   |
+| Pre-escalating to a high tier because the change feels big    | Size is not the signal. Escalate one tier at a time, on evidence a lower tier missed something.                                                                 |

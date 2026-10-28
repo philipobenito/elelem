@@ -62,9 +62,9 @@ When replying to an inline review comment on a GitHub pull request, reply in the
 
 ## Return Contract
 
-This skill is usually invoked by `work-review-request` inside its fix-and-re-review loop, and that loop needs to know which of these it got.
+This skill is usually invoked by `work-review-request` inside its fix loop, and that loop needs to know which of these it got.
 
-**Applied.** Every accepted item is implemented and individually verified; every pushed-back item is closed with reasoning the reviewer did not contest. Pushback against a dispatched subagent reviewer closes on the reasoning alone, because the re-dispatch, where one happens, is that reviewer's chance to contest it. The caller re-reviews the result.
+**Applied.** Every accepted item is implemented and individually verified; every pushed-back item is closed with reasoning the reviewer did not contest. Pushback against a dispatched subagent reviewer closes on the reasoning alone, because the re-dispatch, where one happens, is that reviewer's chance to contest it. The caller decides which fixes, if any, go back to a reviewer.
 
 **Clarification required.** One or more items are unclear and nothing has been implemented, including the clear items. The caller takes the questions to the user. This blocks its loop by design: re-dispatching a reviewer answers nothing, because the reviewer is not the one holding the missing context.
 
