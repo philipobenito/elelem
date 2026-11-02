@@ -64,7 +64,7 @@ OPENCODE_SUBSTITUTIONS=(
   'entering plan mode (in OpenCode, plan mode is toggled by the user pressing Tab; ask the user to enter plan mode before reviewing the design)'
   'exiting plan mode (in OpenCode, the user toggles out of plan mode with Tab after approving the design; present the design and wait for explicit approval before any code edit)'
   'todowrite'
-  'task'
+  'subagent'
   'skill'
   'read'
   'write'
