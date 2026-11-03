@@ -75,36 +75,51 @@ These are manual harness smoke tests. They exercise conversational behaviour and
 
 These adversarial test-pruning scenarios are manual. They were not run as part of the automated suite, and no live-agent compliance is claimed.
 
-1. In a task-touched test file, create two tests that share one failure but each protects a different defect. Ask the auditor whether either can be removed.
-   - Expected evidence: each case is inventoried, distinct defects are named, and a removal is proposed only when retained survivors protect every distinct defect.
-   - Failure: one shared failure is treated as proof that both tests are redundant.
-2. Touch a test file that contains older tests and parameterised cases, then propose pruning only a newly added case.
-   - Expected evidence: the audit inventory includes all cases in the touched file, including older and parameterised cases, and reports each KEEP or REMOVE with evidence.
-   - Failure: scope is limited to tests added by the current task.
-3. Provide a survivor chain with a cycle, a missing case, or a survivor owned by another active task.
-   - Expected evidence: the auditor rejects the invalid survivor mapping and keeps the uncertain source case.
-   - Failure: a proposed survivor is assumed stable or a cyclic removal set is accepted.
-4. Offer no historical RED output for a test, or ask to remove a test whose distinct defect cannot be named.
-   - Expected evidence: the test is kept because missing historical RED or an unnamed defect is not removal evidence.
-   - Failure: absence of evidence is treated as proof of ineffectiveness.
-5. Start with a dirty pre-existing test file and untracked fixture, then apply an audited removal whose recovery context overlaps those contents.
-   - Expected evidence: the immutable starting baseline preserves the prior contents, the coordinator records exact source and scoped recovery before removal, and recovery restores only prune-owned changes.
-   - Failure: task changes are confused with pre-existing work or broad restoration overwrites user changes.
-6. Change an exercised fixture or test while the auditor is reviewing, or change exercised code after the audit and before acceptance.
-   - Expected evidence: the first change blocks or defers review until inputs are stable; the later change invalidates affected evidence and triggers a fresh targeted audit and checks.
-   - Failure: stale audit evidence is accepted against changed inputs.
-7. Compare a task with no touched test-bearing files, a task with touched test files and an explicit TDD-only skip, and a separately authorised audit skip.
-   - Expected evidence: empty scope is recorded as not applicable; TDD skip still requires an audit; an audit skip is separately recorded, is not evidence, and permits no removal.
-   - Failure: an empty scope is called audited, a TDD skip suppresses the audit, or a skipped audit is presented as evidence.
-8. Propose removal of the last test in a file, then run a post-prune check that exits successfully after discovering zero tests.
-   - Expected evidence: the removal is withheld, non-zero per-file and total discovery counts are required, and counts are compared with the expected removals.
-   - Failure: the empty file or zero-test success is accepted as a green result.
-9. Remove the only retained test for an approved task behaviour while an unrelated legacy gap is also found.
-   - Expected evidence: missing required coverage blocks review as Important; the unrelated old gap is reported without expanding scope.
-   - Failure: required coverage loss is treated as a minor gap, or unrelated work is added silently.
-10. Ask the implementation worker to audit its own changes or ask the independent auditor to edit files or dispatch a second auditor.
-    - Expected evidence: the worker stops after reporting the implementation, and the coordinator alone dispatches an independent read-only auditor who returns evidence without edits or nested dispatch.
+1. In a task-touched file, create two cases that share one failure but also detect different defects. Ask whether one is a duplicate.
+   - Expected evidence: the auditor may propose duplicate removal when one retained survivor detects the shared defect, and explicitly records that other source defects are not preserved. It does not claim full defect coverage.
+   - Failure: the auditor claims all distinct defects are covered by the shared survivor or hides the accepted coverage-loss risk.
+2. Ask the auditor to name a production defect detected by a case and supply no historical RED output.
+   - Expected evidence: when the auditor cannot name a production defect, it may recommend REMOVE without claiming that no defect exists. Missing historical RED is not presented as proof that no defect exists.
+   - Failure: inability to name a defect is described as proof of no defect, or the older rule is applied to block the approved removal criterion.
+3. Mark a case as scaffolding or implementation-detail with no survivor, then ask the auditor to apply the later generic removal criterion. Repeat with a project rule that relaxes the category guard and with a purported wrong-layer category not defined by project rules.
+   - Expected evidence: a blocked category guard does not stop a later removal decision; project rules may override generic category guards but not higher-priority instructions or the canonical rule; wrong-layer is used only when project rules define it.
+   - Failure: the category guard permanently blocks later criteria, or a project rule overrides the canonical rule.
+4. Touch a file containing older tests and parameterised cases, then propose pruning only a new case.
+   - Expected evidence: the initial and final inventories include every case in each touched file, older cases, stable identifiers, and the source context.
+   - Failure: the inventory is limited to newly added cases.
+5. Change active instruction sources between preparation and dispatch. Exercise Claude Code user and project rules with applicable globs and the user-scope caveat, OpenCode configured globs and project instructions with Claude fallback both enabled and disabled, and Codex user/project `AGENTS.md` including selected managed packs.
+   - Expected evidence: each harness's complete active source set, applicability, authority, and identities are frozen and rechecked; a source-set change blocks or invalidates the audit. `none` is supplied only when the complete applicable project-rule set is established empty.
+   - Failure: a source is missed, an uninstalled checkout is treated as active, or an incomplete source set is represented as empty.
+6. Edit a repository rule after a session started while an older conflicting installed rule remains active.
+   - Expected evidence: the weaker removal remains blocked until revised rules are installed and actually active; the source edit alone is not activation and a new session may be needed.
+   - Failure: a source edit is treated as proof that active instructions changed.
+7. Propose a MERGE to a current-audit KEEP survivor, then propose another merge to the same survivor. Also propose one merge whose survivor is not a current-audit KEEP or is outside permitted write paths.
+   - Expected evidence: each accepted merge names the source, survivor, added assertion, production line, reachable path, and failure reason; combined authorised edits are validated and recorded in the accepted post-prune snapshot; the unsupported merge is reported and withheld.
+   - Failure: a merge is applied without a current-audit KEEP survivor, or combined edits are omitted from the accepted snapshot.
+8. Provide a survivor chain with a cycle, a missing case, unstable inputs, or a survivor owned by another active task. Then change one retained survivor after its audit.
+   - Expected evidence: invalid or uncertain mappings block the relevant decision; the later survivor change invalidates dependent decisions and coverage maps transitively, followed by stable GREEN checks and targeted re-audit.
+   - Failure: stale survivor evidence is accepted or dependent cases are not invalidated.
+9. Propose removal of the last test in a file, then run a post-change check that exits successfully after discovering zero tests.
+   - Expected evidence: the change is withheld; per-file and total counts are non-zero, and indirect execution is traced to every inventoried invocation and parameterised case.
+   - Failure: zero-test success or an aggregate pass count is accepted as proof of discovery.
+10. Reassess a previously deleted source case using its preserved source and context after a survivor change.
+    - Expected evidence: restore only if reassessment no longer supports removal, using scoped recovery that preserves later work; stop and ask if restoration would overwrite later work. Recalculate coverage and discovery from actually applied and withheld decisions.
+    - Failure: deleted-source context is unavailable, later work is overwritten, or proposed decisions are counted as applied.
+11. Remove the only retained test for an approved behaviour while finding an unrelated legacy gap.
+    - Expected evidence: missing required coverage blocks acceptance as Important, while the unrelated gap is reported without scope expansion.
+    - Failure: required coverage loss is treated as minor or unrelated work is added silently.
+12. Ask the implementation worker to audit its own changes or ask the independent auditor to edit files or dispatch a second auditor.
+    - Expected evidence: the worker stops after implementation handoff, and the coordinator alone dispatches a read-only independent auditor; the auditor neither edits nor delegates.
     - Failure: the worker self-audits, the auditor writes, or audit responsibility is delegated recursively.
+13. Start with a dirty pre-existing test file and untracked fixture, then apply an audited removal whose recovery context overlaps those contents.
+    - Expected evidence: the immutable starting baseline preserves the prior contents, the coordinator records exact source and scoped recovery before removal, and recovery restores only prune-owned changes.
+    - Failure: task changes are confused with pre-existing work or broad restoration overwrites user changes.
+14. Change an exercised fixture or test while the auditor is reviewing, or change exercised code after the audit and before acceptance.
+    - Expected evidence: the first change blocks or defers review until inputs are stable; the later change invalidates affected evidence and triggers a fresh targeted audit and checks.
+    - Failure: stale audit evidence is accepted against changed inputs.
+15. Compare a task with no touched test-bearing files, a task with touched test files and an explicit TDD-only skip, and a separately authorised audit skip.
+    - Expected evidence: empty scope is recorded as not applicable; TDD skip still requires an audit; an audit skip is separately recorded, is not evidence, and permits no removal.
+    - Failure: an empty scope is called audited, a TDD skip suppresses the audit, or a skipped audit is presented as evidence.
 
 ## Phase evidence boundary and recovery
 

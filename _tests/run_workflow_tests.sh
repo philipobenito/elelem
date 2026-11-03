@@ -187,7 +187,7 @@ test_test_pruning_contract_is_documented() {
   local file token requirement normalized missing=0
   local requirements=(
     "rules/common/testing.md|Meaningful Assertions"
-    "rules/common/testing.md|distinct defects"
+    "rules/common/testing.md|named defect"
     "skills/_shared/test-pruning.md|uncertain"
     "skills/_shared/test-pruning.md|distinct"
     "skills/_shared/test-pruning.md|survivor"
@@ -221,8 +221,8 @@ test_test_pruning_contract_is_documented() {
     "skills/subagent-driven-development/implementer-prompt.md|recovery"
     "skills/subagent-driven-development/implementer-prompt.md|Do not prune"
     "skills/subagent-driven-development/implementer-prompt.md|audit your own work"
-    "skills/subagent-driven-development/reviewer-prompt.md|survivor mapping"
-    "skills/subagent-driven-development/reviewer-prompt.md|final green snapshot"
+    "skills/subagent-driven-development/reviewer-prompt.md|survivor requirements"
+    "skills/subagent-driven-development/reviewer-prompt.md|accepted post-prune snapshot"
     "skills/subagent-driven-development/reviewer-prompt.md|Important finding"
     "README.md|test pruning"
     "README.md|live"
@@ -243,6 +243,503 @@ test_test_pruning_contract_is_documented() {
   done
   if (( missing == 0 )); then
     _pass "test_pruning_contract_is_documented"
+  fi
+}
+
+test_auditor_policy_categories_and_decisions_are_explicit() {
+  local testing_rules="$REPO_ROOT/rules/common/testing.md"
+  local content requirement pattern missing=0
+  content="$(tr '\n' ' ' < "$testing_rules" | tr -s '[:space:]' ' ')"
+  local requirements=(
+    'decision categories|scaffolding.{0,120}implementation-detail.{0,120}duplicate.{0,120}timing-dependent'
+    'verdicts|KEEP.{0,100}REMOVE.{0,100}MERGE'
+    'category-first ordering|Classify each test.{0,160}scaffolding'
+    'removal without defect claim|cannot name a production defect.{0,160}(remove|REMOVE)'
+    'duplicate shared defect|duplicate when one retained survivor.{0,120}defect shared'
+    'merge condition|small assertion.{0,120}KEEP survivor.{0,120}MERGE'
+    'project precedence|higher-priority instructions.{0,100}canonical.{0,100}project rules.{0,100}generic categories'
+    'category guard continuation|category guard.{0,120}later removal'
+    'category guard condition|category guard permits removal only when a retained survivor detects the named defect or the auditor states that no defect can be caught, unless applicable project rules relax the guard'
+    'wrong-layer source|wrong-layer.{0,120}project rules define'
+    'survivor constraints|stable.{0,80}retained.{0,80}non-cyclic'
+    'last-test protection|Never delete a test file or its last test'
+  )
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "auditor_policy_${requirement%%|*}" "expected canonical policy for ${requirement%%|*}"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "auditor_policy_categories_and_decisions_are_explicit"
+  fi
+}
+
+test_category_guard_matcher_rejects_removal_without_required_evidence() {
+  local fixture_root content output
+  fixture_root="$TEST_TMP/category-guard-without-only"
+  mkdir -p "$fixture_root/rules/common"
+  content="$(cat "$REPO_ROOT/rules/common/testing.md")"
+  content="${content/permits removal only when/permits removal when}"
+  printf '%s\n' "$content" > "$fixture_root/rules/common/testing.md"
+  output="$(
+    REPO_ROOT="$fixture_root"
+    passed=0
+    failed=0
+    test_auditor_policy_categories_and_decisions_are_explicit
+  )"
+  if grep -Fq '[FAIL] auditor_policy_category guard condition:' <<< "$output" && ! grep -Fq '[PASS] auditor_policy_categories_and_decisions_are_explicit' <<< "$output"; then
+    _pass "category_guard_matcher_rejects_removal_without_required_evidence"
+  else
+    _fail "category_guard_matcher_rejects_removal_without_required_evidence" "the active policy check accepted a category removal without the required guard"
+  fi
+}
+
+test_auditor_rule_discovery_freezes_complete_harness_sources() {
+  local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
+  local content requirement pattern missing=0
+  content="$(tr '\n' ' ' < "$helper" | tr -s '[:space:]' ' ')"
+  local requirements=(
+    'Claude active sources|Claude Code.{0,220}(active user|user-scope).{0,120}project.{0,120}globs'
+    'Claude scope caveat|Claude Code.{0,220}(user-scope caveat|globs.{0,80}not honoured)'
+    'OpenCode active sources|OpenCode.{0,220}configured instruction globs.{0,140}project instructions'
+    'OpenCode Claude fallback|OpenCode.{0,180}Claude Code fallback when enabled'
+    'Codex active sources|Codex.{0,220}(active user|user and project).{0,160}AGENTS\.md'
+    'Codex selected packs|Codex.{0,220}(selected packs|managed blocks)'
+    'complete empty source set|none.{0,120}complete applicable project-rule set.{0,80}empty'
+    'uncertain applicability blocks|applicability.{0,120}(cannot be established|uncertain).{0,100}block'
+    'frozen identity|freeze.{0,120}(source identities|identity).{0,180}dispatch.{0,120}acceptance'
+    'old active instructions|older conflicting active instructions.{0,160}(installed|active)'
+    'source edit is not activation|source edit alone is not activation'
+  )
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "auditor_discovery_${requirement%%|*}" "expected complete source discovery for ${requirement%%|*}"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "auditor_rule_discovery_freezes_complete_harness_sources"
+  fi
+}
+
+test_auditor_inventory_merge_recovery_and_dependency_invalidation() {
+  local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
+  local content requirement pattern missing=0
+  content="$(tr '\n' ' ' < "$helper" | tr -s '[:space:]' ' ')"
+  local requirements=(
+    'initial full inventory|initial (live )?inventory.{0,160}every test.{0,120}(older|parameterised)'
+    'stable input identity|stable input identities.{0,120}(test|case|production|fixture)'
+    'nonzero per-file and total counts|non-zero.{0,120}(per-file.{0,120}total.{0,120}discovery|discovery counts.{0,100}per current-live file and total)'
+    'executed-case trace|trace.{0,160}(each|every).{0,100}(case|invocation)'
+    'three auditor decisions|KEEP.{0,80}REMOVE.{0,80}MERGE'
+    'merge source and keep survivor|MERGE.{0,180}current-audit KEEP survivor'
+    'merge assertion evidence|added assertion.{0,120}production line.{0,120}reachable path.{0,120}failure reason'
+    'withhold unsupported merge|otherwise report and withhold'
+    'accepted merged snapshot|combined authorised edits.{0,120}accepted post-prune snapshot'
+    'accepted edits do not self-invalidate|authorised.{0,100}do not invalidate'
+    'transitive survivor invalidation|transitive.{0,160}survivor.{0,120}invalidation'
+    're-audit after green|after GREEN.{0,120}re-audit'
+    'removed source reassessment|removed source.{0,160}(reassess|reassessment)'
+    'restore only unsupported removals|restore.{0,160}no longer supports removal'
+    'scoped restoration safety|scoped recovery.{0,160}cannot apply without overwriting later work.{0,120}stop and ask'
+    'recalculate actual coverage|actually applied and withheld.{0,160}coverage'
+    'required coverage blocks|missing required behaviour coverage.{0,100}blocks'
+  )
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "auditor_lifecycle_${requirement%%|*}" "expected audit lifecycle for ${requirement%%|*}"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "auditor_inventory_merge_recovery_and_dependency_invalidation"
+  fi
+}
+
+test_removal_handoff_requires_survivors_only_when_the_criterion_does() {
+  local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
+  local content requirement pattern missing=0
+  content="$(tr '\n' ' ' < "$helper" | tr -s '[:space:]' ' ')"
+  local requirements=(
+    'source and decision evidence always|Before assigning any removal or merge.{0,220}exact source.{0,160}decision evidence'
+    'no survivor explicitly recorded|If the criterion requires no survivor, explicitly record `no survivor required`'
+    'survivor evidence is criterion-dependent|Record survivor identity and evidence only when the decision criterion requires it'
+    'duplicate removal survivor proof|duplicate.{0,20}REMOVE.{0,100}retained survivor.{0,120}shared defect'
+    'merge survivor proof|MERGE.{0,100}current-audit `KEEP` survivor.{0,200}added assertion.{0,100}production line.{0,100}reachable path.{0,100}failure reason'
+  )
+  if grep -Fqi 'For removal, record the source and survivor.' <<< "$content"; then
+    _fail "removal_handoff_unconditional_survivor" "removal handoff still requires a survivor unconditionally"
+    missing=1
+  fi
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "removal_handoff_${requirement%%|*}" "expected removal handoff to cover ${requirement%%|*}"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "removal_handoff_requires_survivors_only_when_the_criterion_does"
+  fi
+}
+
+test_uncertain_survivor_handling_does_not_override_named_removal() {
+  local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
+  local content requirement pattern missing=0
+  content="$(tr '\n' ' ' < "$helper" | tr -s '[:space:]' ' ')"
+  local requirements=(
+    'stable survivor requirements|Survivors must be real, stable, retained, and non-cyclic'
+    'uncertain proof does not establish coverage|Uncertain survivor proof cannot establish retained coverage'
+    'uncertain application is not applied|Uncertain safe application blocks applying a proposed removal or merge'
+    'unverified coverage is not claimed|do not claim unverified coverage is preserved'
+    'canonical removal criterion remains|These uncertainties do not override a REMOVE otherwise permitted by the canonical rule when the auditor cannot name a production defect'
+  )
+  if grep -Fqi 'Keep uncertain coverage' <<< "$content"; then
+    _fail "uncertain_survivor_handling_unqualified_keep" "unqualified uncertainty handling can override the canonical removal criterion"
+    missing=1
+  fi
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "uncertain_survivor_${requirement%%|*}" "expected uncertainty handling for ${requirement%%|*}"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "uncertain_survivor_handling_does_not_override_named_removal"
+  fi
+}
+
+test_archived_removed_sources_are_separate_from_live_execution() {
+  local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
+  local content requirement pattern missing=0
+  content="$(tr '\n' ' ' < "$helper" | tr -s '[:space:]' ' ')"
+  local requirements=(
+    'complete live inventory|complete initial live inventory.{0,120}every test and parameterised case'
+    'archive separate from live|archived removed-source records.{0,100}separate from the current live inventory'
+    'nonzero live discovery|non-zero discovery counts per current-live file and total'
+    'trace live executions|trace.{0,80}each current-live case invocation'
+    'archived reassessment input|Archived removed-source reassessments, separate from current-live cases'
+    'preserved archived source|ARCHIVED_REMOVED_SOURCE_AND_CONTEXT'
+    'archived snapshot identity|ARCHIVED_PRE_REMOVAL_SNAPSHOT_IDENTITIES'
+    'archived prior checks and discovery|ARCHIVED_PRIOR_CHECKS_AND_DISCOVERY_EVIDENCE'
+    'archive not expected to execute now|Archived cases are not required to execute in the current live run'
+    'missing archive blocks|If any required archived evidence is missing, unstable, or inconsistent, return.{0,20}BLOCKED'
+    'no invented archive evidence|Do not invent or fabricate prior evidence'
+    'fresh checks remain for live tests|fresh.{0,50}stable GREEN result with exit status zero'
+    'separate archived report rows|separate report rows for current-live cases and archived reassessments'
+  )
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "archived_live_inventory_${requirement%%|*}" "expected archived-source separation for ${requirement%%|*}"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "archived_removed_sources_are_separate_from_live_execution"
+  fi
+}
+
+test_archived_trace_is_required_only_when_original_runner_needs_it() {
+  local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
+  local content requirement pattern missing=0
+  content="$(tr '\n' ' ' < "$helper" | tr -s '[:space:]' ' ')"
+  local requirements=(
+    'exact archived source and context|preserved exact source and surrounding context'
+    'archived snapshot always required|pre-removal snapshot identities'
+    'prior checks and discovery always required|Archived removed-source reassessments.{0,250}Always require.{0,240}actual prior check and discovery evidence'
+    'original runner determines trace applicability|original runner.{0,100}whether historical trace evidence was applicable'
+    'indirect original runner requires trace|Require prior trace-to-case evidence.{0,100}original runner was indirect'
+    'direct original runner needs no trace|when the original runner was direct.{0,160}prior check and discovery evidence is sufficient.{0,40}trace is not required'
+    'complete archive evidence blocks|If any required archived evidence is missing, unstable, or inconsistent, return.{0,20}BLOCKED'
+    'complete archive evidence inputs|Archived evidence is complete only when.{0,200}(snapshot identities|prior check and discovery evidence)'
+    'prompt identifies trace applicability|ARCHIVED_ORIGINAL_RUNNER_AND_TRACE_APPLICABILITY'
+    'prompt has conditional trace field|ARCHIVED_PRIOR_TRACE_EVIDENCE_IF_APPLICABLE'
+    'report explains conditional trace|Archived reassessment rows.{0,240}actual prior check/discovery evidence.{0,220}trace applicability'
+    'live green remains mandatory|fresh.{0,50}stable GREEN result with exit status zero'
+    'live discovery remains nonzero|non-zero discovery counts per current-live file and total'
+    'pre-green removal remains blocked|A non-zero exit status blocks removal and auditor dispatch'
+  )
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "archived_trace_applicability_${requirement%%|*}" "expected archived trace handling for ${requirement%%|*}"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "archived_trace_is_required_only_when_original_runner_needs_it"
+  fi
+}
+
+test_canonical_rule_resolution_uses_verified_active_scope() {
+  local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
+  local content requirement pattern missing=0
+  content="$(tr '\n' ' ' < "$helper" | tr -s '[:space:]' ' ')"
+  local requirements=(
+    'active source set|Claude Code and OpenCode.{0,180}complete, verified active instruction source set and current harness instruction context'
+    'different install scopes|skill and active rule may be installed in different user or project scopes'
+    'active source authority|select the source using active rule applicability.{0,120}harness'
+    'frozen identity validation|verify.{0,20}selected source identity.{0,120}frozen inputs'
+    'ambiguous authority blocks|If the active authoritative source.{0,160}missing, inconsistent, or ambiguous, block before dispatch'
+    'no adjacency or guessed path|Do not infer the canonical rule source from adjacency to this helper or a guessed path'
+    'no uninstalled fallback|Do not guess a path or fall back to an uninstalled source'
+    'Codex managed block retained|Codex.{0,100}active elelem-managed `AGENTS.md` block'
+    'Codex unique testing rule entry|unique `## rules/common/testing.md` rule entry'
+    'canonical section copied verbatim|complete Meaningful Assertions section verbatim'
+  )
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "canonical_rule_scope_${requirement%%|*}" "expected active-rule resolution for ${requirement%%|*}"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "canonical_rule_resolution_uses_verified_active_scope"
+  fi
+}
+
+test_source_identity_matcher_requires_both_recheck_boundaries() {
+  local fixture_root content output
+  fixture_root="$TEST_TMP/source-identity-single-boundary"
+  mkdir -p "$fixture_root/skills/_shared"
+  content="$(cat "$REPO_ROOT/skills/_shared/test-pruning.md")"
+  content="${content/Recheck them at dispatch and acceptance./Recheck them at dispatch.}"
+  printf '%s\n' "$content" > "$fixture_root/skills/_shared/test-pruning.md"
+  output="$(
+    REPO_ROOT="$fixture_root"
+    passed=0
+    failed=0
+    test_auditor_rule_discovery_freezes_complete_harness_sources
+  )"
+  if grep -Fq '[FAIL] auditor_discovery_frozen identity:' <<< "$output" && ! grep -Fq '[PASS] auditor_rule_discovery_freezes_complete_harness_sources' <<< "$output"; then
+    _pass "source_identity_matcher_requires_both_recheck_boundaries"
+  else
+    _fail "source_identity_matcher_requires_both_recheck_boundaries" "the active discovery check accepted text missing the acceptance recheck"
+  fi
+}
+
+test_restoration_matcher_requires_stopping_before_overwriting_later_work() {
+  local fixture_root content output
+  fixture_root="$TEST_TMP/restoration-overwrite-without-stop"
+  mkdir -p "$fixture_root/skills/_shared"
+  content="$(cat "$REPO_ROOT/skills/_shared/test-pruning.md")"
+  content="${content/stop and ask the user/continue and overwrite later work}"
+  printf '%s\n' "$content" > "$fixture_root/skills/_shared/test-pruning.md"
+  output="$(
+    REPO_ROOT="$fixture_root"
+    passed=0
+    failed=0
+    test_auditor_inventory_merge_recovery_and_dependency_invalidation
+  )"
+  if grep -Fq '[FAIL] auditor_lifecycle_scoped restoration safety:' <<< "$output" && ! grep -Fq '[PASS] auditor_inventory_merge_recovery_and_dependency_invalidation' <<< "$output"; then
+    _pass "restoration_matcher_requires_stopping_before_overwriting_later_work"
+  else
+    _fail "restoration_matcher_requires_stopping_before_overwriting_later_work" "the active lifecycle check accepted unsafe restoration wording"
+  fi
+}
+
+test_auditor_contract_is_wired_to_workers_reviewers_docs_and_scenarios() {
+  local requirement file token content missing=0
+  local requirements=(
+    'implementer merge handoff|skills/subagent-driven-development/implementer-prompt.md|MERGE'
+    'implementer current keep survivor|skills/subagent-driven-development/implementer-prompt.md|current-audit KEEP'
+    'standard reviewer three decisions|skills/subagent-driven-development/reviewer-prompt.md|KEEP, REMOVE, or MERGE'
+    'standard reviewer merged snapshot|skills/subagent-driven-development/reviewer-prompt.md|accepted post-prune snapshot'
+    'fast-path pruning audit|skills/fast-path-implementation/fast-path-reviewer-prompt.md|test-pruning'
+    'fast-path merge evidence|skills/fast-path-implementation/fast-path-reviewer-prompt.md|current-audit KEEP'
+    'readme category policy|README.md|timing-dependent'
+    'readme merge policy|README.md|MERGE'
+    'readme authority policy|README.md|active instruction sources'
+    'manual shared defect policy|_tests/workflow_scenarios.md|shared defect'
+    'manual no-defect case|_tests/workflow_scenarios.md|cannot name a production defect'
+    'manual source change case|_tests/workflow_scenarios.md|source-set change'
+    'manual withheld merge case|_tests/workflow_scenarios.md|withheld'
+    'manual deleted-source case|_tests/workflow_scenarios.md|deleted source'
+    'manual survivor invalidation case|_tests/workflow_scenarios.md|transitively'
+    'manual tests remain unrun|_tests/workflow_scenarios.md|were not run'
+    'manual dirty baseline recovery case|_tests/workflow_scenarios.md|Start with a dirty pre-existing test file and untracked fixture'
+    'manual audit input stability case|_tests/workflow_scenarios.md|Change an exercised fixture or test while the auditor is reviewing'
+    'manual empty scope and skip case|_tests/workflow_scenarios.md|Compare a task with no touched test-bearing files'
+  )
+  for requirement in "${requirements[@]}"; do
+    file="${requirement#*|}"
+    file="${file%%|*}"
+    token="${requirement##*|}"
+    content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+    if ! grep -Fqi "$token" <<< "$content"; then
+      _fail "auditor_wiring_${requirement%%|*}" "expected $file to document $token"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "auditor_contract_is_wired_to_workers_reviewers_docs_and_scenarios"
+  fi
+}
+
+test_auditor_prompt_supplies_category_definitions_and_authority_inputs() {
+  local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
+  local content requirement pattern missing=0
+  content="$(tr '\n' ' ' < "$helper" | tr -s '[:space:]' ' ')"
+  local requirements=(
+    'classification-only purpose|Generic category meanings.{0,120}classify observable test shape only'
+    'scaffolding without crashing|Scaffolding.{0,120}renders-without-crashing'
+    'scaffolding exported shape|Scaffolding.{0,160}export/module/type-shape'
+    'scaffolding literal constant|Scaffolding.{0,200}literal constant'
+    'scaffolding own mock|Scaffolding.{0,220}its own mock'
+    'scaffolding intermediate flow|Scaffolding.{0,240}intermediate full-flow step'
+    'scaffolding redundant input classes|Scaffolding.{0,220}redundant input-class cases'
+    'implementation detail examples|Implementation-detail.{0,180}internal call counts.{0,80}CSS class names.{0,80}DOM structure.{0,80}child props'
+    'duplicate category definition|Duplicate.{0,120}same shared production defect'
+    'timing category definition|Timing-dependent.{0,180}real timers.{0,100}waitFor.{0,20}chains.{0,100}deterministic signal'
+    'wrong-layer definition|Wrong-layer.{0,120}only when applicable project test rules define the category'
+    'categories are not value rules|do not infer KEEP, REMOVE, or MERGE solely from a category'
+    'higher-priority instructions input|Applicable higher-priority testing instructions.{0,80}verbatim'
+    'higher-priority empty set condition|none.{0,20}only when the complete active higher-priority set is established empty'
+    'higher-priority source block|If applicable higher-priority testing instructions are missing or ambiguous, return BLOCKED'
+    'exact merge paths input|Exact permitted write paths for automatic MERGE application'
+    'merge path authority input|Authority and task-scope evidence for those paths'
+    'merge path blocker|If exact permitted MERGE write paths or their scope evidence are missing or ambiguous, return BLOCKED'
+    'no history fallback|Do not use inherited session history to fill missing instruction or write-scope inputs'
+    'merge survivor path gate|current-audit KEEP.{0,160}path exactly matches an authorised path in the supplied permitted-write-path list'
+    'merge outside scope withheld|path is outside the permitted write paths.{0,100}withhold'
+  )
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "auditor_prompt_${requirement%%|*}" "expected shared auditor prompt to supply ${requirement%%|*}"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "auditor_prompt_supplies_category_definitions_and_authority_inputs"
+  fi
+}
+
+test_higher_priority_blocker_does_not_borrow_merge_path_blocker() {
+  local fixture_root content output
+  fixture_root="$TEST_TMP/higher-priority-blocker-missing"
+  mkdir -p "$fixture_root/skills/_shared"
+  content="$(tr '\n' ' ' < "$REPO_ROOT/skills/_shared/test-pruning.md" | tr -s '[:space:]' ' ')"
+  content="${content/If applicable higher-priority testing instructions are missing or ambiguous, /}"
+  printf '%s\n' "$content" > "$fixture_root/skills/_shared/test-pruning.md"
+  output="$(
+    REPO_ROOT="$fixture_root"
+    passed=0
+    failed=0
+    test_auditor_prompt_supplies_category_definitions_and_authority_inputs
+  )"
+  if grep -Fq '[FAIL] auditor_prompt_higher-priority source block:' <<< "$output" && ! grep -Fq '[PASS] auditor_prompt_supplies_category_definitions_and_authority_inputs' <<< "$output"; then
+    _pass "higher_priority_blocker_does_not_borrow_merge_path_blocker"
+  else
+    _fail "higher_priority_blocker_does_not_borrow_merge_path_blocker" "the active auditor prompt check accepted a missing higher-priority blocker"
+  fi
+}
+
+test_merge_path_blocker_is_checked_independently() {
+  local fixture_root content output
+  fixture_root="$TEST_TMP/merge-path-blocker-missing"
+  mkdir -p "$fixture_root/skills/_shared"
+  content="$(tr '\n' ' ' < "$REPO_ROOT/skills/_shared/test-pruning.md" | tr -s '[:space:]' ' ')"
+  content="${content/If exact permitted MERGE write paths or their scope evidence are missing or ambiguous, return BLOCKED. /}"
+  content="${content/or exact permitted MERGE write paths and their scope evidence are missing or ambiguous, return BLOCKED./.}"
+  printf '%s\n' "$content" > "$fixture_root/skills/_shared/test-pruning.md"
+  output="$(
+    REPO_ROOT="$fixture_root"
+    passed=0
+    failed=0
+    test_auditor_prompt_supplies_category_definitions_and_authority_inputs
+  )"
+  if grep -Fq '[FAIL] auditor_prompt_merge path blocker:' <<< "$output" && ! grep -Fq '[PASS] auditor_prompt_supplies_category_definitions_and_authority_inputs' <<< "$output"; then
+    _pass "merge_path_blocker_is_checked_independently"
+  else
+    _fail "merge_path_blocker_is_checked_independently" "the active auditor prompt check accepted missing MERGE path authority"
+  fi
+}
+
+test_reviewer_prompts_honor_scoped_pruning_audit_skips() {
+  local requirement file token content missing=0
+  local requirements=(
+    'standard reviewer exact scope|skills/subagent-driven-development/reviewer-prompt.md|exact user authorisation and the skipped file/case scope'
+    'standard reviewer no pruning|skills/subagent-driven-development/reviewer-prompt.md|confirm no removal or merge was applied in that scope'
+    'standard reviewer skipped status|skills/subagent-driven-development/reviewer-prompt.md|`SKIPPED` and unverified'
+    'standard reviewer no audit evidence|skills/subagent-driven-development/reviewer-prompt.md|not pruning-audit evidence'
+    'standard reviewer no skipped audit|skills/subagent-driven-development/reviewer-prompt.md|Do not dispatch or repeat a pruning audit for the skipped scope'
+    'standard reviewer includes skipped-audit files|skills/subagent-driven-development/reviewer-prompt.md|Continue reviewing all task changes, including changes in files with skipped pruning audits'
+    'standard reviewer skips only pruning evidence|skills/subagent-driven-development/reviewer-prompt.md|Only skip pruning-evidence inspection for the explicitly skipped file/case scope'
+    'standard reviewer continues unskipped checks|skills/subagent-driven-development/reviewer-prompt.md|Continue all unskipped checks'
+    'standard reviewer skip-record field|skills/subagent-driven-development/reviewer-prompt.md|PRUNING_AUDIT_SKIP_RECORDS_OR_NONE'
+    'standard reviewer explicit none|skills/subagent-driven-development/reviewer-prompt.md|`none` when no pruning-audit skip was authorised'
+    'standard reviewer skip source|skills/subagent-driven-development/reviewer-prompt.md|exact source and instruction text'
+    'standard reviewer skip file scope|skills/subagent-driven-development/reviewer-prompt.md|skipped test-bearing file/case scope'
+    'standard reviewer skip reason and consequence|skills/subagent-driven-development/reviewer-prompt.md|reason and consequence'
+    'standard reviewer absent record blocks|skills/subagent-driven-development/reviewer-prompt.md|If the skip record is absent or incomplete, report BLOCKED'
+    'standard reviewer no inferred skip|skills/subagent-driven-development/reviewer-prompt.md|Do not infer an authorised skip from a missing record or audit evidence'
+    'fast-path reviewer exact scope|skills/fast-path-implementation/fast-path-reviewer-prompt.md|exact user authorisation and the skipped file/case scope'
+    'fast-path reviewer no pruning|skills/fast-path-implementation/fast-path-reviewer-prompt.md|confirm no removal or merge was applied in that scope'
+    'fast-path reviewer skipped status|skills/fast-path-implementation/fast-path-reviewer-prompt.md|`SKIPPED` and unverified'
+    'fast-path reviewer no audit evidence|skills/fast-path-implementation/fast-path-reviewer-prompt.md|not pruning-audit evidence'
+    'fast-path reviewer no skipped audit|skills/fast-path-implementation/fast-path-reviewer-prompt.md|Do not dispatch or repeat a pruning audit for the skipped scope'
+    'fast-path reviewer includes skipped-audit files|skills/fast-path-implementation/fast-path-reviewer-prompt.md|Continue reviewing all task changes, including changes in files with skipped pruning audits'
+    'fast-path reviewer skips only pruning evidence|skills/fast-path-implementation/fast-path-reviewer-prompt.md|Only skip pruning-evidence inspection for the explicitly skipped file/case scope'
+    'fast-path reviewer continues unskipped checks|skills/fast-path-implementation/fast-path-reviewer-prompt.md|Continue all unskipped checks'
+    'fast-path reviewer skip-record field|skills/fast-path-implementation/fast-path-reviewer-prompt.md|PRUNING_AUDIT_SKIP_RECORDS_OR_NONE'
+    'fast-path reviewer explicit none|skills/fast-path-implementation/fast-path-reviewer-prompt.md|`none` when no pruning-audit skip was authorised'
+    'fast-path reviewer skip source|skills/fast-path-implementation/fast-path-reviewer-prompt.md|exact source and instruction text'
+    'fast-path reviewer skip file scope|skills/fast-path-implementation/fast-path-reviewer-prompt.md|skipped test-bearing file/case scope'
+    'fast-path reviewer skip reason and consequence|skills/fast-path-implementation/fast-path-reviewer-prompt.md|reason and consequence'
+    'fast-path reviewer absent record blocks|skills/fast-path-implementation/fast-path-reviewer-prompt.md|If the skip record is absent or incomplete, report BLOCKED'
+    'fast-path reviewer no inferred skip|skills/fast-path-implementation/fast-path-reviewer-prompt.md|Do not infer an authorised skip from a missing record or audit evidence'
+  )
+  for requirement in "${requirements[@]}"; do
+    file="${requirement#*|}"
+    file="${file%%|*}"
+    token="${requirement##*|}"
+    content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+    if ! grep -Fqi "$token" <<< "$content"; then
+      _fail "reviewer_audit_skip_${requirement%%|*}" "expected $file to document $token"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "reviewer_prompts_honor_scoped_pruning_audit_skips"
+  fi
+}
+
+test_reviewer_prompts_accept_runner_appropriate_pruning_evidence() {
+  local file requirement token content missing=0
+  local reviewer_prompts=(
+    'skills/subagent-driven-development/reviewer-prompt.md'
+    'skills/fast-path-implementation/fast-path-reviewer-prompt.md'
+  )
+  local requirements=(
+    'current live discovery counts|non-zero per-file and total discovery counts'
+    'indirect runner trace requirement|For indirect runners, require trace-to-case execution evidence'
+    'direct runner evidence accepted|For direct runners, accept actual check output and discovery evidence without requiring a trace'
+    'post-prune counts remain checked|post-prune discovery counts must match actual applied decisions and remain non-zero per file and in total'
+    'last test protection remains|No file or last test may be deleted'
+    'archived source snapshot and prior checks|verify exact preserved source and context, pre-removal snapshot identity, and actual prior check and discovery evidence for each archived source'
+    'archived trace conditional|Require historical trace evidence only for an indirect original runner; for a direct original runner, prior check and discovery evidence is sufficient without a trace.'
+    'missing archive evidence blocks|Missing or unstable required archived evidence blocks reassessment'
+  )
+  for file in "${reviewer_prompts[@]}"; do
+    content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+    for requirement in "${requirements[@]}"; do
+      token="${requirement#*|}"
+      if ! grep -Fq "$token" <<< "$content"; then
+        _fail "reviewer_runner_evidence_${file##*/}_${requirement%%|*}" "expected $file to check ${requirement%%|*}"
+        missing=1
+      fi
+    done
+  done
+  if (( missing == 0 )); then
+    _pass "reviewer_prompts_accept_runner_appropriate_pruning_evidence"
   fi
 }
 
@@ -269,7 +766,7 @@ test_pruning_safety_gates_are_explicit() {
     _fail "pruning_safety_gates_are_explicit" "a non-zero pre-prune check must block removals"
     return
   fi
-  if ! grep -Eiq 'worker[^.]{0,100}restor' <<< "$helper_content" || ! grep -Eiq 'coordinator[^.]{0,100}(must not|does not|never)[^.]{0,80}(edit|restor|apply)' <<< "$helper_content"; then
+  if ! grep -Eiq 'coordinator[^.]{0,100}assigns[^.]{0,100}restoration[^.]{0,100}implementation worker' <<< "$helper_content" || ! grep -Eiq 'coordinator[^.]{0,100}(must not|does not|never)[^.]{0,80}(edit|restor|apply)' <<< "$helper_content"; then
     _fail "pruning_safety_gates_are_explicit" "restoration must be assigned to a worker, not coordinator edits"
     return
   fi
@@ -306,7 +803,7 @@ test_audit_invalidation_uses_accepted_green_snapshot() {
   local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
   local content
   content="$(tr '\n' ' ' < "$helper")"
-  if ! grep -Eiq 'accepted post-prune snapshot' <<< "$content" || ! grep -Eiq 'exact authorised pruning changes' <<< "$content" || ! grep -Eiq 'authorised pruning changes (do not|must not) invalidate' <<< "$content"; then
+  if ! grep -Eiq 'accepted post-prune snapshot' <<< "$content" || ! grep -Eiq 'exact authorised pruning changes' <<< "$content" || ! grep -Eiq 'authorised pruning changes.{0,80}(do not|must not) invalidate' <<< "$content"; then
     _fail "audit_invalidation_uses_accepted_green_snapshot" "invalidation must distinguish accepted pruning changes from later input changes"
     return
   fi
@@ -554,17 +1051,45 @@ test_phase_evidence_installed_links_resolve() {
   done
 }
 
+test_required_files_check_is_registered() {
+  local test_call_count
+  test_call_count="$(sed -n '/^_check_skill_frontmatter$/,/^total=/p' "$0" | grep -Fxc 'test_required_files_exist' || true)"
+  if [[ "$test_call_count" != 1 ]]; then
+    _fail "required_files_check_is_registered" "expected test_required_files_exist once in the suite invocation block, found $test_call_count"
+    return
+  fi
+  _pass "required_files_check_is_registered"
+}
+
 test_required_files_exist() {
   _check_required_files || true
 }
 
 _check_skill_frontmatter
+test_required_files_check_is_registered
 test_phase_evidence_contract
 test_phase_evidence_boundary_references
 test_claude_installer_copy_and_substitution
 test_opencode_installer_copy_and_substitution
 test_codex_installer_copy_and_substitution
 test_test_pruning_contract_is_documented
+test_auditor_policy_categories_and_decisions_are_explicit
+test_category_guard_matcher_rejects_removal_without_required_evidence
+test_auditor_rule_discovery_freezes_complete_harness_sources
+test_auditor_inventory_merge_recovery_and_dependency_invalidation
+test_removal_handoff_requires_survivors_only_when_the_criterion_does
+test_uncertain_survivor_handling_does_not_override_named_removal
+test_archived_removed_sources_are_separate_from_live_execution
+test_archived_trace_is_required_only_when_original_runner_needs_it
+test_canonical_rule_resolution_uses_verified_active_scope
+test_source_identity_matcher_requires_both_recheck_boundaries
+test_restoration_matcher_requires_stopping_before_overwriting_later_work
+test_auditor_contract_is_wired_to_workers_reviewers_docs_and_scenarios
+test_auditor_prompt_supplies_category_definitions_and_authority_inputs
+test_higher_priority_blocker_does_not_borrow_merge_path_blocker
+test_merge_path_blocker_is_checked_independently
+test_reviewer_prompts_honor_scoped_pruning_audit_skips
+test_reviewer_prompts_accept_runner_appropriate_pruning_evidence
 test_test_pruning_helper_installs_and_skill_links_resolve
 test_tdd_completion_gate_is_behaviour_based
 test_pruning_safety_gates_are_explicit
@@ -577,6 +1102,7 @@ test_new_backticked_source_references_resolve
 test_parallel_agent_readiness_contract_reference
 test_fast_path_readiness_contract_reference
 test_phase_evidence_installed_links_resolve
+test_required_files_exist
 
 total=$(( passed + failed ))
 printf '\n%s/%s tests passed\n' "$passed" "$total"

@@ -160,15 +160,34 @@ The scenarios in `_tests/workflow_scenarios.md` are manual live-harness checks, 
 ### Test pruning
 
 When a task changes a test-bearing file, the coordinator uses the shared
-test-pruning procedure to audit every test and parameterised case in each
-actually touched file, including older cases. Removal requires evidence that
-retained survivors preserve every distinct defect, a scoped recovery record,
-and stable pre-prune and post-prune discovery counts. Uncertainty keeps the
-test. An empty test-bearing scope is recorded as not applicable, not as an
-audit. Automated workflow checks verify policy and installation contracts;
-they do not establish live agent compliance. The adversarial scenarios in
-`_tests/workflow_scenarios.md` are manual and remain unrun unless explicitly
-reported otherwise.
+test-pruning procedure to inventory every test and parameterised case in each
+actually touched file, including older cases. The independent auditor receives
+the complete canonical Meaningful Assertions rule and applicable project test
+rules from the complete active instruction sources for Claude Code, OpenCode,
+or Codex. Source identities and applicability are frozen and rechecked; an
+uncertain or conflicting active source blocks weaker removal decisions.
+
+The audit classifies scaffolding, implementation-detail, duplicate, and
+timing-dependent cases, then returns `KEEP`, `REMOVE`, or `MERGE`. Under the
+canonical rule, removal is permitted when the auditor cannot name a production
+defect, without claiming that no defect exists. A duplicate may be removed
+when one retained survivor detects a shared defect, even if other defects are
+not preserved. A `MERGE` requires a small assertion with a named production
+line, reachable path, and failure reason, added to a current-audit `KEEP`
+survivor. Unsupported merges are withheld. Higher-priority instructions and
+the canonical rule precede project rules, which precede generic categories;
+project rules may relax generic category guards. Never delete a test file or
+its last test.
+
+The coordinator records full inventories, stable input identities, scoped
+recovery, non-zero pre-prune and post-prune discovery counts, and the accepted
+snapshot. Later survivor changes invalidate dependent decisions transitively;
+removed sources are reassessed from preserved context and restored only through
+scoped recovery when removal is no longer supported. An empty test-bearing
+scope is recorded as not applicable, not as an audit. Automated workflow checks
+verify policy and installation contracts; they do not establish live agent
+compliance. The adversarial scenarios in `_tests/workflow_scenarios.md` are
+manual and remain unrun unless explicitly reported otherwise.
 
 ## Writing a new language pack
 

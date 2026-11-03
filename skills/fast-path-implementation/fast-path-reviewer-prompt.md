@@ -23,6 +23,16 @@ workflow design.
     [Paste the full brief, including mapped requirements, exclusions, exact
     write paths, stable reads, acceptance criteria and relevant contracts.]
 
+    ## Pruning-audit skip record
+
+    The coordinator supplies exact user-authorised pruning-audit skip records,
+    or `none` when no pruning-audit skip was authorised:
+    [PRUNING_AUDIT_SKIP_RECORDS_OR_NONE]
+    Each record includes the exact source and instruction text, skipped
+    test-bearing file/case scope, reason and consequence. If the skip record is
+    absent or incomplete, report BLOCKED. Do not infer an authorised skip from
+    a missing record or audit evidence.
+
     ## Worker report and evidence
 
     [Paste the structured worker report, verification commands and outputs,
@@ -41,6 +51,55 @@ workflow design.
     that every changed path is allowed. Assess reported TDD evidence, but do not
     treat it as fresh independent verification. Do not suggest unrelated
     refactors or invent requirements.
+
+    ## Explicit pruning-audit skips
+
+    For each user-authorised pruning-audit skip, verify that the supplied
+    workflow record identifies the exact user authorisation and the skipped
+    file/case scope. Inspect the actual diff and confirm no removal or merge
+    was applied in that scope. Report the pruning audit as `SKIPPED` and
+    unverified; it is not pruning-audit evidence or approval. Do not dispatch
+    or repeat a pruning audit for the skipped scope, or invent KEEP, REMOVE, or
+    MERGE decisions for it. If a removal or merge was applied in skipped scope,
+    report the scope violation without claiming audit evidence. Continue
+    reviewing all task changes, including changes in files with skipped pruning
+    audits. Only skip pruning-evidence inspection for the explicitly skipped
+    file/case scope. Continue all unskipped checks. Apply the pruning-evidence
+    review below only to unskipped test-bearing scopes.
+
+    For a task that touched test-bearing files, inspect the pruning evidence
+    under `../_shared/test-pruning.md`. Check actual task scope and the complete
+    inventory of every test and parameterised case in each touched file,
+    including older cases. Inspect the immutable baseline, frozen active
+    instruction-source identities and applicable project test rules, stable
+    input identities, pre-prune checks, non-zero per-file and total discovery
+    counts, runner-appropriate execution evidence, and the accepted post-prune
+    snapshot. For indirect runners, require trace-to-case execution evidence.
+    For direct runners, accept actual check output and discovery evidence
+    without requiring a trace. Check that the independent auditor returned one
+    KEEP, REMOVE, or MERGE per case under the complete current canonical
+    Meaningful Assertions section and applicable project rules. For removals,
+    assess the stated category and
+    authorised rationale, survivor requirements, and scoped recovery. For each
+    merge, verify the source, current-audit KEEP survivor, assertion, production
+    line, reachable path, and failure reason; confirm unsupported merges were
+    withheld and combined authorised edits appear in the accepted snapshot.
+    Check decision dependencies and transitive invalidation for later survivor
+    changes. No file or last test may be deleted, and post-prune discovery
+    counts must match actual applied decisions and remain non-zero per file and
+    in total.
+    When archived removed-source reassessments are included, verify exact
+    preserved source and context, pre-removal snapshot identity, and actual
+    prior check and discovery evidence for each archived source. Verify the
+    original runner and whether historical tracing applied. Require historical
+    trace evidence only for an indirect original runner; for a direct original
+    runner, prior check and discovery evidence is sufficient without a trace.
+    Missing or unstable required archived evidence blocks reassessment. Do not
+    fabricate prior evidence or require an archived case to execute now.
+    Check approved-behaviour coverage against decisions actually applied and
+    withheld; missing required coverage is Important. Report unrelated existing
+    gaps separately. Do not dispatch or repeat the audit unless its inputs
+    changed and the coordinator requests it under the approved procedure.
 
     Classify each finding as Critical, Important or Minor. Give a precise path
     and location, supporting evidence, impact and bounded correction guidance

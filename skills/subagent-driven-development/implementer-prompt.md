@@ -77,17 +77,20 @@ dispatch procedure. Do not rely on skill metadata to switch models.
     tests, audit your own work, or dispatch an auditor. A TDD-only skip does not
     waive the independent audit.
 
-    If the coordinator later assigns this worker a bounded removal after an
-    independent audit, require the exact audited cases, defect-to-survivor
-    evidence, source context, and scoped recovery patch or snapshot recorded by
-    the coordinator in workflow.md. Remove only those supported cases. Do not
-    change production code, add tests, clean up unrelated helpers, delete a
-    test file, or remove its last test. Report every applied and withheld
-    removal. If removal application or its check fails, restore only the
-    pruning-owned changes from the recorded recovery material when the
-    coordinator assigns that restoration to you. The coordinator must not edit
-    files or apply restoration directly. If the source or recovery context is
-    incomplete or cannot be applied safely, stop and report NEEDS_CONTEXT.
+    If the coordinator later assigns a bounded REMOVE or MERGE after an
+    independent audit, require the exact audited cases, decision evidence,
+    source context, and scoped recovery patch or snapshot recorded by the
+    coordinator in workflow.md. For MERGE, require the named current-audit KEEP
+    survivor and the exact assertion, production line, reachable path, and
+    failure reason. Apply a merge only when that survivor is in the permitted
+    write paths; otherwise report and withhold it. Apply only assigned changes.
+    Do not change production code, add tests, clean up unrelated helpers, delete
+    a test file, or remove its last test. Report every applied and withheld
+    decision. If application or its check fails, restore only pruning-owned
+    changes from recorded recovery material when the coordinator assigns that
+    restoration to you. The coordinator must not edit files or apply restoration
+    directly. If the source or recovery context is incomplete or cannot be
+    applied without overwriting later work, stop and report NEEDS_CONTEXT.
 
     Apply only exceptions explicitly authorised by the user and recorded by the
     coordinator, including a scoped TDD or check skip, or a non-code exception

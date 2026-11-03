@@ -45,26 +45,34 @@ You **MUST NOT** mock:
 
 ## Meaningful Assertions
 
-Assertions protect named behaviour and distinct defects, not incidental
-structure. A test or assertion is meaningful when it would detect a specific
-incorrect behaviour that matters to an approved requirement, public contract,
-or existing supported behaviour.
+Assertions protect approved requirements, public contracts, or existing
+supported behaviour. Apply this ordered generic audit after checking applicable
+instructions:
 
-When assessing test removal:
+1. Classify each test or parameterised case as scaffolding,
+   implementation-detail, duplicate, timing-dependent, or none of these. A
+   wrong-layer category exists only when applicable project rules define it.
+2. For a category candidate, the category guard permits removal only when a
+   retained survivor detects the named defect or the auditor states that no
+   defect can be caught, unless applicable project rules relax the guard. A
+   blocked category guard does not prevent a later removal decision.
+3. Remove when the auditor cannot name a production defect that the test or
+   case can detect. This is not a claim that no defect exists. Also remove a
+   duplicate when one retained survivor detects a defect shared with the
+   source, even if other defects detected by the source are not preserved.
+4. If neither removal condition applies, MERGE when a small assertion from the
+   source can be added to a KEEP survivor and protects a named production
+   defect. Otherwise KEEP.
 
-- Name every distinct defect the test or case can detect. Similar setup,
-  overlapping assertions, or one shared failure does not prove redundancy.
-- Remove a redundant test or case only when retained survivor tests detect
-  every distinct defect it detects. Identify the survivor for each defect.
-- Treat parameterised cases independently when their inputs, outcomes, or
-  defect coverage differ. Include older tests in every task-touched test file.
-- Treat uncertainty, missing historical RED evidence, and inability to name a
-  defect as reasons to keep the test, not evidence that it is redundant or
-  ineffective.
-- Keep a uniquely valuable but ineffective test pending correction. Report
-  why it is ineffective and which behaviour it fails to protect.
-- Do not remove a test merely because it asserts implementation details if
-  those details are part of an approved contract or prevent a named defect.
+Return exactly one KEEP, REMOVE, or MERGE decision for each case, with its
+category, rationale, and supporting evidence. Apply precedence in this order:
+higher-priority instructions, this canonical rule, applicable project rules,
+then generic categories. Applicable project rules may override generic
+categories to the extent this canonical rule allows, but they cannot override
+higher-priority instructions or this canonical rule. Never delete a test file
+or its last test. MERGE and removal survivors must be stable, retained, and
+non-cyclic. Treat parameterised cases independently when their inputs or
+outcomes differ, and include older tests in every task-touched test file.
 
 Use the shared test-pruning procedure for the audit, evidence, application,
 recovery, and invalidation lifecycle. This section is the sole canonical value

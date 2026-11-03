@@ -8,13 +8,47 @@ section in `rules/common/testing.md` is the sole canonical value rule. Retrieve
 its authoritative text as described below and inject it into the auditor prompt
 verbatim; do not duplicate or paraphrase the rule here.
 
+## Resolve and freeze active instruction sources
+
+Before preparing an audit, identify the active harness and inspect its complete
+instruction context, not only the canonical rule file. Resolve all applicable
+project test rules and higher-priority instructions that affect test value.
+Supply applicable project test rules verbatim to the auditor, or supply `none`
+only when the complete applicable project-rule set is established empty. Block
+when scope, applicability, completeness, or authority cannot be established;
+uncertain applicability blocks dispatch.
+
+- Claude Code: inspect active user-scope and project-scope rule files and
+  applicable `globs:`. Account for the documented user-scope caveat: user-scope
+  `globs:` may not be honoured, while project-scope rules can still apply.
+- OpenCode: inspect the configured instruction globs, project instructions,
+  and Claude Code fallback when enabled, including its fallback instructions.
+  A source outside the configured or fallback context is not active merely
+  because it exists in the checkout.
+- Codex: inspect active user and project `AGENTS.md` instructions, including
+  selected packs within active elelem-managed blocks. Do not infer the active
+  managed block from an uninstalled checkout.
+
+Freeze each source's identity, applicability, authority, and the complete
+source set before dispatch. Recheck them at dispatch and acceptance. A changed
+source set or identity invalidates affected audit evidence. Older conflicting
+active instructions block weaker removals until the revised rules are
+installed and actually active. Editing a source file alone is not activation.
+A source edit alone is not activation; a new session may be required.
+
 ## Retrieve the canonical rule
 
-The coordinator identifies the active harness before preparing an audit
-dispatch. For Claude Code and OpenCode, read `../../rules/common/testing.md`
-relative to this helper. That locator resolves from the source tree and from
-their installed directory layouts. Do not substitute a different checkout or
-an uninstalled copy when the active installed rule is available.
+For Claude Code and OpenCode, resolve the authoritative
+`rules/common/testing.md` from the complete, verified active instruction source
+set and current harness instruction context. The skill and active rule may be
+installed in different user or project scopes. Select the source using active
+rule applicability, configured instruction globs and Claude fallback status,
+together with harness precedence. Verify the selected source identity and
+active status against frozen inputs. Do not infer the canonical rule source
+from adjacency to this helper or a guessed path. Do not guess a path or fall
+back to an uninstalled source. If the active authoritative source, its
+identity, applicability, or precedence is missing, inconsistent, or ambiguous,
+block before dispatch.
 
 For Codex, use the active elelem-managed `AGENTS.md` block and its
 `## rules/common/testing.md` entry, as identified by the current instruction
@@ -48,13 +82,19 @@ paths. An existing supplied baseline may be used only after validating its
 source, revision, scope, and current contents. Never move or replace the
 original baseline with a later task checkpoint.
 
-After implementation work stops, derive scope from the worker's actual changed
-paths within the task's allowed writes. Do not use a broad HEAD diff to select
-tests. Inventory every test and parameterised case in each test-bearing file
-the task actually touched, including older tests and cases the worker did not
-add. Record stable test and case identifiers. If no test-bearing file was
-touched, record the audit as `NOT APPLICABLE` with the empty scope and do not
-invent an audit or evidence.
+Keep the current-live inventory separate from archived removed-source cases.
+Before pruning begins, record the complete initial live inventory: every test
+and parameterised case currently present in each test-bearing file in scope,
+including older live tests. After implementation work stops,
+derive the final audit scope from the worker's actual changed paths within the
+task's allowed writes.
+Do not use a broad HEAD diff to select tests. Inventory every case still
+present in each actually touched test-bearing file and record stable test and
+case identifiers and source identities. Archived removed-source records are
+separate from the current live inventory; do not add archived cases to it or
+count them as live execution cases. If no test-bearing file was touched, record
+the audit as `NOT APPLICABLE` with the empty live scope and do not invent an
+audit or evidence.
 
 A TDD-only skip does not waive this audit. A TDD skip, audit skip, and check
 skip are separate decisions. Only explicit user authorisation can skip the
@@ -68,14 +108,20 @@ input may change during another task, defer the audit to a safe wave barrier.
 Never rely on tests owned or changed by another active task as removal
 survivors.
 
-Freeze and identify all audit inputs: the in-scope test files, exercised
-production code, fixtures, configuration, and resources that affect the
-assertions. Account for test-command side effects before running checks. Run
-the pre-prune task checks against stable inputs and record the exact commands,
-outputs, exit codes, discovered test and case counts per file, and total
-counts. If a check changes an audit input, refresh the input inventory and
-content identities and rerun the check until the inputs and results are stable.
-The coordinator records the resulting pre-prune audit snapshot and evidence in
+Freeze and record stable input identities for current-live test files and
+cases, exercised production code, fixtures, configuration, and resources that
+affect the assertions. Archived removed-source records are not current-live
+cases. Account for test-command side effects before running checks. Run the
+pre-prune task checks against stable live inputs and record exact commands,
+outputs, exit codes, discovered test and case counts per current-live file, and
+total counts. Establish non-zero discovery counts per current-live file and
+total for the live inventory. Where execution uses an indirect runner, capture
+a trace and correlate each current-live case invocation with its executed trace
+entry. Archived sources are excluded from current-live counts and trace
+requirements. Aggregate pass counts are not discovery evidence. If a
+check changes a live audit input, refresh the live inventory and content
+identities and rerun the check until the inputs and results are stable. The
+coordinator records the resulting live pre-prune audit snapshot and evidence in
 `workflow.md` before dispatching an auditor.
 
 Every required pre-prune check must exit with status zero. A non-zero exit
@@ -98,54 +144,98 @@ other mutating checks, change workflow state, dispatch another agent, or
 perform removals. Give it the frozen inputs and pre-prune evidence listed in
 the prompt. If those inputs are incomplete or unstable, it returns `BLOCKED`.
 
-The auditor inventories every test and case in scope and returns exactly one
-`KEEP` or `REMOVE` decision for each, with evidence. A `REMOVE` decision must
-name each distinct defect the source test or case detects and map every such
-defect to one or more retained survivor tests. A shared failure alone is not
-proof of preservation. Survivors must be real, stable tests that will remain
-after all proposed removals; an outside-scope survivor must not be owned by an
-active task. Reject missing or cyclic survivor references, uncertain defect
-coverage, and any inference from absent historical RED evidence. Keep uncertain
-cases and uniquely valuable ineffective tests, recording their concerns.
+The auditor inventories every current-live test and case in scope and returns
+exactly one `KEEP`, `REMOVE`, or `MERGE` decision for each, with evidence under
+the supplied canonical rule. Include category, rationale, named production
+defect when applicable, and current-audit survivor references. A `REMOVE` may
+follow when the auditor cannot name a production defect, without claiming that
+this proves no defect exists. For duplicate removal, one retained survivor may
+detect a defect shared with the source even when other source defects are not
+preserved. Do not treat one shared failure as proof of general redundancy.
+Survivors must be real, stable, retained, and non-cyclic. Uncertain survivor
+proof cannot establish retained coverage; report that uncertainty and do not
+claim unverified coverage is preserved. Uncertain safe application blocks
+applying a proposed removal or merge. These uncertainties do not override a
+REMOVE otherwise permitted by the canonical rule when the auditor cannot name
+a production defect.
 
-The auditor also maps every approved behaviour in the task design to retained
-tests. A required approved behaviour without retained coverage is an Important
-finding and blocks acceptance. Report unrelated pre-existing coverage gaps
-separately without expanding the task. If the audit finds no removals, record
-the complete KEEP inventory and its evidence; do not imply that an audit was
-skipped.
+Archived removed-source reassessments are separate from current-live cases.
+Always require the preserved exact source and surrounding context,
+pre-removal snapshot identities, and actual prior check and discovery evidence,
+including commands, outputs, exit status, and discovery counts. Establish the
+original runner and whether historical trace evidence was applicable. Require
+prior trace-to-case evidence when the original runner was indirect; when the
+original runner was direct, the prior check and discovery evidence is sufficient
+and a trace is not required. Archived cases are not required to execute in the
+current live run. Archived evidence is complete only when the source and
+context, snapshot identities, prior check and discovery evidence, runner and
+trace-applicability evidence, and any applicable trace are present. If any
+required archived evidence is missing, unstable, or inconsistent, return
+`BLOCKED`; do not invent or fabricate prior evidence.
+Record separate report rows for current-live cases and archived reassessments,
+with their distinct evidence.
+
+For every `MERGE`, identify the source case, a `KEEP` survivor in this same
+current audit, the small added assertion, the production line and reachable
+path it exercises, and the failure reason that assertion would detect. A merge
+may be applied automatically only when its survivor is a current-audit `KEEP`
+in the permitted write paths. Otherwise report and withhold the merge. If
+multiple authorised merges target one survivor, validate the combined
+authorised edits and include those exact edits in the accepted post-prune
+snapshot.
+
+The auditor maps every approved behaviour in the task design to retained tests.
+Recalculate coverage using decisions actually applied and withheld, not only
+proposed decisions. A required approved behaviour without retained coverage is
+an Important finding and blocks acceptance. Report unrelated pre-existing
+coverage gaps separately without expanding the task. Record the complete
+decision inventory and evidence even when no removal or merge is applied.
 
 ## Apply supported removals and recover safely
 
-Before assigning any removal, the coordinator records in `workflow.md` the
-exact source test or case, its path and surrounding context, the auditor's
-defect-to-survivor evidence, and a scoped recovery patch or snapshot that can
-restore only the proposed pruning changes. Record the expected per-file and
-total discovery-count changes. If exact source or safe recovery material
-cannot be preserved, do not remove the case.
+Before assigning any removal or merge, the coordinator records in `workflow.md`
+the exact source test or case, its path and surrounding context, the auditor's
+decision evidence, and a scoped recovery patch or snapshot. For removal, record
+the source and decision evidence. If the criterion requires no survivor,
+explicitly record `no survivor required`. Record survivor identity and evidence
+only when the decision criterion requires it. For a duplicate `REMOVE`, record
+the retained survivor and evidence that it detects the shared defect. For a
+`MERGE`, record the current-audit `KEEP` survivor, added assertion, production
+line, reachable path, and failure reason. Preserve both source and survivor
+context for a merge. Record expected per-file and total discovery-count
+changes. If exact source or safe recovery material cannot be preserved, do not
+apply the change.
 
-The assigned implementation worker applies only the audited test or case
-removals. It must not change production code, add tests, perform unrelated
-helper cleanup, delete a test file, or remove the last test in a file. It
-reports each applied and withheld removal. The coordinator inspects the actual
-diff against the audit and the allowed writes before accepting it.
+The assigned implementation worker applies only audited removals and
+authorised merges. It must not change production code, add tests, perform
+unrelated helper cleanup, delete a test file, or remove the last test in a
+file. It reports each applied and withheld decision. The coordinator inspects
+the actual diff against the audit and allowed writes before accepting it.
 
-Run the post-prune command against stable inputs. Compare discovery results
-and counts with the recorded expected removals, per file and in total. Confirm
-that every test-bearing file still discovers at least one test and that the
-overall command did not succeed with zero discovered tests. Unexpected counts,
-failures, changed inputs, or ownership violations block acceptance.
+Run the post-prune command against stable current-live inputs. Require a fresh,
+stable GREEN result with exit status zero. Compare live discovery results and
+counts with the recorded expected removals, per file and in total. Confirm that
+every live test-bearing file still discovers at least one test and the overall
+live command did not succeed with zero discovered tests. For an indirect runner,
+capture its current trace and correlate each live case with a trace entry; for a
+direct runner, use its actual check and discovery output without requiring a
+trace. Archived sources do not contribute to current-live discovery counts or
+trace requirements. Unexpected counts, failures, changed inputs, or ownership
+violations block acceptance.
 
-If application or verification fails, the coordinator assigns restoration to
-the same implementation worker. The worker restores only pruning-owned changes
-using the recorded recovery material. The coordinator must not edit files or
-apply restoration directly, and verifies the worker's resulting diff. Do not
-use a broad Git restore or reset, or overwrite unrelated user changes. If the
-scoped recovery no longer applies cleanly or ownership is uncertain, stop and
-ask the user while preserving the current state.
+If a later reassessment no longer supports a removed source, the coordinator
+assigns restoration to the implementation worker using the preserved source
+and recovery material. Restore only when reassessment no longer supports
+removal, and never overwrite later work. The coordinator must not edit files or
+apply restoration directly. Do not use a broad Git restore or reset. If scoped
+recovery cannot apply without overwriting later work, stop and ask the user
+while preserving the current state. For application or verification failure,
+restoration is likewise assigned to the worker and checked against its recorded
+recovery.
 
-An Important uncovered approved behaviour blocks acceptance. Return an
-in-scope correction to the assigned worker for TDD and a targeted fresh audit;
+Missing required behaviour coverage is an Important finding and blocks
+acceptance. Return an in-scope correction to the assigned worker for TDD and a
+targeted fresh audit;
 if the correction is outside the approved task, return to the coordinator for
 planning and approval. Unrelated old gaps are reported only.
 
@@ -154,24 +244,33 @@ planning and approval. Unrelated old gaps are reported only.
 The coordinator records the accepted post-prune snapshot in `workflow.md`,
 including content identities for retained test files and exercised code,
 fixtures, configuration, and resources, plus post-prune commands, outputs,
-exit codes, and actual discovery counts. Record the content difference between
-the pre-prune snapshot and this accepted snapshot. That difference must contain
-only the exact authorised pruning changes. Exact authorised pruning changes do
-not invalidate the audit; they are the expected result of its approved
-removals. The original task-start baseline remains immutable and distinct from
-both snapshots.
+exit codes, and actual discovery counts. Include exact authorised removal and
+merge changes in this snapshot. Record the content difference between the
+pre-prune snapshot and this accepted snapshot. That difference must contain
+only the exact authorised pruning changes. Exact authorised pruning changes,
+including merges, do not invalidate their audit decisions. The original
+task-start baseline remains immutable and distinct from both snapshots.
 
-Before acceptance, compare current audit inputs with the accepted post-prune
-snapshot, not with the pre-prune snapshot. Any additional change to an audited
-test or case, exercised code, fixture, configuration, or relevant resource
-invalidates the affected evidence. A changed test inventory requires a fresh
-inventory; changed exercised behaviour inputs require a targeted audit of
-affected cases and survivors. Changes to active-task ownership or survivor
-stability invalidate the affected survivor evidence. Re-run applicable checks
-and dispatch a fresh independent audit on stable inputs only for those
-unexpected changes. Record new recovery material before any further removal.
-Do not repeat the audit merely because the accepted snapshot contains the exact
-authorised pruning changes. Changes outside the frozen audit inputs do not
+Before acceptance, compare current-live audit inputs with the accepted
+post-prune snapshot, not with the pre-prune snapshot. Any additional change to
+an audited live test or case, exercised code, fixture, configuration, or
+relevant resource invalidates the affected evidence. A changed live test
+inventory requires a fresh inventory; changed exercised behaviour inputs
+require a targeted audit of affected live cases and survivors. Record
+decision-to-survivor dependencies.
+Unexpected changes to a survivor cause transitive survivor-dependency
+invalidation. After GREEN and stable passing checks for live cases, re-audit the
+affected live cases and survivors. For a previously removed source, present its
+archived source, context, pre-removal snapshot, and prior trace/check evidence
+to the auditor for reassessment; do not require current execution of that
+archived case. If required archived context or evidence is missing or unstable,
+block reassessment rather than fabricating history. Restore it through scoped
+recovery only when reassessment no longer supports removal. Changes to
+active-task ownership or survivor stability invalidate affected evidence.
+Re-run applicable checks and dispatch a fresh independent audit on stable
+inputs only for unexpected changes. Record new recovery material before any
+further removal. Do not repeat the audit merely because the accepted snapshot
+contains exact authorised changes. Changes outside frozen audit inputs do not
 invalidate evidence merely because they are in the same repository. Final
 review inspects the audit and accepted snapshot, and repeats neither unless
 evidence has been invalidated.
@@ -192,7 +291,8 @@ missing context from session history.
     task contract and canonical value rule. Do not edit files, run tests or
     other mutating checks, change workflow state, dispatch another agent, or
     apply removals. Do not infer missing inputs. Return BLOCKED if the supplied
-    scope or evidence is incomplete, unstable, or inconsistent.
+    scope or evidence is incomplete, unstable, or inconsistent. Do not infer
+    missing authority or write scope from inherited session history.
 
     ## Approved task and required behaviours
 
@@ -210,11 +310,38 @@ missing context from session history.
     [PRE_EXISTING_CONTENT_IDENTITIES_OR_SNAPSHOTS]
     Actual task-changed paths and evidence used to derive scope:
     [ACTUAL_TASK_DIFF_PATHS_AND_SCOPE_EVIDENCE]
-    Every in-scope test-bearing file and every test or parameterised case,
-    including older tests:
+    Active harness, complete instruction source set, identities,
+    applicability, and authority frozen for this audit:
+    [FROZEN_ACTIVE_INSTRUCTION_SOURCES_AND_IDENTITIES]
+    Applicable higher-priority testing instructions in authority order,
+    verbatim, with source identities and applicability, or `none` only when the
+    complete active higher-priority set is established empty:
+    [APPLICABLE_HIGHER_PRIORITY_TESTING_INSTRUCTIONS]
+    Applicable project test rules verbatim, or `none` only when the complete
+    applicable source set is established empty:
+    [APPLICABLE_PROJECT_TEST_RULES]
+    Exact permitted write paths for automatic MERGE application:
+    [EXACT_PERMITTED_MERGE_WRITE_PATHS]
+    Authority and task-scope evidence for those paths:
+    [MERGE_WRITE_PATH_AUTHORITY_AND_SCOPE_EVIDENCE]
+    Every current-live test-bearing file and every test or parameterised case,
+    including older live tests, with archived cases excluded:
     [COMPLETE_FILE_AND_CASE_INVENTORY]
-    Exact source and surrounding context for the inventoried cases:
+    Exact source and surrounding context for each current-live case:
     [TEST_SOURCE_AND_CONTEXT]
+    Archived removed-source reassessments, separate from current-live cases:
+    [ARCHIVED_REMOVED_SOURCE_AND_CONTEXT]
+    Archived pre-removal snapshot identities:
+    [ARCHIVED_PRE_REMOVAL_SNAPSHOT_IDENTITIES]
+    Archived actual prior checks and discovery evidence, including commands,
+    outputs, exit status, discovery counts, and source identities:
+    [ARCHIVED_PRIOR_CHECKS_AND_DISCOVERY_EVIDENCE]
+    Archived original runner and evidence establishing whether historical trace
+    was applicable:
+    [ARCHIVED_ORIGINAL_RUNNER_AND_TRACE_APPLICABILITY]
+    Archived prior trace-to-case evidence when the original runner required it,
+    or evidence that a direct runner made historical trace inapplicable:
+    [ARCHIVED_PRIOR_TRACE_EVIDENCE_IF_APPLICABLE]
 
     ## Frozen exercised inputs and ownership
 
@@ -222,40 +349,87 @@ missing context from session history.
     [INPUT_PATHS_AND_CONTENT_IDENTITIES]
     Concurrent writers and test ownership information:
     [ACTIVE_TASK_OWNERSHIP_AND_STABILITY_EVIDENCE]
-    Pre-prune commands, exit codes, outputs, and per-file and total discovery
-    counts:
+    Current-live pre-prune commands, exit codes, outputs, and per-file and total
+    discovery counts; include trace-to-case evidence when the runner is
+    indirect, and direct-runner execution evidence from its check output:
     [PRE_PRUNE_CHECKS_AND_DISCOVERY_COUNTS]
-    Planned post-prune command and discovery-counting method:
+    Planned post-prune live GREEN command, applicable trace capture, and
+    discovery-counting method:
     [POST_PRUNE_COMMAND_AND_COUNTING_METHOD]
 
     ## Canonical value rule, authoritative text
 
     [PASTE THE COMPLETE CURRENT MEANINGFUL ASSERTIONS SECTION VERBATIM]
 
+    ## Generic category meanings for classification only
+
+    These meanings classify observable test shape only. They are not a
+    test-value rule; use the supplied canonical Meaningful Assertions section
+    for value decisions. Do not infer KEEP, REMOVE, or MERGE solely from a
+    category.
+
+    - Scaffolding: a case that checks renders-without-crashing,
+      export/module/type-shape, a literal constant, its own mock, an
+      intermediate full-flow step, or redundant input-class cases.
+    - Implementation-detail: a case that asserts internal call counts, CSS
+      class names, DOM structure, or child props.
+    - Duplicate: cases that fail on the same shared production defect.
+    - Timing-dependent: a case that relies on real timers or `waitFor` chains
+      without a deterministic signal.
+    - Wrong-layer: use only when applicable project test rules define the
+      category.
+
     ## Audit
 
-    Assess every test and case in the supplied inventory against the canonical
-    rule. Return exactly one KEEP or REMOVE decision for each. For every
-    decision, identify the behaviour and evidence. For each REMOVE, list every
-    distinct defect the source case detects and map each defect to one or more
-    named retained survivor tests. Verify that every survivor exists, is
-    stable, is not owned by another active task, and remains after all proposed
-    removals. Do not accept one shared failure as proof that distinct defects
-    are preserved. Reject cycles, missing survivors, and uncertain coverage.
-    Absence of historical RED evidence or inability to name a defect is not
-    evidence for removal. Keep uncertain cases and uniquely valuable
-    ineffective cases, and state the concern.
+    Assess every current-live test and case in the supplied live inventory using
+    the supplied canonical rule and applicable project rules. Archived removed
+    sources are not live cases and are not required to execute in the current
+    trace. For every archived source require its exact preserved source and
+    context, pre-removal snapshot identities, and actual prior check and
+    discovery evidence, including commands, outputs, exit status, and counts.
+    Establish the original runner and whether a trace was applicable. Require
+    historical trace-to-case evidence for an indirect original runner; for a
+    direct original runner, prior check and discovery evidence is sufficient
+    and no trace is required. If any required archived input or evidence is
+    missing, unstable, or inconsistent, return BLOCKED; do not invent or
+    fabricate prior evidence. Return separate decisions and evidence for
+    current-live cases and archived reassessments.
+    Return exactly one KEEP,
+    REMOVE, or MERGE decision for each. Identify the category, behaviour,
+    rationale, and evidence. For REMOVE decisions, apply the supplied
+    category-first rule, then the authorised defect and duplicate criteria.
+    Do not claim that inability to name a production defect proves no defect
+     exists. For duplicate removal, identify one retained survivor that detects
+     the shared defect; do not claim other source defects are preserved unless
+     they are. Reject missing, unstable, cyclic, or ownership-uncertain
+     survivors and report uncertain coverage.
+
+     Apply supplied higher-priority testing instructions according to their
+     authority. If applicable higher-priority testing instructions are missing
+     or ambiguous, return BLOCKED. If exact permitted MERGE write paths or their
+     scope evidence are missing or ambiguous, return BLOCKED. `none` is valid
+     only when the supplied source inventory establishes the complete applicable
+     set is empty. Do not use inherited session history to fill missing
+     instruction or write-scope inputs.
+
+    For every MERGE, name the source case, its current-audit KEEP survivor, the
+    small added assertion, production line, reachable path, and failure reason.
+    Recommend automatic application only when the survivor is a current-audit
+    KEEP and its path exactly matches an authorised path in the supplied
+    permitted-write-path list. If the path is outside the permitted write
+    paths, report and withhold the merge. Do not infer permission from the task
+    description or session history.
+    Identify decision-to-survivor dependencies for later invalidation.
 
     Map every approved behaviour to retained test identifiers. Mark any
     required approved behaviour without retained coverage as an Important
     finding. Report unrelated gaps separately without proposing scope expansion.
-    From the supplied per-file pre-prune counts and your proposed removals,
-    calculate projected per-file and total post-prune counts. Flag a projected
-    zero-test file or total as a blocker. The coordinator must validate and
-    record these expected counts and a scoped recovery patch or snapshot in
-    workflow.md before assigning removal. The recovery record is coordinator
-    owned and is created after your audit, before any removal worker is
-    assigned.
+    From the supplied per-file pre-prune counts and proposed removals and
+    merges, calculate projected per-file and total post-change counts. Flag a
+    projected zero-test file or total as a blocker. The coordinator validates
+    counts and records source context plus scoped recovery in workflow.md
+    before assigning any change. The recovery record is coordinator owned and
+    is created after your audit, before a worker is assigned.
     Do not recommend deleting a file or its last test. You have no authority to
     make edits or delegate this audit.
 
@@ -263,15 +437,26 @@ missing context from session history.
 
     Verdict: READY only when the inventory and evidence are complete and there
     is no Important finding for required behaviour coverage; otherwise BLOCKED.
-    Complete inventory: one KEEP or REMOVE row per test or case.
-    For each row: path, stable test/case identifier, decision, named behaviour,
-    rationale, and evidence from the supplied stable inputs.
-    For each REMOVE: all distinct defects and a defect-to-survivor mapping.
+    Complete inventory: one KEEP, REMOVE, or MERGE row per test or case.
+    For each row: path, stable test/case identifier, category, decision, named
+    behaviour, rationale, and evidence from the supplied stable inputs.
+    For each REMOVE: the applicable reason and any required survivor mapping.
+    For each MERGE: source, current-audit KEEP survivor, assertion, production
+    line, reachable path, and failure reason, or state that it is withheld.
     Behaviour coverage: each approved behaviour and its retained test IDs, or
     an Important finding when coverage is absent.
-    Discovery: confirm supplied pre-prune counts are non-zero per file and
-    total, and provide projected post-prune per-file and total counts for the
-    proposed removals, or identify the blocker.
+    Current-live report rows: one KEEP, REMOVE, or MERGE row per live case,
+    with current live source and audit evidence.
+    Archived reassessment rows: exact source and context, pre-removal snapshot
+    identity, actual prior check/discovery evidence, original runner and trace
+    applicability, and prior trace evidence when applicable, plus the decision
+    and rationale. If any required archived input is missing or unstable,
+    report BLOCKED without fabricating evidence.
+    Discovery: confirm current-live per-file and total pre-prune counts are
+    non-zero, confirm trace-to-case evidence for current-live indirect runners
+    or direct-runner execution evidence, and provide projected current-live
+    post-change per-file and total counts or identify the blocker. Archived
+    cases are excluded from current discovery and trace counts.
     Stability: list any missing, changing, or ownership-uncertain inputs.
     Unrelated gaps: report only, with no scope expansion.
     Do not claim tests passed, checks ran, files changed, or removals were
