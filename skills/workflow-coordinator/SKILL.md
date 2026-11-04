@@ -12,7 +12,8 @@ Owns workflow transitions and shared workflow state. Detailed research, design,
 review, planning and execution procedures belong to their phase skills. Model
 metadata expresses a capability target; it does not switch the active model.
 Phase skills return findings and proposed content; the coordinator alone
-persists shared workflow files.
+persists shared workflow files. The intention is to keep context under control
+by using workflow files and clean up between transistions.
 
 ## Entry and transitions
 
@@ -87,7 +88,7 @@ design change requires renewed explicit user approval; schedule-only replanning
 requires a fresh readiness review unless the user explicitly skips it.
 
 Before any repository artefact is created, ensure the root `.gitignore` has
-the exact `/.elelem/workflows/` entry. Preserve all existing content, add no
+the exact `.elelem/` entry. Preserve all existing content, add no
 broad ignore, and verify with `git check-ignore`. In plan mode, write only to
 authorised locations. If repository writes are prohibited, use authorised
 staging; never instruct a phase or worker to write to the repository. Failure
