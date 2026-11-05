@@ -144,3 +144,12 @@ For multiple requested tickets, carry each ticket's identity, scope, and ownersh
 - **Ticket depends on unfinished work**: flag the dependency. Ask the user whether to work on the dependency first or to proceed with stubs or interfaces for the missing pieces.
 - **Ticket description is vague**: use the epic's design context to fill in gaps. If still unclear after that, ask the user targeted questions before proceeding. You **MUST NOT** guess at requirements.
 - **No ticketing system detected**: if the user provides a ticket reference but `detect-ticketing-system` returns "none", ask the user to paste the ticket content (and the parent epic content if applicable) directly, then run `resolve_epic_context` against the pasted content using markdown heading levels as the tier marker.
+
+The ticket handoff routes the recovered ticket context to the coordinator and
+ends this ticket procedure, not the overall workflow. The
+active coordinator validates recovered scope, provenance, outcome, dependencies
+and questions against the current baseline and state, records the result and
+next action in existing `workflow.md`, and invokes the next required phase
+without routine prompting when its inputs are sufficient. Ticket approval or
+scope confirmation does not satisfy upstream phases. Pause for
+missing evidence, user choice or approval, unsafe state, or a real blocker.

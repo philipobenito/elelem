@@ -37,6 +37,13 @@ Before dispatching, read `committee-member-prompt.md` and `../_shared/subagent-d
 5. **Assemble a proposed design.** Cover goal, requirements, exclusions, architecture, components, interfaces, data flow, errors/failure behaviour, tests/verification and evidence references. Summarise material splits and risks without exposing deliberation transcripts.
 6. **Return to the coordinator.** Return the consolidated proposal, unresolved decisions and substantive uncertainty. Do not invoke design review, seek final user approval, persist an approved plan, create tickets or begin implementation.
 
+Committee members and any tiebreaker return their results to the committee
+skill's Planning procedure for reconciliation. Return the proposed design to
+the coordinator after reconciliation. This ends the committee procedure, not the overall workflow; the
+coordinator records the result and next action in existing `workflow.md` and
+invokes the next required phase without routine prompting. User choices,
+approval and unresolved blockers remain pauses.
+
 ## The Three Perspectives
 
 Each committee member uses a perspective-specific subagent type. The full prompt templates live in `committee-member-prompt.md`.

@@ -27,6 +27,13 @@ The `workflow-coordinator` owns Research, Design Review, explicit final approval
 4. **Consolidate a proposed design.** Return one self-contained block covering goal, requirements, exclusions, architecture, components, interfaces, data flow, errors and tests/verification, with relevant assumptions or evidence references. This is a proposal for independent review, not final approval.
 5. **Return to the coordinator.** Return the proposed design and unresolved points to `workflow-coordinator`. Do not invoke design review, ask for final approval, persist an approved plan, create tickets or begin implementation.
 
+Returning the proposal ends this Planning procedure, not the overall workflow.
+This procedure does not advance the workflow itself.
+The coordinator validates and records the result and next action in existing
+`workflow.md`, then invokes the next required phase without routine prompting.
+Pause only when a user choice or approval, missing input, unsafe state or other
+real blocker requires resolution.
+
 ## Working in Existing Codebases
 
 - Follow existing patterns. Include targeted changes only when needed for the requested outcome.

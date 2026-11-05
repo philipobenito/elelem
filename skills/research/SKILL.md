@@ -59,3 +59,12 @@ Research informs planning but does not approve a design, implementation or
 workflow transition. Return the record and unresolved points to the coordinator.
 If evidence is unavailable or contradictory, state that limitation instead of
 filling the gap with an assumption.
+
+## Handoff
+
+Return findings, evidence references, user direction, remaining questions and
+blockers to the active coordinator. This ends the Research procedure; it does
+not stop the overall workflow. The coordinator validates the result against the
+current scope and state, records the next action in existing `workflow.md`, and
+invokes the next required phase when its inputs are sufficient. Do not invoke a
+second coordinator or treat an unanswered question or missing input as resolved.

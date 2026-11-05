@@ -81,3 +81,11 @@ persistence. The coordinator alone writes shared workflow files. `READY` may
 only be recorded when returned by the independent reviewer; do not convert
 planner checks or a skip into that verdict. Do not dispatch implementation
 agents; the coordinator owns transitions and execution hand-off.
+
+The readiness reviewer returns the verdict and findings to this Wave Planning
+procedure for reconciliation. Return the reconciled schedule, readiness result
+and blockers to the coordinator. This ends Wave Planning, not the overall
+workflow. The coordinator records the schedule and next action in existing
+`workflow.md` and proceeds to execution without routine prompting only after
+the approved-plan, readiness or explicitly scoped skip, capability and safety
+gates are satisfied. A `SKIPPED` review is not `READY`.

@@ -194,6 +194,20 @@ coordinator mirrors task progress through `{{TASK_TRACKER_TOOL}}`; the mirror is
 for user-visible progress only and never becomes a separate source of truth.
 Do not invent tracker parameters or let workers update the tracker.
 
+### Executor handoff
+
+Workers return reports and evidence through the executor. Reconcile each
+worker's scope, outcome, changed paths, checks, questions and blockers against
+its brief; workers do not hand workflow state directly to the coordinator.
+The executor validates the returned scope, outcome and evidence before
+continuing safe task-local checks with stable inputs while other workers run.
+Respect task dependencies and wave barriers, required independent reviews and
+verification before returning the executor's reconciled result to the active
+coordinator. A worker's "stop after handoff" ends that worker task, not the
+overall workflow. The coordinator validates the executor handoff, records the
+result and next action in existing `workflow.md`, then proceeds without routine
+prompting when no gate or blocker requires a pause.
+
 ## Prompt templates
 
 - `./implementer-prompt.md`: bounded worker prompt for approved tasks.
