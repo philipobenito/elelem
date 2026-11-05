@@ -131,3 +131,12 @@ If you exhaust the Investigation Budget without a confirmed root cause, follow t
 ## Workflow hand-off
 
 Return a structured investigation result to `workflow-coordinator` with reproduction status and exact evidence, ranked hypotheses and test results, confirmed root cause or remaining uncertainty, and the minimal intended correction. State whether the correction is covered by the current approved plan revision or requires Planning and renewed approval. The coordinator reconciles investigator findings and owns all transitions and execution scheduling. Investigators gather evidence only; the assigned bounded worker implements approved changes, and the coordinator obtains required reviews and fresh verification. An explicit skip is recorded with its scope, reason and consequence, and is never reported as a verdict, evidence or successful outcome.
+
+Investigators return their results to the debugging phase for reconciliation before
+the debugging phase returns the reconciled evidence, questions, blockers and
+proposed correction to the coordinator. The Phase 7 task brief also returns to the coordinator, not to a
+second debugging or autonomous fix flow. A debugging handoff ends this
+investigation procedure only; the coordinator records the result and next
+action in existing `workflow.md` and continues when the approved design and
+required evidence permit it. Missing reproduction evidence, user approval,
+capability or safe execution remains a pause.

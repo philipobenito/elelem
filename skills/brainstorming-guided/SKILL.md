@@ -36,6 +36,12 @@ These principles apply at every step of the procedure. They are what makes this 
 5. **Consolidate and return.** Provide a self-contained proposed design covering these sections, assumptions and evidence references. Return it to `workflow-coordinator` for independent review. It is not final approval.
 6. **Stop at the Planning boundary.** Do not invoke design review, ask for final approval, persist an approved plan, create tickets or begin implementation.
 
+Stop at the Planning boundary ends this guided procedure, not the overall
+workflow. This procedure does not advance the workflow itself. The coordinator validates and records the proposal and next action in
+existing `workflow.md`, then invokes the next required phase without routine
+prompting. A user choice or approval and any genuine missing input remain
+required pauses.
+
 ## What Guided Mode Does Not Change
 
 - One question per message, multiple choices are preferred.

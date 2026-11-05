@@ -141,10 +141,20 @@ Research dialogue or its separately chosen alternative remains distinct from
 the Planning method. Structural tests check policy wiring and all three harness
 copy/substitution paths, not live agent compliance or runtime prevention.
 
+At actual coordinator-managed phase or assigned-task handoffs, the same active
+coordinator validates the return and records the next action in existing
+`workflow.md`. It proceeds to the next required phase without routine prompts,
+while preserving approval, review, verification, TDD, debugging and skip gates.
+This is not a per-tool-call loop and does not guarantee live harness compliance.
+See `_tests/workflow_scenarios.md` for manual handoff scenarios in Claude Code,
+OpenCode and Codex. Structural checks do not prove that a live agent follows the
+rule.
+
 Run the automated workflow checks with:
 
 ```sh
 bash _tests/run_workflow_tests.sh
+bash _tests/run_workflow_continuation_tests.sh
 ```
 
 The existing automated installer suites can also be run with:

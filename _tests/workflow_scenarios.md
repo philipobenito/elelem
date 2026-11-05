@@ -2,6 +2,59 @@
 
 These are manual harness smoke tests. They exercise conversational behaviour and are not covered by the executable structural test runner. They were not run as part of the automated suite, and no live agent tests are claimed.
 
+## Coordinator-managed handoff continuation
+
+These manual scenarios must be run separately in Claude Code, OpenCode and
+Codex. Structural checks exercise source rules and isolated installer helpers;
+they do not establish live behaviour, runtime enforcement or guaranteed
+compliance. These scenarios were not run unless explicitly reported otherwise.
+
+1. Complete a Research handoff with findings, an unresolved question and enough
+   evidence to begin Planning. Observe the same coordinator validate and record
+   the result and next action in existing `workflow.md`, then invoke the selected
+   Planning method without an extra routine prompt.
+   - Expected evidence: the handoff is reconciled once, required user method
+     selection remains explicit, and the next phase begins only when its inputs
+     are sufficient.
+   - Failure: a status label substitutes for evidence, a second coordinator is
+     invoked, or continuation bypasses a user choice.
+2. Complete an assigned worker task with a report while an independent worker
+   remains active and stable-input task checks are available.
+   - Expected evidence: the executor validates the returned scope and evidence,
+     permits only safe stable-input checks, and observes dependency and wave
+     barriers before handing its reconciled result to the coordinator.
+   - Failure: the worker writes shared state, a dependent task starts early, or
+     the coordinator treats the worker report alone as review or verification.
+3. Return a design-review verdict of `Issues Found`, then return `Approved` for
+   the revised proposal.
+   - Expected evidence: each reviewer result returns through the design-review
+     phase; substantive changes return to Planning and renewed explicit user
+     approval; only then does the coordinator continue.
+   - Failure: the reviewer advances the workflow directly or approval is
+     inferred from the verdict.
+4. At a handoff, withhold a required user decision, then separately introduce a
+   real blocker, missing evidence, an unsafe state, unavailable capability and
+   an outstanding dependency with no safe independent work.
+   - Expected evidence: the coordinator records the specific pause and next
+     action in `workflow.md`, continues only safe independent work, and resumes
+     after resolution without repeating valid completed phases.
+   - Failure: routine approval is requested, a required gate is skipped, or
+     continuation is claimed despite the blocker.
+5. Resume a prior workflow with a valid baseline, accepted checkpoints and an
+   explicitly recorded scoped skip.
+   - Expected evidence: the coordinator validates the existing provenance,
+     preserves the original baseline and skip scope, reuses valid completed
+     evidence and continues at the next required action.
+   - Failure: useful prior work is discarded, the skip is widened, or a prior
+     status label is treated as evidence.
+6. Complete a phase that says "stop after handoff" and observe the ensuing
+   coordinator action.
+   - Expected evidence: only the phase procedure ends; the same coordinator
+     records the outcome and invokes the next required phase or pauses for a
+     genuine choice, approval or blocker.
+   - Failure: the entire workflow stops without reason or a recursive
+     coordinator is created.
+
 ## Conversational research and planning
 
 1. Start a new request that requires research before the work plan can be trusted. Provide only the initial goal and the relevant uncertainty.

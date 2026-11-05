@@ -32,6 +32,12 @@ The coordinator invokes this router when the workflow reaches Planning and no Pl
 3. **Ask for a method.** Use `{{ASK_USER_QUESTION_TOOL}}` exactly as specified below. Do not ask as plain text or assume a default.
 4. **Record and hand off.** Preserve the selected method in coordinator state, then invoke exactly one selected mode skill using `{{INVOKE_SKILL_TOOL}}`. Stop after hand-off. Mode skills return proposed designs; they do not transition phases.
 
+Stop after hand-off ends the current phase procedure only, not the overall workflow.
+The selected mode returns its proposal and unresolved choices to the coordinator;
+the coordinator records the result and next action in existing `workflow.md`
+and continues through required phases without routine prompts. A required user
+choice or approval remains a pause.
+
 ## The Mode Question
 
 ```
