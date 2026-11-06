@@ -23,9 +23,17 @@ workflow design.
     [Paste the full brief, including mapped requirements, exclusions, exact
     write paths, stable reads, acceptance criteria and relevant contracts.]
 
+    ## Review stage
+
+    [TASK_REVIEW_OR_FINAL_AUDIT_EVIDENCE_REVIEW]
+    During task review the pruning evidence is deferred to the final audit;
+    review the task changes and TDD evidence without requiring or claiming an
+    audit. Apply the pruning-evidence instructions below only in final audit
+    evidence review, after the coordinator has run or explicitly skipped it.
+
     ## Pruning-audit skip record
 
-    The coordinator supplies exact user-authorised pruning-audit skip records,
+    For final audit evidence review, the coordinator supplies exact user-authorised pruning-audit skip records,
     or `none` when no pruning-audit skip was authorised:
     [PRUNING_AUDIT_SKIP_RECORDS_OR_NONE]
     Each record includes the exact source and instruction text, skipped
@@ -67,8 +75,8 @@ workflow design.
     file/case scope. Continue all unskipped checks. Apply the pruning-evidence
     review below only to unskipped test-bearing scopes.
 
-    For a task that touched test-bearing files, inspect the pruning evidence
-    under `../_shared/test-pruning.md`. Check actual task scope and the complete
+    For final audit evidence review of test-bearing files, inspect the pruning evidence
+    under `../_shared/test-pruning.md`. Check actual task and correction scope and the complete
     inventory of every test and parameterised case in each touched file,
     including older cases. Inspect the immutable baseline, frozen active
     instruction-source identities and applicable project test rules, stable

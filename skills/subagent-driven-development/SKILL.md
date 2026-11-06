@@ -90,20 +90,23 @@ Preserve that baseline separately from later task and audit snapshots.
 
 ## Test pruning audit and application
 
-For each task that actually changes a test-bearing file, complete the
-coordinator-owned procedure in `../_shared/test-pruning.md` before independent
-task review. That helper owns scope, safety gates, source retrieval, audit
-evidence, recovery, and invalidation. An empty test-bearing scope is recorded as
-`NOT APPLICABLE`.
+The coordinator owns and executes one cumulative test-pruning audit within the
+executor phase after implementation, task reviews and wave barriers, before
+final cumulative review and verification.
+The union of actual test-bearing paths changed by tasks and corrections defines
+its scope. Follow `../_shared/test-pruning.md` for full inventory, safety gates,
+source retrieval, audit evidence, recovery, and invalidation. An empty scope is
+`NOT APPLICABLE`; a TDD-only skip does not skip the audit.
 
-The stage order is fixed: after the implementation worker stops, the coordinator
-freezes inputs and runs pre-prune checks, then alone dispatches the independent
-read-only auditor. After its verdict, the coordinator records exact source and
-recovery context and assigns any supported removal or restoration to the
-implementation worker. Once that worker stops, the coordinator inspects the
-diff, runs post-prune checks, and records the accepted snapshot. No nested audit
-dispatch or worker self-audit is allowed. A TDD-only skip does not skip the
-audit.
+After relevant writers stop, the coordinator freezes inputs, runs pre-prune
+checks and alone dispatches the independent read-only auditor. The coordinator
+records exact source and recovery context and assigns supported removal or
+restoration to a bounded implementation worker. After it stops, inspect the
+diff, run post-prune checks, and record the accepted snapshot. No nested audit
+dispatch or worker self-audit is allowed. Task review and checks proceed before
+this audit and do not claim it occurred. The executor returns current audit,
+final review and verification evidence to the coordinator for recording or
+reuse; do not automatically repeat a gate with matching fresh evidence.
 
 ## Task lifecycle and barriers
 
@@ -117,6 +120,9 @@ important issues must be resolved before completion; delegate in-scope
 corrections to a worker within the same boundaries, then re-review. A missing
 requirement, contract or architecture decision is a blocker to return to
 planning, not a prompt to silently redesign.
+
+Batch related in-scope review corrections within the approved task boundaries;
+retain independent re-review and fresh task checks after the batch.
 
 After review or its recorded skip, the orchestrator reads the actual changed
 paths and evidence, then runs fresh task verification by default. Do not trust
@@ -168,14 +174,30 @@ the coordinator and planning for user-authorised resolution.
 
 ## Final feature review and verification
 
-After all requested tasks and integration barriers are resolved, invoke
+After the cumulative audit and all requested tasks and integration barriers are resolved, invoke
 `requesting-code-review` for the cumulative, current uncommitted changes,
 including tracked and untracked files, by default. If the user explicitly
 skipped final review, record that scoped skip and do not imply a review verdict
 or approval. The review must inspect actual changes; `BASE..HEAD` alone is
 insufficient when work is uncommitted. Resolve critical and important findings
 by delegating within approved task boundaries and repeat the relevant review
-and checks. Record minor findings for the user.
+and checks. If later corrections affect audit evidence, refresh the inventory,
+perform targeted independent rechecks and repeat affected review and checks
+before final verification. Record minor findings for the user.
+
+The final cumulative review must inspect audit evidence and the actual current
+diff including pruning, using the final audit evidence review criteria in the
+reviewer prompt. Task review is separate and must not claim a deferred audit.
+
+For the final review dispatch, supply the audit record, approved scope, exact
+audit skip provenance or `none`, the `./reviewer-prompt.md` final audit evidence
+review criteria, and the actual post-prune diff including tracked and untracked
+changes. Populate `requesting-code-review`'s DESCRIPTION with these inputs and
+an explicit instruction to inspect the audit evidence against the supplied
+criteria. Include the current audit status, including `NOT APPLICABLE` or an
+authorised `SKIPPED` scope where applicable. Do not dispatch with missing or
+ambiguous required inputs; report a blocker instead. The final review consumes
+these inputs in addition to the normal review boundaries, not instead of them.
 
 Then invoke `verification-before-completion` against the full current state by
 default. Honour an explicitly authorised final verification skip only for its

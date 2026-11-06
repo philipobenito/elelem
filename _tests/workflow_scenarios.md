@@ -43,6 +43,12 @@ These are manual harness smoke tests. They exercise conversational behaviour and
 4. Explicitly skip the readiness review for a wave.
    - Expected evidence: the skip is recorded only after explicit user authorisation, and the workflow does not claim the skipped readiness review produced a READY verdict.
    - Failure: readiness is marked READY without the review, or the review is skipped without authorisation.
+5. Provide several ready independent tasks, then constrain a shared fixture, stable read or capacity to require concurrency one.
+   - Expected evidence: the planner uses the earliest safe wave up to verified capacity and records the concrete reason for serialisation; it does not manufacture task splits.
+   - Failure: safe work is unnecessarily serialised, or conflicting work is scheduled together.
+6. Give a worker one cohesive task requiring multiple genuine sequential RED/GREEN cycles and several related in-scope review corrections.
+   - Expected evidence: each cycle records its expected failure and fresh green; corrections are batched within scope, independently re-reviewed and freshly checked before the wave barrier.
+   - Failure: test-first evidence is fabricated, or batching bypasses re-review and checks.
 
 ## Blockers, cancellation, and plan drift
 
@@ -74,6 +80,10 @@ These are manual harness smoke tests. They exercise conversational behaviour and
 ## Test pruning audit and recovery
 
 These adversarial test-pruning scenarios are manual. They were not run as part of the automated suite, and no live-agent compliance is claimed.
+
+0. Inspect the cumulative test-pruning audit after task reviews and wave barriers, before final cumulative review and verification, across multiple tasks and corrections.
+   - Expected evidence: one audit covers the union of actually changed test-bearing files, including older and parameterised cases; task reviews do not claim the deferred audit occurred. Later affected changes refresh inventory and trigger targeted independent rechecks, including full audits of newly touched files; unaffected decisions retain stable evidence.
+   - Failure: per-task pruning runs before review, a correction file is omitted, or a final review ignores pruning changes.
 
 1. In a task-touched file, create two cases that share one failure but also detect different defects. Ask whether one is a duplicate.
    - Expected evidence: the auditor may propose duplicate removal when one retained survivor detects the shared defect, and explicitly records that other source defects are not preserved. It does not claim full defect coverage.

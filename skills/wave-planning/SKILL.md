@@ -37,6 +37,9 @@ directed acyclic graph; contracts and foundations precede consumers, and
 integration is explicit work. One-task waves are valid. Do not impose a fixed
 file-count limit or ask bounded workers to discover architecture.
 
+Prefer cohesive bounded tasks that allow multiple genuine sequential RED/GREEN cycles
+per worker. Do not manufacture splits or unapproved architecture to increase width.
+
 For each task, name exact allowed writes and known formatter, generator, build
 and test outputs; stable reads; interfaces and assumptions; dependencies;
 acceptance criteria; verification commands; specialist type; and required
@@ -50,6 +53,10 @@ resource capacity. If capacity cannot be verified, report the limitation and
 do not assume parallelism. Skipping wave planning permits one bounded,
 complete, fully specified task only; do not improvise a wave plan or parallel
 dispatch.
+
+Place ready independent tasks in the earliest safe wave up to verified harness
+and resource capacity. Record concrete reasons for serialisation, including
+concurrency one, from dependencies, ownership, stable reads or resource limits.
 
 ## Readiness review and explicit skips
 

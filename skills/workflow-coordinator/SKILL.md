@@ -47,13 +47,15 @@ harness:
 4. Obtain explicit user approval, then persist the approved plan.
 5. Wave planning with the `wave-planning` skill (`../wave-planning/SKILL.md`).
 6. Execute approved tasks using the `subagent-driven-development` skill
-   (`../subagent-driven-development/SKILL.md`).
-7. The executor runs each final gate once per current cumulative revision and
-    returns its final review and verification evidence to the coordinator. The
-    coordinator records or reuses matching, fresh evidence rather than invoking
-    the same gate again, then cleans up under the shared artefact contract.
-    Rerun a gate only when a relevant change invalidates its evidence or
-    required evidence is missing.
+   (`../subagent-driven-development/SKILL.md`). The coordinator owns and executes
+   the cumulative test-pruning audit within the executor phase after task reviews
+   and wave barriers, before final cumulative review and verification. Follow
+   `../_shared/test-pruning.md` for scope, independent audit and recovery.
+7. The executor returns current audit, final review and verification evidence to
+   the coordinator. The coordinator records or reuses matching, fresh evidence;
+   it does not automatically repeat these gates. Rerun a gate only when a
+   relevant change invalidates its evidence or required evidence is missing,
+   then clean up under the shared artefact contract.
 
 Every phase is on by default. The user may explicitly skip any phase, including
 reviews, checks and clean-up. Record each skip's scope, reason and consequence.
