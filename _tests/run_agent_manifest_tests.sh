@@ -45,6 +45,7 @@ test_write_manifest_rejects_a_different_existing_base_without_changing_the_manif
   local expected_manifest="$case_directory/expected-manifest"
   local old_base="$case_directory/old-base"
   local new_base="$case_directory/new-base"
+  local diagnostic_file="$case_directory/diagnostic"
   local entries=("agents/new.md")
   local write_status=0
 
@@ -52,13 +53,15 @@ test_write_manifest_rejects_a_different_existing_base_without_changing_the_manif
   printf '%s\n%s\n' "$old_base" 'agents/old.md' > "$manifest_file"
   cp "$manifest_file" "$expected_manifest"
 
-  if write_manifest "$manifest_file" "$new_base" entries 2>/dev/null; then
+  if write_manifest "$manifest_file" "$new_base" entries 2>"$diagnostic_file"; then
     write_status=0
   else
     write_status=$?
   fi
 
-  (( write_status != 0 )) && cmp -s "$manifest_file" "$expected_manifest"
+  (( write_status != 0 )) &&
+    grep -Fq "manifest '$manifest_file' records base '$old_base', not '$new_base'; refusing to change install scope." "$diagnostic_file" &&
+    cmp -s "$manifest_file" "$expected_manifest"
 }
 
 test_prune_stale_manifest_entries_preserves_omitted_agent_bundle_files() {
