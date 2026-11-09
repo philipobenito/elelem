@@ -276,6 +276,10 @@ codex_resolve_targets() {
       say_err "$project_path does not exist"
       return 1
     fi
+    if [[ "$(cd "$project_path" && pwd -P)" == "$(cd "$HOME" && pwd -P)" ]]; then
+      say_err "project path resolves to HOME; refusing to install at this scope."
+      return 1
+    fi
     _codex_base="$project_path"
     _codex_agents_target="$project_path/AGENTS.md"
     _codex_skills_target="$project_path/.agents/skills"
@@ -295,6 +299,209 @@ codex_resolve_targets() {
   eval "${skills_ref}=\"\$_codex_skills_target\""
 }
 
+_codex_preflight_bundle() {
+  perl - "$base" "$HOME" "$PWD" "${agent_bundle_files[@]}" <<'PERL'
+use strict;
+use warnings;
+use Cwd qw(abs_path);
+use Encode qw(decode FB_CROAK);
+use Errno qw(ENOENT);
+
+my ($target, $home, $current, @bundle_files) = @ARGV;
+my %bundled = map { (s/\.toml\z//r) => 1 } @bundle_files;
+my $target_root = abs_path($target);
+my @roots;
+my %seen;
+for my $root ($home, $current, $target) {
+  my $resolved = abs_path($root);
+  defined $resolved or inspection_error($root);
+  push @roots, $resolved unless $seen{$resolved}++;
+}
+
+sub inspection_error {
+  my ($path) = @_;
+  print STDERR "Error: inspection error for '$path'; review or remove the unsupported or inaccessible input, then rerun the installer.\n";
+  exit 1;
+}
+
+sub conflict_error {
+  my ($path, $identity) = @_;
+  print STDERR "Error: identity conflict in '$path': '$identity'; move or remove the conflicting declaration, then rerun the installer.\n";
+  exit 1;
+}
+
+sub exists_or_error {
+  my ($path) = @_;
+  local $! = 0;
+  my @metadata = lstat($path);
+  return 1 if @metadata;
+  return 0 if $! == ENOENT;
+  inspection_error($path);
+}
+
+sub file_content {
+  my ($path) = @_;
+  !-l $path && -f $path && -r $path or inspection_error($path);
+  open my $handle, '<:raw', $path or inspection_error($path);
+  my $bytes = '';
+  while (1) {
+    my $length = sysread($handle, my $part, 65536);
+    defined $length or inspection_error($path);
+    last if $length == 0;
+    $bytes .= $part;
+  }
+  close $handle or inspection_error($path);
+  my $text = eval { decode('UTF-8', $bytes, FB_CROAK) };
+  defined $text or inspection_error($path);
+  $text =~ s/\r\n/\n/g;
+  $text !~ /[\x00-\x08\x0b-\x1f\x7f]/ or inspection_error($path);
+  return $text;
+}
+
+sub key_parts {
+  my ($remainder) = @_;
+  my @parts;
+  while (1) {
+    $remainder =~ s/\A[ \t]*//;
+    if ($remainder =~ s/\A"([^"\\]*)"// || $remainder =~ s/\A'([^'\\]*)'// || $remainder =~ s/\A([A-Za-z0-9_-]+)//) {
+      push @parts, $1;
+    } else {
+      die "unsupported key\n";
+    }
+    $remainder =~ s/\A[ \t]*//;
+    last unless $remainder =~ s/\A\.//;
+  }
+  return (\@parts, $remainder);
+}
+
+sub register_table {
+  my ($parts, $tables, $namespaces, $keys) = @_;
+  my $path = join "\0", @$parts;
+  !$tables->{$path}++ or die "duplicate table\n";
+  my @prefix;
+  for my $part (@$parts) {
+    push @prefix, $part;
+    my $key = join "\0", @prefix;
+    !$keys->{$key} or die "table collides with key\n";
+    $namespaces->{$key} = 1;
+  }
+}
+
+sub consume_multiline {
+  my ($fragment, $delimiter) = @_;
+  my $end = index($fragment, $delimiter);
+  my $content = $end < 0 ? $fragment : substr($fragment, 0, $end);
+  $content !~ /\\/ or die "escaped value\n";
+  return 0 if $end < 0;
+  my $suffix = substr($fragment, $end + 3);
+  $suffix =~ /\A[ \t]*(?:\#.*)?\z/ or die "invalid multiline suffix\n";
+  return 1;
+}
+
+sub inspect_table {
+  my ($state, $remainder) = @_;
+  my ($parts, $rest) = key_parts($remainder);
+  $rest =~ /\A\][ \t]*(?:\#.*)?\z/ or die "invalid table\n";
+  @{$state->{table}} = @$parts;
+  register_table($parts, $state->{tables}, $state->{namespaces}, $state->{keys});
+  my $table = $state->{table};
+  if ($state->{kind} eq 'config' && @$table >= 2 && $table->[0] eq 'agents' && $bundled{$table->[1]}) {
+    @$table == 2 or die "unsupported nested agent table\n";
+    push @{$state->{conflicts}}, $table->[1];
+  }
+}
+
+sub inspect_assignment_value {
+  my ($state, $rest, $is_name) = @_;
+  if ($rest =~ s/\A("""|''')//) {
+    !$is_name or die "multiline name\n";
+    my $delimiter = $1;
+    $state->{multiline} = $delimiter unless consume_multiline($rest, $delimiter);
+  } elsif ($rest =~ /\A"([^"\\]*)"[ \t]*(?:\#.*)?\z/ || $rest =~ /\A'([^'\\]*)'[ \t]*(?:\#.*)?\z/) {
+    $state->{name} = $1 if $is_name;
+  } elsif (!$is_name && $rest =~ /\A(?:true|false|[+-]?(?:0|[1-9](?:_?[0-9])*)(?:\.[0-9](?:_?[0-9])*)?(?:[eE][+-]?[0-9](?:_?[0-9])*)?)[ \t]*(?:\#.*)?\z/) {
+    return;
+  } else {
+    die "unsupported value\n";
+  }
+}
+
+sub inspect_assignment {
+  my ($state, $line) = @_;
+  my ($parts, $rest) = key_parts($line);
+  @$parts == 1 && $rest =~ s/\A=[ \t]*// or die "unsupported assignment\n";
+  my $table = $state->{table};
+  my $key = join "\0", @$table, $parts->[0];
+  !$state->{keys}{$key}++ && !$state->{namespaces}{$key} or die "duplicate key\n";
+  if ($state->{kind} eq 'config' && ((!@$table && $parts->[0] eq 'agents') || (@$table == 1 && $table->[0] eq 'agents' && $bundled{$parts->[0]}))) {
+    die "unsupported agent assignment\n";
+  }
+  my $is_name = $state->{kind} eq 'agent' && !@$table && $parts->[0] eq 'name';
+  $state->{name_count}++ if $is_name;
+  inspect_assignment_value($state, $rest, $is_name);
+}
+
+sub inspect_document {
+  my ($text, $kind) = @_;
+  my $state = { kind => $kind, tables => {}, namespaces => {}, keys => {}, table => [], conflicts => [], name => '', name_count => 0, multiline => '' };
+  for my $line (split /\n/, $text, -1) {
+    if (length $state->{multiline}) {
+      $state->{multiline} = '' if consume_multiline($line, $state->{multiline});
+      next;
+    }
+    next if $line =~ /\A[ \t]*(?:\#.*)?\z/;
+    if ($line =~ /\A[ \t]*\[(.*)\z/) {
+      inspect_table($state, $1);
+      next;
+    }
+    inspect_assignment($state, $line);
+  }
+  !length($state->{multiline}) or die "unterminated multiline string\n";
+  $kind ne 'agent' || $state->{name_count} == 1 or die "missing or duplicate name\n";
+  return $kind eq 'agent' ? $state->{name} : $state->{conflicts}[0];
+}
+
+sub inspect_file {
+  my ($path, $kind) = @_;
+  my $content = file_content($path);
+  my $identity;
+  eval { $identity = inspect_document($content, $kind); 1 } or inspection_error($path);
+  return unless defined $identity && $bundled{$identity};
+  return if $kind eq 'agent' && $path eq "$target_root/.codex/agents/$identity.toml";
+  conflict_error($path, $identity);
+}
+
+sub inspect_config {
+  my ($root) = @_;
+  my $directory = "$root/.codex";
+  return unless exists_or_error($directory);
+  -d $directory && -x $directory or inspection_error($directory);
+  my $path = "$directory/config.toml";
+  inspect_file($path, 'config') if exists_or_error($path);
+}
+
+sub inspect_agents {
+  my ($root) = @_;
+  my $directory = "$root/.codex/agents";
+  return unless exists_or_error("$root/.codex");
+  return unless exists_or_error($directory);
+  -d $directory or inspection_error($directory);
+  opendir my $handle, $directory or inspection_error($directory);
+  local $! = 0;
+  my @entries = readdir $handle;
+  $! == 0 or inspection_error($directory);
+  closedir $handle or inspection_error($directory);
+  for my $entry (sort @entries) {
+    next unless $entry =~ /\.toml\z/;
+    inspect_file("$directory/$entry", 'agent');
+  }
+}
+
+inspect_config($_) for @roots;
+inspect_agents($_) for @roots;
+PERL
+}
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if ! { : >/dev/tty; } 2>/dev/null; then
     say_err "this script requires an interactive terminal (/dev/tty is not accessible)."
@@ -309,6 +516,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   codex_resolve_targets base agents_target skills_target || exit 1
 
   manifest_file="$SCRIPT_DIR/.elelem-manifest-codex"
+  assert_manifest_base_matches "$manifest_file" "$base" || exit 1
   manifest_entries=()
 
   echo
@@ -397,8 +605,30 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     say_info "No skills found in $SKILLS_SOURCE (skipping skills install)."
   fi
 
-  prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries
-  write_manifest "$manifest_file" "$base" manifest_entries
+  agent_bundle_items=("Elelem agent bundle (11 agents)")
+  agent_bundle_defaults=(0)
+  multiselect agent_bundle_selected agent_bundle_items agent_bundle_defaults
+
+  changed_paths=()
+  if (( ${#agent_bundle_selected[@]} > 0 )); then
+    agent_bundle_files=()
+    for _f in "$SCRIPT_DIR/agents/codex/"*.toml; do
+      [[ -f "$_f" ]] || continue
+      agent_bundle_files+=("${_f##*/}")
+    done
+    _codex_preflight_bundle || exit 1
+    install_agent_bundle_notice "$SCRIPT_DIR/agents/LICENSE" "$base/.codex/agents.LICENSE" .codex/agents.LICENSE manifest_entries changed_paths || exit 1
+    install_agent_bundle_files "$SCRIPT_DIR/agents/codex" "$base/.codex/agents" .codex/agents manifest_entries agent_bundle_files changed_paths || exit 1
+  fi
+
+  if ! prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries .codex/agents; then
+    report_agent_bundle_changes changed_paths
+    exit 1
+  fi
+  if ! write_manifest "$manifest_file" "$base" manifest_entries; then
+    report_agent_bundle_changes changed_paths
+    exit 1
+  fi
 
   echo
   say_ok "Done."
