@@ -422,7 +422,8 @@ write_manifest() {
   local entries_ref="$3"
 
   [[ "$entries_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "write_manifest: invalid entries variable name: $entries_ref" >&2; return 1; }
-  assert_manifest_base_matches "$manifest_file" "$base" || return 1
+  assert_manifest_base_ma
+  tches "$manifest_file" "$base" || return 1
 
   local entries
   eval "entries=(\"\${${entries_ref}[@]+\${${entries_ref}[@]}}\")"
@@ -607,7 +608,7 @@ install_agent_bundle_files() {
       return 1
     fi
     if [[ -e "$destination" || -L "$destination" ]]; then
-      printf "Replace existing agent '${destination##*/}'? [y/Y] " >&2
+      printf "Replace existing agent '${destination##*/}'? [y/n] " >&2
       if ! IFS= read -r response; then
         response=""
       fi
@@ -643,7 +644,7 @@ install_agent_bundle_notice() {
 
   if [[ -e "$destination_file" || -L "$destination_file" ]]; then
     local response
-    if ! IFS= read -r -p "Replace existing notice '${destination_file##*/}'? [y/Y] " response; then
+    if ! IFS= read -r -p "Replace existing notice '${destination_file##*/}'? n " response; then
       response=""
     fi
     if [[ "$response" != "y" && "$response" != "Y" ]]; then
