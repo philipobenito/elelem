@@ -90,7 +90,9 @@ resolve_install_base base "$HOME/.config/opencode" ".opencode"
 rules_target="$base/rules"
 skills_target="$base/skills"
 manifest_file="$SCRIPT_DIR/.elelem-manifest-opencode"
+assert_manifest_base_matches "$manifest_file" "$base"
 manifest_entries=()
+changed_paths=()
 instructions_globs=()
 
 mkdir -p "$rules_target"
@@ -195,6 +197,99 @@ else
   say_info "No skills found in $SKILLS_SOURCE (skipping skills install)."
 fi
 
+echo
+say_step "Optional agent bundle:"
+agent_bundle_items=("Elelem agent bundle (11 agents)")
+agent_bundle_defaults=(0)
+multiselect agent_bundle_selected agent_bundle_items agent_bundle_defaults
+
+if (( ${#agent_bundle_selected[@]} > 0 )); then
+  agent_bundle_files=()
+  for _f in "$SCRIPT_DIR/agents/opencode/"*.md; do
+    [[ -f "$_f" ]] || continue
+    agent_bundle_files+=("$(basename "$_f")")
+  done
+
+  config_paths=("$HOME/.config/opencode/opencode.json" "$PWD/opencode.json" "$PWD/.opencode/opencode.json" "$base/opencode.json")
+  if [[ "$base" != "$HOME/.config/opencode" ]]; then
+    config_paths+=("${base%/.opencode}/opencode.json")
+  fi
+  for config_path in "${config_paths[@]}"; do
+    config_paths+=("${config_path}c")
+  done
+  inspected_config_paths=()
+  for config_path in "${config_paths[@]}"; do
+    [[ -e "$config_path" || -L "$config_path" ]] || continue
+    if ! config_directory="$(cd "$(dirname "$config_path")" && pwd -P)"; then
+      say_err "cannot inspect JSON agent declarations in '$config_path'."
+      exit 1
+    fi
+    config_key="$config_directory/${config_path##*/}"
+    already_inspected=0
+    for inspected_config_path in "${inspected_config_paths[@]+"${inspected_config_paths[@]}"}"; do
+      [[ "$config_key" == "$inspected_config_path" ]] && already_inspected=1
+    done
+    (( already_inspected == 0 )) || continue
+    inspected_config_paths+=("$config_key")
+    if [[ "$config_path" == *.jsonc ]]; then
+      say_err "cannot inspect JSONC configuration '$config_path'; convert it to JSON, remove it, or deselect the agent bundle."
+      exit 1
+    fi
+    if [[ ! -f "$config_path" || ! -r "$config_path" ]]; then
+      say_err "cannot inspect JSON agent declarations in '$config_path'."
+      exit 1
+    fi
+    if ! jq -se 'length == 1 and (.[0] | type == "object" and (if has("agent") then (.agent | type == "object") else true end) and (if has("agents") then (.agents | type == "object") else true end))' "$config_path" > /dev/null 2>&1; then
+      say_err "cannot inspect JSON agent declarations in '$config_path'."
+      exit 1
+    fi
+    for agent_file in "${agent_bundle_files[@]}"; do
+      agent_id="${agent_file%.md}"
+      if jq -e --arg agent_id "$agent_id" '(.agent // {} | has($agent_id)) or (.agents // {} | has($agent_id))' "$config_path" > /dev/null; then
+        say_err "agent ID '$agent_id' conflicts with an existing JSON agent declaration in '$config_path'; rename or remove the competing declaration, then rerun."
+        exit 1
+      else
+        query_status=$?
+        if (( query_status != 1 )); then
+          say_err "cannot inspect JSON agent declarations in '$config_path'."
+          exit 1
+        fi
+      fi
+    done
+  done
+
+  for agent_root in "$PWD/.opencode/agents" "$HOME/.config/opencode/agents" "$base/agents"; do
+    if [[ ! -d "$agent_root" ]]; then
+      inspection_path="$agent_root"
+      while [[ ! -e "$inspection_path" && ! -L "$inspection_path" ]]; do
+        inspection_path="${inspection_path%/*}"
+      done
+      if [[ ! -d "$inspection_path" || ! -r "$inspection_path" || ! -x "$inspection_path" ]]; then
+        say_err "failed to enumerate Markdown agents in '$agent_root'."
+        exit 1
+      fi
+      continue
+    fi
+    for agent_file in "${agent_bundle_files[@]}"; do
+      if ! conflicting_agent_path=$(find -H "$agent_root" -maxdepth 1 -name "$agent_file" -print -quit); then
+        say_err "failed to enumerate Markdown agents in '$agent_root'."
+        exit 1
+      fi
+      [[ -n "$conflicting_agent_path" ]] || continue
+      [[ "$conflicting_agent_path" == "$base/agents/$agent_file" ]] && continue
+      if [[ -d "$base/agents" ]] && [[ "$(cd "$agent_root" && pwd -P)" == "$(cd "$base/agents" && pwd -P)" ]]; then
+        continue
+      fi
+      agent_id="${agent_file%.md}"
+      say_err "agent ID '$agent_id' conflicts with existing Markdown agent '$conflicting_agent_path'; rename or remove the competing file, then rerun."
+      exit 1
+    done
+  done
+
+  install_agent_bundle_notice "$SCRIPT_DIR/agents/LICENSE" "$base/agents.LICENSE" "agents.LICENSE" manifest_entries changed_paths
+  install_agent_bundle_files "$SCRIPT_DIR/agents/opencode" "$base/agents" "agents" manifest_entries agent_bundle_files changed_paths
+fi
+
 write_opencode_instructions "$base/opencode.json" "${instructions_globs[@]+"${instructions_globs[@]}"}"
 
 if (( ${#instructions_globs[@]} > 0 )); then
@@ -252,8 +347,18 @@ write_agents_md "$base/AGENTS.md" manifest_entries
 
 manifest_entries+=("AGENTS.md")
 
-prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries
-write_manifest "$manifest_file" "$base" manifest_entries
+if ! prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries agents; then
+  if (( ${#changed_paths[@]} > 0 )); then
+    report_agent_bundle_changes changed_paths
+  fi
+  exit 1
+fi
+if ! write_manifest "$manifest_file" "$base" manifest_entries; then
+  if (( ${#changed_paths[@]} > 0 )); then
+    report_agent_bundle_changes changed_paths
+  fi
+  exit 1
+fi
 
 echo
 say_ok "Done."
