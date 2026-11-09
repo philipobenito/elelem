@@ -79,12 +79,193 @@ _skill_resolve_dst() {
   printf '%s/%s\n' "$out" "${src#$SKILLS_SOURCE/}"
 }
 
+check_agent_bundle_conflicts() {
+  local target="$1"
+  shift
+  local roots=("$PWD/.claude/agents" "$HOME/.claude/agents" "$target")
+  local root candidate identity canonical candidate_list ancestor scan_status=0
+  if ! candidate_list="$(mktemp "${TMPDIR:-/tmp}/claude-agent-candidates.XXXXXX")"; then
+    say_err "cannot create a temporary agent scan list."
+    return 1
+  fi
+  for root in "${roots[@]}"; do
+    if [[ -L "$root" ]]; then
+      say_err "cannot inspect agent scan root '$root'; ensure it is a readable and searchable directory."
+      scan_status=1
+      break
+    fi
+    if [[ ! -e "$root" && ! -L "$root" ]]; then
+      ancestor="$root"
+      while [[ ! -e "$ancestor" && ! -L "$ancestor" ]]; do
+        if [[ "$ancestor" == */* ]]; then
+          ancestor="${ancestor%/*}"
+          [[ -n "$ancestor" ]] || ancestor="/"
+        else
+          ancestor="."
+        fi
+      done
+      if [[ ! -d "$ancestor" || ! -x "$ancestor" ]]; then
+        say_err "cannot inspect agent scan root '$root'; ensure it is a readable and searchable directory."
+        scan_status=1
+        break
+      fi
+      continue
+    fi
+    if [[ ! -d "$root" || ! -r "$root" || ! -x "$root" ]]; then
+      say_err "cannot inspect agent scan root '$root'; ensure it is a readable and searchable directory."
+      scan_status=1
+      break
+    elif ! ls -a "$root" >/dev/null 2>&1; then
+      say_err "cannot inspect agent scan root '$root'; ensure it is a readable and searchable directory."
+      scan_status=1
+      break
+    fi
+    if ! find "$root" -type l -print0 > "$candidate_list"; then
+      say_err "cannot inspect agent scan root '$root'; ensure it is a readable and searchable directory."
+      scan_status=1
+      break
+    fi
+    while IFS= read -r -d '' candidate; do
+      if [[ ! -d "$candidate" && "$candidate" != *.md ]]; then
+        continue
+      fi
+      say_err "cannot inspect agent scan path '$candidate'; refusing a symlinked path."
+      scan_status=1
+      break
+    done < "$candidate_list"
+    if (( scan_status != 0 )); then
+      break
+    fi
+    if ! find "$root" -type f -name '*.md' -print0 > "$candidate_list"; then
+      say_err "cannot inspect agent scan root '$root'; ensure it is a readable and searchable directory."
+      scan_status=1
+      break
+    fi
+    while IFS= read -r -d '' candidate; do
+      [[ -f "$candidate" ]] || continue
+      if [[ ! -r "$candidate" ]]; then
+        say_err "cannot be inspected: $candidate"
+        scan_status=1
+        break
+      fi
+      if ! identity="$(awk '
+        { sub(/\r$/, "") }
+        NR == 1 { if ($0 != "---") exit; next }
+        $0 == "---" { exit }
+        { frontmatter[++line_count] = $0 }
+        END {
+          for (line_number = 1; line_number <= line_count; line_number++) {
+            line = frontmatter[line_number]
+            if (line ~ /^[[:space:]]*$/ || line ~ /^[[:space:]]*#/) continue
+            match(line, /[^[:space:]]/)
+            indentation = RSTART - 1
+            if (!root_indentation_found || indentation < root_indentation) {
+              root_indentation = indentation
+              root_indentation_found = 1
+            }
+          }
+          for (line_number = 1; line_number <= line_count; line_number++) {
+            line = frontmatter[line_number]
+            if (line ~ /^[[:space:]]*$/ || line ~ /^[[:space:]]*#/) continue
+            match(line, /[^[:space:]]/)
+            if (RSTART - 1 != root_indentation) continue
+            line = substr(line, root_indentation + 1)
+            if (line ~ /^\.\.\.[[:space:]]*($|#)/) { parse_error = 1; break }
+            if (line ~ /^[{&!?]/) { parse_error = 1; break }
+            if (line ~ /^<<[[:space:]]*:/ || line ~ /^"<<"[[:space:]]*:/ || line ~ /^\047<<\047[[:space:]]*:/) { parse_error = 1; break }
+            if (line ~ /^"/) {
+              quoted_key_closed = 0
+              escaped = 0
+              for (character_index = 2; character_index <= length(line); character_index++) {
+                character = substr(line, character_index, 1)
+                if (escaped) { escaped = 0; continue }
+                if (character == "\\") { escaped = 1; continue }
+                if (character == "\"") { quoted_key_closed = 1; break }
+              }
+              if (!quoted_key_closed) { parse_error = 1; break }
+            }
+            if (line ~ /^"[^"]*\\[^"]*"[[:space:]]*:/ || line ~ /^"name"[[:space:]]*:/ || line ~ /^\047name\047[[:space:]]*:/) { parse_error = 1; break }
+            if (line ~ /^\047/) {
+              quoted_key_closed = 0
+              for (character_index = 2; character_index <= length(line); character_index++) {
+                character = substr(line, character_index, 1)
+                if (character == "\047") {
+                  if (substr(line, character_index + 1, 1) == "\047") { character_index++; continue }
+                  quoted_key_closed = 1
+                  break
+                }
+              }
+              if (!quoted_key_closed) { parse_error = 1; break }
+            }
+            if (line !~ /^name[[:space:]]*:[[:space:]]*/) continue
+            if (found_name) { parse_error = 1; break }
+            found_name = 1
+            value = line
+            sub(/^name[[:space:]]*:[[:space:]]*/, "", value)
+            sub(/^[[:space:]]+/, "", value)
+            sub(/[[:space:]]+$/, "", value)
+            if (value ~ /^[>|]/) { parse_error = 1; break }
+            if (value ~ /^"/) {
+              if (value !~ /^"[^\"]*"([[:space:]]+#.*)?$/) { parse_error = 1; break }
+              if (index(value, "\\") != 0) { parse_error = 1; break }
+              sub(/^"/, "", value)
+              sub(/"([[:space:]]+#.*)?$/, "", value)
+            } else if (value ~ /^\047/) {
+              if (value !~ /^\047[^\047]*\047([[:space:]]+#.*)?$/) { parse_error = 1; break }
+              sub(/^\047/, "", value)
+              sub(/\047([[:space:]]+#.*)?$/, "", value)
+            } else {
+              if (value ~ /^!/) { parse_error = 1; break }
+              if (value ~ /^[&*]/) { parse_error = 1; break }
+              sub(/[[:space:]]+#.*$/, "", value)
+              sub(/[[:space:]]+$/, "", value)
+              if (value == "") { parse_error = 1; break }
+            }
+            if (value == "") { parse_error = 1; break }
+            identity = value
+          }
+          if (parse_error) exit 2
+          if (found_name) print identity
+        }
+      ' "$candidate")"; then
+        say_err "cannot inspect agent identity in '$candidate'; its name field is unreadable or malformed."
+        scan_status=1
+        break
+      fi
+      identity="${identity#\"}"
+      identity="${identity%\"}"
+      identity="${identity#\'}"
+      identity="${identity%\'}"
+      for canonical in "$@"; do
+        if [[ "$identity" == "${canonical%.md}" && "$candidate" != "$root/$identity.md" ]]; then
+          say_err "competing agent definition at $candidate claims bundled identity $identity"
+          scan_status=1
+          break
+        fi
+      done
+      if (( scan_status != 0 )); then
+        break
+      fi
+    done < "$candidate_list"
+    if (( scan_status != 0 )); then
+      break
+    fi
+  done
+  if ! rm -f "$candidate_list"; then
+    say_err "cannot remove the temporary agent scan list '$candidate_list'."
+    return 1
+  fi
+  return "$scan_status"
+}
+
 resolve_install_base base "$HOME/.claude" ".claude"
 
 rules_target="$base/rules"
 skills_target="$base/skills"
 manifest_file="$SCRIPT_DIR/.elelem-manifest-claude"
+assert_manifest_base_matches "$manifest_file" "$base"
 manifest_entries=()
+changed_paths=()
 
 mkdir -p "$rules_target"
 
@@ -185,8 +366,33 @@ else
   say_info "No skills found in $SKILLS_SOURCE (skipping skills install)."
 fi
 
-prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries
-write_manifest "$manifest_file" "$base" manifest_entries
+agent_bundle_items=("Elelem agent bundle (11 agents)")
+agent_bundle_defaults=(0)
+multiselect agent_bundle_selected agent_bundle_items agent_bundle_defaults
+
+if (( ${#agent_bundle_selected[@]} > 0 )); then
+  agent_bundle_files=()
+  for _f in "$SCRIPT_DIR/agents/claude/"*.md; do
+    [[ -f "$_f" ]] || continue
+    agent_bundle_files+=("$(basename "$_f")")
+  done
+  check_agent_bundle_conflicts "$base/agents" "${agent_bundle_files[@]}" || exit 1
+  install_agent_bundle_notice "$SCRIPT_DIR/agents/LICENSE" "$base/agents.LICENSE" "agents.LICENSE" manifest_entries changed_paths
+  install_agent_bundle_files "$SCRIPT_DIR/agents/claude" "$base/agents" "agents" manifest_entries agent_bundle_files changed_paths
+fi
+
+if ! prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries agents; then
+  if (( ${#changed_paths[@]} > 0 )); then
+    report_agent_bundle_changes changed_paths
+  fi
+  exit 1
+fi
+if ! write_manifest "$manifest_file" "$base" manifest_entries; then
+  if (( ${#changed_paths[@]} > 0 )); then
+    report_agent_bundle_changes changed_paths
+  fi
+  exit 1
+fi
 
 echo
 say_ok "Done."
