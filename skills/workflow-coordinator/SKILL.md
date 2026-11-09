@@ -98,6 +98,44 @@ leaving changes uncommitted, and never push.
 
 ## Execution and recovery
 
+### Coordinator-managed handoff continuation
+
+At each actual phase or assigned-task handoff, resume the same active
+coordinator. This is a phase/task boundary rule, not a check after each tool
+call or interactive question. Validate the returned scope, outcome, evidence,
+questions and blockers against user instructions, approval, the current phase,
+approved revision and relevant workflow state. Record the result and next
+action in existing `workflow.md`, in the applicable phase or task entry.
+
+If the return is sufficient and the next required phase has no outstanding
+user choice or approval, invoke that phase through `{{INVOKE_SKILL_TOOL}}`
+without routine prompting. Continue only along the approved workflow order and
+do not skip or bypass any review, approval, TDD, debugging, verification or
+explicit-skip gate. A status label or returned report is not evidence by itself.
+
+Pause when the phase requires a user choice or approval, actual Plan-mode
+restrictions prevent the next action, a real blocker or interruption occurs,
+evidence is missing, state is unsafe, required capability is unavailable, or an
+outstanding dependency leaves no safe independent work. Record the blocker and
+next action; do not repeatedly retry unchanged work or dispatch dependants.
+Stable task-local checks may continue while other workers run, but only against
+stable inputs and within dependency and wave barriers.
+
+Nested investigators and reviewers return to their owning phase for
+reconciliation before that phase hands its result to the coordinator. Assigned
+workers return through `subagent-driven-development`, which validates their
+reports and checks before its coordinator handoff. Preserve existing
+coordinator-owned dispatch paths. Never invoke a coordinator recursively or
+create another owner for the same workflow. A phase's instruction to stop after
+handoff ends that phase procedure only; the coordinator then resumes the
+workflow. On cross-session resumption, validate the existing state and evidence.
+Before retrying interrupted work that may have caused an external side effect,
+determine from available evidence whether the side effect actually occurred. If
+its outcome is unknown or repeating would be unsafe, pause and surface the
+uncertainty rather than duplicate the action. Reuse still-valid work, and
+continue at the next required action without repeating satisfied phases or
+routine prompts.
+
 Wave planning finishes before dispatch. By default, its independent readiness
 review must return `READY`. If the user explicitly authorised skipping only
 that review, record its status as `SKIPPED` and require the executor to confirm

@@ -44,6 +44,16 @@ Keep the concise phase evidence required by `./phase-evidence.md` in these
 existing `workflow.md` records. Preserve procedure and user-choice provenance,
 exact-source scoped skips and current validity; do not create another report.
 
+For each actual coordinator-managed phase or assigned-task handoff, preserve the
+original baseline and exact skip provenance. The same active coordinator
+records the validated result and next action in the existing phase or task entry
+in `workflow.md`. Include returned scope, outcome, evidence, questions or
+blockers as relevant. Do not create a separate handoff state file. On resume,
+validate provenance and current validity of evidence, then continue from the
+next required action without repeating valid completed phases or routine
+prompts. A phase's
+"stop after handoff" ends that phase procedure, not the overall workflow.
+
 Task statuses use `queued`, `running`, `review`, `verified`, `integrated`,
 `accepted-unverified`, `blocked` or `skipped`. `integrated` requires task review,
 task verification and the appropriate wave integration check. A task with an

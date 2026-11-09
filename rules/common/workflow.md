@@ -81,6 +81,31 @@ for routine task or wave approvals. Keep the coordinator thin: invoke phase
 skills and track state, rather than rereading or substituting for their
 procedures.
 
+## Coordinator-managed handoffs
+
+At each actual coordinator-managed phase or assigned-task handoff, the same
+active coordinator validates the returned scope, outcome, evidence, questions
+and blockers against the current phase, user instructions, approval and relevant
+workflow state. This standing rule applies to phase or task handoffs, not to
+each tool call or each interactive question. Record the result and next action
+in the existing `workflow.md`.
+
+When the return supports the next required phase, invoke that phase without
+routine prompting. Pause for an actual user choice or approval, a Plan-mode
+limitation, a real blocker, missing evidence, unsafe state, unavailable
+capability, interruption, or an outstanding dependency when no safe independent
+work remains. Preserve all existing approval, review, verification, TDD,
+debugging and scoped-skip gates. Continuation never skips a phase or treats a
+status label or worker report as evidence.
+
+Nested investigators and reviewers return to their owning phase for
+reconciliation before that phase hands off to the coordinator. Assigned workers
+return through the executor, except for pre-existing coordinator-owned dispatch.
+Safe task-local checks with stable inputs may continue while other workers run;
+dependency and wave barriers still apply. Do not recursively invoke another
+coordinator or create a second owner for the active workflow. "Stop after
+handoff" ends the current phase procedure, not the overall workflow.
+
 ## Blockers and recovery
 
 A real blocker stops new dispatch. Cancel running work only when safe

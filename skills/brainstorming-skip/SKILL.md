@@ -26,6 +26,12 @@ The `workflow-coordinator` owns lifecycle, explicit phase skips, final approval,
 3. **Shape the proposal.** Capture goal, requirements, exclusions, architecture, components, interfaces, data flow, errors/failure behaviour and tests/verification. Use explicit assumptions and research references. Do not invent acceptance criteria or claim the design is approved.
 4. **Return to the coordinator.** Return one self-contained proposed-design block and unresolved points. The coordinator runs any required independent review, seeks explicit final approval, persists the approved plan, and proceeds with Wave Planning.
 
+Returning the proposed-design block ends this Planning procedure only. The
+procedure does not stop the overall workflow. The coordinator validates and records the proposal and next action in existing
+`workflow.md`, then invokes the next required phase without routine prompting.
+Lightweight Planning is not a phase skip; user choices, approval and missing
+inputs remain governed by the usual gates.
+
 ## What Skip Mode Does Not Do
 
 - It does not repeat Research or run independent Design Review; those remain coordinator-owned phases.

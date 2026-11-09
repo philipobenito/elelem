@@ -42,6 +42,13 @@ The reviewer **MUST** flag only issues that would cause real problems in plannin
 
 The full prompt, bounded evidence fields, calibration and output format live in `design-reviewer-prompt.md`.
 
+The dispatched reviewer returns the verdict and findings to this review phase
+for reconciliation. Return the reconciled verdict and any remaining issues to
+the coordinator before explicit user approval or another phase. This ends the
+review procedure, not the overall workflow. The coordinator records the result
+and next action in existing `workflow.md` and continues without routine
+prompting only when the applicable approval gate permits it.
+
 ## Verdict Gate
 
 Return `Approved` only when the most recent reviewer dispatch for the current proposal returned `Approved`. A skipped review, prior verdict, or your own assessment is not approval. The coordinator separately records user approval.
