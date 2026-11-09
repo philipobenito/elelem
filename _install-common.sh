@@ -337,25 +337,38 @@ prune_stale_manifest_entries() {
   local manifest_file="$1"
   local base="$2"
   local new_entries_ref="$3"
+  local preserve_prefix="${4:-}"
 
+  assert_manifest_base_matches "$manifest_file" "$base" || return 1
   [[ -f "$manifest_file" ]] || return 0
   [[ "$new_entries_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "prune_stale_manifest_entries: invalid new_entries variable name: $new_entries_ref" >&2; return 1; }
 
   local new_entries
   eval "new_entries=(\"\${${new_entries_ref}[@]+\${${new_entries_ref}[@]}}\")"
 
-  local old_base=""
   local removed=0
   local first_line=1
   while IFS= read -r line; do
     if (( first_line )); then
-      old_base="$line"
       first_line=0
       continue
     fi
     [[ -z "$line" ]] && continue
-    if [[ "$old_base" != "$base" ]]; then
-      continue
+    if [[ -n "$preserve_prefix" ]] && {
+      [[ "$line" == "$preserve_prefix.LICENSE" ]] ||
+        [[ "${line#"$preserve_prefix/"}" != "$line" ]]
+    }; then
+      local preserved=0
+      local existing_entry
+      for existing_entry in "${new_entries[@]+"${new_entries[@]}"}"; do
+        if [[ "$existing_entry" == "$line" ]]; then
+          preserved=1
+          break
+        fi
+      done
+      if (( preserved == 0 )); then
+        new_entries+=("$line")
+      fi
     fi
     local found=0
     local new_entry
@@ -366,16 +379,34 @@ prune_stale_manifest_entries() {
       fi
     done
     if (( found == 0 )) && [[ -f "$base/$line" ]]; then
-      rm "$base/$line"
+      rm "$base/$line" || return 1
       echo "  removed stale: $line"
       (( removed++ )) || true
     fi
   done < "$manifest_file"
 
+  if [[ -n "$preserve_prefix" ]]; then
+    eval "${new_entries_ref}=(\"\${new_entries[@]+\${new_entries[@]}}\")"
+  fi
+
   if (( removed > 0 )); then
     local rules_dir="$base/rules"
     local skills_dir="$base/skills"
     find "$rules_dir" "$skills_dir" -type d -empty -delete 2>/dev/null || true
+  fi
+}
+
+assert_manifest_base_matches() {
+  local manifest_file="$1"
+  local base="$2"
+
+  [[ -f "$manifest_file" ]] || return 0
+
+  local manifest_base=""
+  IFS= read -r manifest_base < "$manifest_file" || true
+  if [[ "$manifest_base" != "$base" ]]; then
+    say_err "manifest '$manifest_file' records base '$manifest_base', not '$base'; refusing to change install scope."
+    return 1
   fi
 }
 
@@ -391,11 +422,24 @@ write_manifest() {
   local entries_ref="$3"
 
   [[ "$entries_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "write_manifest: invalid entries variable name: $entries_ref" >&2; return 1; }
+  assert_manifest_base_matches "$manifest_file" "$base" || return 1
 
   local entries
   eval "entries=(\"\${${entries_ref}[@]+\${${entries_ref}[@]}}\")"
 
-  { echo "$base"; printf '%s\n' "${entries[@]+"${entries[@]}"}" | sort; } > "$manifest_file"
+  local staged_manifest staged_entries
+  staged_manifest="$(mktemp "${manifest_file}.tmp.XXXXXX")" || return 1
+  staged_entries="$(mktemp "${manifest_file}.entries.XXXXXX")" || { rm -f "$staged_manifest"; return 1; }
+
+  if ! printf '%s\n' "${entries[@]+"${entries[@]}"}" > "$staged_entries" ||
+    ! printf '%s\n' "$base" > "$staged_manifest" ||
+    ! sort "$staged_entries" >> "$staged_manifest"; then
+    rm -f "$staged_manifest" "$staged_entries"
+    return 1
+  fi
+
+  rm -f "$staged_entries" || { rm -f "$staged_manifest"; return 1; }
+  mv -f "$staged_manifest" "$manifest_file" || { local status=$?; rm -f "$staged_manifest"; return "$status"; }
 }
 
 # Default destination resolver used by install_files_from_dir.
@@ -505,6 +549,136 @@ install_files_from_dir() {
     entry="${manifest_prefix}/${dst_rel}"
     eval "${manifest_ref}+=(\"\$entry\")"
   done
+}
+
+report_agent_bundle_changes() {
+  local changed_paths_ref="$1"
+  local reported_paths path
+  eval "reported_paths=(\"\${${changed_paths_ref}[@]+\${${changed_paths_ref}[@]}}\")"
+  printf 'Changed paths:\n'
+  for path in "${reported_paths[@]+"${reported_paths[@]}"}"; do
+    printf '  %s\n' "$path"
+  done
+}
+
+copy_and_record_agent_bundle_file() {
+  local source_file="$1"
+  local destination="$2"
+  local manifest_entry="$3"
+  local manifest_ref="$4"
+  local changed_paths_ref="$5"
+
+  if ! cp "$source_file" "$destination"; then
+    say_err "failed to copy agent to '$destination'; it may be partially written."
+    report_agent_bundle_changes "$changed_paths_ref"
+    return 1
+  fi
+  eval "${manifest_ref}+=(\"\$manifest_entry\")"
+  eval "${changed_paths_ref}+=(\"\$destination\")"
+}
+
+install_agent_bundle_files() {
+  local source_dir="$1"
+  local output_dir="$2"
+  local manifest_prefix="$3"
+  local manifest_ref="$4"
+  local files_ref="$5"
+  local changed_paths_ref="$6"
+
+  [[ "$manifest_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_agent_bundle_files: invalid manifest_ref variable name: $manifest_ref" >&2; return 1; }
+  [[ "$files_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_agent_bundle_files: invalid files_ref variable name: $files_ref" >&2; return 1; }
+  [[ "$changed_paths_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_agent_bundle_files: invalid changed_paths_ref variable name: $changed_paths_ref" >&2; return 1; }
+
+  local files
+  eval "files=(\"\${${files_ref}[@]+\${${files_ref}[@]}}\")"
+
+  if ! mkdir -p "$output_dir"; then
+    say_err "failed to create agent output directory '$output_dir'."
+    report_agent_bundle_changes "$changed_paths_ref"
+    return 1
+  fi
+
+  local file destination entry response
+  for file in "${files[@]+"${files[@]}"}"; do
+    destination="$output_dir/$file"
+    if [[ -d "$destination" ]]; then
+      say_err "cannot install agent at '$destination'; move or remove the directory, then rerun the installer."
+      report_agent_bundle_changes "$changed_paths_ref"
+      return 1
+    fi
+    if [[ -e "$destination" || -L "$destination" ]]; then
+      printf "Replace existing agent '${destination##*/}'? [y/Y] " >&2
+      if ! IFS= read -r response; then
+        response=""
+      fi
+      if [[ "$response" != "y" && "$response" != "Y" ]]; then
+        continue
+      fi
+      if [[ -L "$destination" ]] && ! rm -f "$destination"; then
+        say_err "failed to remove existing agent symlink '$destination'."
+        report_agent_bundle_changes "$changed_paths_ref"
+        return 1
+      fi
+    fi
+    entry="$manifest_prefix/$file"
+    copy_and_record_agent_bundle_file "$source_dir/$file" "$destination" "$entry" "$manifest_ref" "$changed_paths_ref" || return 1
+  done
+}
+
+install_agent_bundle_notice() {
+  local source_file="$1"
+  local destination_file="$2"
+  local manifest_entry="$3"
+  local manifest_ref="$4"
+  local changed_paths_ref="$5"
+
+  [[ "$manifest_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_agent_bundle_notice: invalid manifest_ref variable name: $manifest_ref" >&2; return 1; }
+  [[ "$changed_paths_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "install_agent_bundle_notice: invalid changed_paths_ref variable name: $changed_paths_ref" >&2; return 1; }
+
+  if [[ -d "$destination_file" ]]; then
+    say_err "cannot install notice at '$destination_file'; move or remove the directory, then rerun the installer."
+    report_agent_bundle_changes "$changed_paths_ref"
+    return 1
+  fi
+
+  if [[ -e "$destination_file" || -L "$destination_file" ]]; then
+    local response
+    if ! IFS= read -r -p "Replace existing notice '${destination_file##*/}'? [y/Y] " response; then
+      response=""
+    fi
+    if [[ "$response" != "y" && "$response" != "Y" ]]; then
+      if [[ "$response" != "Y" ]] && cmp -s "$source_file" "$destination_file"; then
+        return 0
+      fi
+      say_err "cannot replace '$destination_file'; move or remove it, then rerun the installer."
+      return 1
+    fi
+  fi
+
+  mkdir -p "$(dirname "$destination_file")" || return 1
+
+  local staged_file
+  staged_file="$(mktemp "${destination_file}.tmp.XXXXXX")" || return 1
+  if ! cp "$source_file" "$staged_file"; then
+    rm -f "$staged_file"
+    say_err "failed to stage notice at '$staged_file' for destination '$destination_file'."
+    return 1
+  fi
+
+  if ! cmp -s "$source_file" "$staged_file"; then
+    rm -f "$staged_file"
+    say_err "verification comparison failed for 'agents.LICENSE' at staged path '$staged_file'."
+    return 1
+  fi
+
+  if ! mv -f "$staged_file" "$destination_file"; then
+    rm -f "$staged_file"
+    say_err "failed to rename/move staged notice '$staged_file' to agents.LICENSE destination '$destination_file'."
+    return 1
+  fi
+
+  eval "${manifest_ref}+=(\"\$manifest_entry\")"
+  eval "${changed_paths_ref}+=(\"\$destination_file\")"
 }
 
 # Scans AGENTS.md files and skill files under root_dir for unsubstituted placeholders
