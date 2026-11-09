@@ -80,6 +80,18 @@ If you already maintain your own `AGENTS.md`, the Codex installer appends or upd
 
 Everything outside that block is left untouched.
 
+## Optional agent bundle
+
+Each harness installer offers an optional bundle of 11 agents. Select the bundle during installation to install the native definitions for the chosen scope:
+
+- Claude Code: `~/.claude/agents` or `<project>/.claude/agents`
+- OpenCode: `~/.config/opencode/agents` or `<project>/.opencode/agents`
+- Codex: `~/.codex/agents` or `<project>/.codex/agents`
+
+Before writing the bundle, the installer checks applicable user and project file-backed agents and relevant configuration declarations. Competing files or declarations with the same agent identity block installation, as do applicable inputs that cannot be inspected safely. Existing canonical agent files and the sibling `agents.LICENSE` notice require replacement consent; refusal preserves them. If a refused notice differs from the bundled notice, the bundle installation stops.
+
+An interrupted installation may leave partial bundle files that are not automatically rolled back. Inspect the affected paths and give them manual attention before retrying. The existing uninstall flow lists manifest-tracked agents and the notice for confirmation before removal.
+
 ## Layout
 
 ```text
