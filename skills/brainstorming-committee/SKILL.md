@@ -32,7 +32,7 @@ Before dispatching, read `committee-member-prompt.md` and `../_shared/subagent-d
 
 1. **Orient to the confirmed brief.** Use the user-confirmed goal, coordinator-supplied research record, approved external inputs, assumptions and unresolved questions. If a material gap blocks committee work, return it to the coordinator; do not repeat broad discovery.
 2. **Identify decisions.** Group consequential choices such as architecture, interfaces, data flow, errors and verification. Do not impose a subsystem-count limit or automatically split a cohesive request into unrelated tickets. If breadth creates genuine uncertainty, flag it to the coordinator for user discussion.
-3. **Deliberate.** For each decision group, dispatch all three members concurrently in one message using `{{DISPATCH_AGENT_TOOL}}` and the templates in `committee-member-prompt.md`. Use specialised types and verify high-capability dispatch through the shared procedure. Each receives the same bounded brief, relevant stable evidence, decisions and prior consensus, never full session history. Members return proposals, reasoning, concerns and unresolved questions, not user approval.
+3. **Deliberate.** For each decision group, dispatch all three members concurrently in one message using `{{DISPATCH_AGENT_TOOL}}` and the templates in `committee-member-prompt.md`. Use specialised types and verify high-capability dispatch through the shared procedure. When a specialised type is unavailable, inspect the dispatch tool's currently exposed type options and select an available type whose description indicates broad general-purpose capability. Do not assume a type identifier. If no suitable available type exists, return a blocker to the coordinator and do not dispatch. Each member receives the same bounded brief, relevant stable evidence, decisions and prior consensus, never full session history. Members return proposals, reasoning, concerns and unresolved questions, not user approval.
 4. **Synthesise consensus.** Apply the rules below, retaining material dissent and concerns. Use at most one tiebreaking round per decision. If it does not resolve the issue, return the unresolved choice to the coordinator for the user's decision.
 5. **Assemble a proposed design.** Cover goal, requirements, exclusions, architecture, components, interfaces, data flow, errors/failure behaviour, tests/verification and evidence references. Summarise material splits and risks without exposing deliberation transcripts.
 6. **Return to the coordinator.** Return the consolidated proposal, unresolved decisions and substantive uncertainty. Do not invoke design review, seek final user approval, persist an approved plan, create tickets or begin implementation.
@@ -71,7 +71,7 @@ Map the project's primary language or framework, as supplied by the coordinator,
 | Java / Spring          | `java-architect`     |
 | C# / .NET              | `csharp-developer`   |
 | Ruby / Rails           | `rails-expert`       |
-| Multi-language / other | `general-purpose`    |
+| Multi-language / other | An available generalist type, resolved at dispatch time |
 
 ## Synthesising Consensus
 

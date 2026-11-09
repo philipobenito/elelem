@@ -29,9 +29,9 @@ Each committee role maps to a specialised subagent type. Resolve the type and a 
 | Java/Spring          | `java-architect`     |
 | C#/.NET              | `csharp-developer`   |
 | Ruby/Rails           | `rails-expert`       |
-| Multi-language/other | `general-purpose`    |
+| Multi-language/other | An available generalist type, resolved at dispatch time |
 
-If any specialised type is unavailable at dispatch time, fall back to `general-purpose` with the full perspective prompt below.
+If any specialised type is unavailable at dispatch time, inspect the dispatch tool's currently exposed type options and choose an available type whose description indicates broad general-purpose capability. Do not assume a type identifier or invent an unavailable type. If no suitable available type exists, report a blocker to the coordinator and do not dispatch. Use the full perspective prompt below for a resolved fallback type.
 
 ## The Three Perspectives
 
@@ -97,7 +97,7 @@ If any specialised type is unavailable at dispatch time, fall back to `general-p
 ### Architect
 
 ```
-{{DISPATCH_AGENT_TOOL}} (architect-reviewer):
+{{DISPATCH_AGENT_TOOL}} ([ARCHITECT_SUBAGENT_TYPE]):
   description: "Committee: Architect perspective"
   prompt: |
     You are a committee member reviewing a design decision. Your perspective is THE ARCHITECT.
@@ -156,7 +156,7 @@ If any specialised type is unavailable at dispatch time, fall back to `general-p
 ### Advocate
 
 ```
-{{DISPATCH_AGENT_TOOL}} (qa-expert):
+{{DISPATCH_AGENT_TOOL}} ([ADVOCATE_SUBAGENT_TYPE]):
   description: "Committee: Advocate perspective"
   prompt: |
     You are a committee member reviewing a design decision. Your perspective is THE ADVOCATE.
@@ -217,7 +217,7 @@ If any specialised type is unavailable at dispatch time, fall back to `general-p
 If a deliberation round produces irreconcilable disagreement (not just preference differences), dispatch at most one high-capability tiebreaking round where the reviewer sees each member's positions. Resolve routing with `../_shared/subagent-dispatch.md`. The recommendation goes to the synthesiser and does not constitute user approval:
 
 ```
-{{DISPATCH_AGENT_TOOL}} (architect-reviewer):
+{{DISPATCH_AGENT_TOOL}} ([TIEBREAKER_SUBAGENT_TYPE]):
   description: "Committee: Tiebreaking round"
   prompt: |
     Three committee members have given conflicting recommendations on a design decision. Your job is to synthesise a final recommendation.
