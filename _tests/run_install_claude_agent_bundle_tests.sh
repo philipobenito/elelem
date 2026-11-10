@@ -357,8 +357,8 @@ EOF
     return 1
   fi
 
-  if ! grep -Fq 'Replace existing agent' "$session_log" || ! grep -Fq 'architect-reviewer.md' "$session_log" || ! grep -Fq 'y/Y' "$session_log"; then
-    printf '[FAIL] %s: replacement prompt did not name the canonical agent and offer y/Y consent\n' "$name"
+  if ! grep -Fq 'Replace existing agent' "$session_log" || ! grep -Fq 'architect-reviewer.md' "$session_log" || ! grep -Fq '[y/n]' "$session_log"; then
+    printf '[FAIL] %s: replacement prompt did not name the canonical agent and offer [y/n] consent\n' "$name"
     return 1
   fi
 
@@ -400,8 +400,8 @@ test_claude_installer_refuses_an_unrecognised_notice_replacement_response() {
     return 1
   fi
 
-  if ! grep -Fq 'Replace existing notice' "$session_log" || ! grep -Fq 'agents.LICENSE' "$session_log" || ! grep -Fq 'y/Y' "$session_log"; then
-    printf '[FAIL] %s: notice replacement prompt did not name agents.LICENSE and offer y/Y consent\n' "$name"
+  if ! grep -Fq 'Replace existing notice' "$session_log" || ! grep -Fq 'agents.LICENSE' "$session_log" || ! grep -Fq '[y/n]' "$session_log"; then
+    printf '[FAIL] %s: notice replacement prompt did not name agents.LICENSE and offer [y/n] consent\n' "$name"
     return 1
   fi
 
@@ -445,8 +445,8 @@ test_claude_installer_refuses_to_replace_a_managed_canonical_agent() {
     return 1
   fi
 
-  if ! grep -Fq 'Replace existing agent' "$session_log" || ! grep -Fq 'architect-reviewer.md' "$session_log" || ! grep -Fq 'y/Y' "$session_log"; then
-    printf '[FAIL] %s: replacement prompt did not name the canonical agent and offer y/Y consent\n' "$name"
+  if ! grep -Fq 'Replace existing agent' "$session_log" || ! grep -Fq 'architect-reviewer.md' "$session_log" || ! grep -Fq '[y/n]' "$session_log"; then
+    printf '[FAIL] %s: replacement prompt did not name the canonical agent and offer [y/n] consent\n' "$name"
     return 1
   fi
 
@@ -493,8 +493,8 @@ test_claude_installer_refuses_to_replace_a_managed_notice() {
     return 1
   fi
 
-  if ! grep -Fq 'Replace existing notice' "$session_log" || ! grep -Fq 'agents.LICENSE' "$session_log" || ! grep -Fq 'y/Y' "$session_log"; then
-    printf '[FAIL] %s: notice replacement prompt did not name agents.LICENSE and offer y/Y consent\n' "$name"
+  if ! grep -Fq 'Replace existing notice' "$session_log" || ! grep -Fq 'agents.LICENSE' "$session_log" || ! grep -Fq '[y/n]' "$session_log"; then
+    printf '[FAIL] %s: notice replacement prompt did not name agents.LICENSE and offer [y/n] consent\n' "$name"
     return 1
   fi
 
@@ -550,8 +550,8 @@ test_claude_installer_allows_refusing_an_exact_existing_notice_without_claiming_
     return 1
   fi
 
-  if ! grep -Fq 'Replace existing notice' "$session_log" || ! grep -Fq 'agents.LICENSE' "$session_log" || ! grep -Fq 'y/Y' "$session_log"; then
-    printf '[FAIL] %s: notice replacement prompt did not name agents.LICENSE and offer y/Y consent\n' "$name"
+  if ! grep -Fq 'Replace existing notice' "$session_log" || ! grep -Fq 'agents.LICENSE' "$session_log" || ! grep -Fq '[y/n]' "$session_log"; then
+    printf '[FAIL] %s: notice replacement prompt did not name agents.LICENSE and offer [y/n] consent\n' "$name"
     return 1
   fi
 
@@ -624,8 +624,8 @@ test_claude_installer_replaces_a_mismatched_notice_when_user_confirms() {
     return 1
   fi
 
-  if ! grep -Fq 'Replace existing notice' "$session_log" || ! grep -Fq 'agents.LICENSE' "$session_log" || ! grep -Fq 'y/Y' "$session_log"; then
-    printf '[FAIL] %s: notice replacement prompt did not name agents.LICENSE and offer y/Y consent\n' "$name"
+  if ! grep -Fq 'Replace existing notice' "$session_log" || ! grep -Fq 'agents.LICENSE' "$session_log" || ! grep -Fq '[y/n]' "$session_log"; then
+    printf '[FAIL] %s: notice replacement prompt did not name agents.LICENSE and offer [y/n] consent\n' "$name"
     return 1
   fi
 
@@ -702,8 +702,8 @@ test_claude_installer_replaces_a_mismatched_notice_when_user_confirms_with_upper
     return 1
   fi
 
-  if ! grep -Fq 'Replace existing notice' "$session_log" || ! grep -Fq 'agents.LICENSE' "$session_log" || ! grep -Fq 'y/Y' "$session_log"; then
-    printf '[FAIL] %s: notice replacement prompt did not name agents.LICENSE and offer y/Y consent\n' "$name"
+  if ! grep -Fq 'Replace existing notice' "$session_log" || ! grep -Fq 'agents.LICENSE' "$session_log" || ! grep -Fq '[y/n]' "$session_log"; then
+    printf '[FAIL] %s: notice replacement prompt did not name agents.LICENSE and offer [y/n] consent\n' "$name"
     return 1
   fi
 
@@ -1987,8 +1987,8 @@ EOF
     return 1
   fi
 
-  if ! grep -Fq 'Replace existing agent' "$session_log" || ! grep -Fq 'architect-reviewer.md' "$session_log" || ! grep -Fq 'y/Y' "$session_log"; then
-    printf '[FAIL] %s: replacement prompt did not name the canonical agent and offer y/Y consent\n' "$name"
+  if ! grep -Fq 'Replace existing agent' "$session_log" || ! grep -Fq 'architect-reviewer.md' "$session_log" || ! grep -Fq '[y/n]' "$session_log"; then
+    printf '[FAIL] %s: replacement prompt did not name the canonical agent and offer [y/n] consent\n' "$name"
     return 1
   fi
 
@@ -2041,8 +2041,8 @@ EOF
     return 1
   fi
 
-  if ! grep -Fq 'Replace existing agent' "$session_log" || ! grep -Fq 'architect-reviewer.md' "$session_log" || ! grep -Fq 'y/Y' "$session_log"; then
-    printf '[FAIL] %s: replacement prompt did not name the canonical agent and offer y/Y consent\n' "$name"
+  if ! grep -Fq 'Replace existing agent' "$session_log" || ! grep -Fq 'architect-reviewer.md' "$session_log" || ! grep -Fq '[y/n]' "$session_log"; then
+    printf '[FAIL] %s: replacement prompt did not name the canonical agent and offer [y/n] consent\n' "$name"
     return 1
   fi
 
@@ -3190,6 +3190,83 @@ EOF
   return 0
 }
 
+test_agent_bundle_notice_rejects_a_mismatched_notice_at_eof_without_changing_it() {
+  local existing_notice expected_notice
+  local manifest_entries=('rules/retained.md')
+  local changed_paths=()
+
+  create_claude_fixture
+  existing_notice="$home_directory/.claude/agents.LICENSE"
+  expected_notice="$fixture_root/expected-agents.LICENSE"
+  mkdir -p "$(dirname "$existing_notice")"
+  printf 'User-authored notice to preserve at EOF.\n' > "$existing_notice"
+  cp "$existing_notice" "$expected_notice"
+  source "$repository_root/_install-common.sh"
+
+  if install_agent_bundle_notice "$repository_root/agents/LICENSE" "$existing_notice" agents.LICENSE manifest_entries changed_paths < /dev/null > "$fixture_root/helper-output" 2>&1; then
+    printf '[FAIL] notice replacement at EOF succeeded for a mismatched notice\n'
+    return 1
+  fi
+  if ! cmp -s "$expected_notice" "$existing_notice"; then
+    printf '[FAIL] notice replacement at EOF changed the mismatched notice\n'
+    return 1
+  fi
+}
+
+test_agent_bundle_notice_preserves_an_identical_notice_at_eof_without_claiming_it() {
+  local existing_notice
+  local manifest_entries=('rules/retained.md')
+  local changed_paths=()
+
+  create_claude_fixture
+  existing_notice="$home_directory/.claude/agents.LICENSE"
+  mkdir -p "$(dirname "$existing_notice")"
+  cp "$repository_root/agents/LICENSE" "$existing_notice"
+  source "$repository_root/_install-common.sh"
+
+  if ! install_agent_bundle_notice "$repository_root/agents/LICENSE" "$existing_notice" agents.LICENSE manifest_entries changed_paths < /dev/null > "$fixture_root/helper-output" 2>&1; then
+    printf '[FAIL] notice replacement at EOF failed for an identical notice\n'
+    return 1
+  fi
+  if ! cmp -s "$repository_root/agents/LICENSE" "$existing_notice"; then
+    printf '[FAIL] notice replacement at EOF changed the identical notice\n'
+    return 1
+  fi
+  if [[ "${#manifest_entries[@]}" -ne 1 || "${manifest_entries[0]}" != 'rules/retained.md' ]]; then
+    printf '[FAIL] notice replacement at EOF changed the manifest entries\n'
+    return 1
+  fi
+}
+
+test_agent_bundle_files_preserves_an_unmanaged_agent_at_eof_without_claiming_it() {
+  local output_directory existing_agent expected_agent
+  local agent_files=('architect-reviewer.md')
+  local manifest_entries=('rules/retained.md')
+  local changed_paths=()
+
+  create_claude_fixture
+  output_directory="$home_directory/.claude/agents"
+  existing_agent="$output_directory/architect-reviewer.md"
+  expected_agent="$fixture_root/expected-architect-reviewer.md"
+  mkdir -p "$output_directory"
+  printf 'User-authored agent to preserve at EOF.\n' > "$existing_agent"
+  cp "$existing_agent" "$expected_agent"
+  source "$repository_root/_install-common.sh"
+
+  if ! install_agent_bundle_files "$invocation_dir/agents/claude" "$output_directory" agents manifest_entries agent_files changed_paths < /dev/null > "$fixture_root/helper-output" 2>&1; then
+    printf '[FAIL] agent replacement at EOF returned a failure\n'
+    return 1
+  fi
+  if ! cmp -s "$expected_agent" "$existing_agent"; then
+    printf '[FAIL] agent replacement at EOF changed the existing agent\n'
+    return 1
+  fi
+  if [[ "${#manifest_entries[@]}" -ne 1 || "${manifest_entries[0]}" != 'rules/retained.md' ]]; then
+    printf '[FAIL] agent replacement at EOF changed the manifest entries\n'
+    return 1
+  fi
+}
+
 test_agent_bundle_helper_prompts_before_refusing_a_dangling_canonical_agent_symlink() {
   local name="agent_bundle_helper_prompts_before_refusing_a_dangling_canonical_agent_symlink"
   local source_directory
@@ -3228,8 +3305,8 @@ test_agent_bundle_helper_prompts_before_refusing_a_dangling_canonical_agent_syml
     printf '[FAIL] %s: refusing replacement returned status %s instead of 0\n' "$name" "$helper_status"
     return 1
   fi
-  if ! grep -Fq 'Replace existing agent' "$helper_output" || ! grep -Fq 'architect-reviewer.md' "$helper_output" || ! grep -Fq 'y/Y' "$helper_output"; then
-    printf '[FAIL] %s: helper did not prompt for y/Y consent to replace the canonical agent\n' "$name"
+  if ! grep -Fq 'Replace existing agent' "$helper_output" || ! grep -Fq 'architect-reviewer.md' "$helper_output" || ! grep -Fq '[y/n]' "$helper_output"; then
+    printf '[FAIL] %s: helper did not prompt for [y/n] consent to replace the canonical agent\n' "$name"
     return 1
   fi
   if [[ ! -L "$canonical_agent" || "$(readlink "$canonical_agent")" != "$dangling_referent" ]]; then
@@ -3282,8 +3359,8 @@ test_agent_bundle_helper_replaces_a_dangling_canonical_agent_symlink_after_conse
     printf '[FAIL] %s: consented replacement returned status %s instead of 0\n' "$name" "$helper_status"
     return 1
   fi
-  if ! grep -Fq 'Replace existing agent' "$helper_output" || ! grep -Fq 'architect-reviewer.md' "$helper_output" || ! grep -Fq 'y/Y' "$helper_output"; then
-    printf '[FAIL] %s: helper did not prompt for y/Y consent to replace the canonical agent\n' "$name"
+  if ! grep -Fq 'Replace existing agent' "$helper_output" || ! grep -Fq 'architect-reviewer.md' "$helper_output" || ! grep -Fq '[y/n]' "$helper_output"; then
+    printf '[FAIL] %s: helper did not prompt for [y/n] consent to replace the canonical agent\n' "$name"
     return 1
   fi
   if [[ -L "$canonical_agent" || ! -f "$canonical_agent" ]]; then
@@ -3839,6 +3916,9 @@ run_case 'Claude installer fails closed for a symlinked nested agent directory' 
 run_case 'Claude installer ignores a non-Markdown agent symlink' test_claude_installer_ignores_a_non_markdown_agent_symlink
 run_case 'Claude installer fails closed for an indented quoted agent identity key' test_claude_installer_fails_closed_for_an_indented_quoted_agent_identity_key
 run_case 'Claude installer fails closed for an indented block scalar agent identity' test_claude_installer_fails_closed_for_an_indented_block_scalar_agent_identity
+run_case 'Agent bundle notice rejects a mismatched notice at EOF without changing it' test_agent_bundle_notice_rejects_a_mismatched_notice_at_eof_without_changing_it
+run_case 'Agent bundle notice preserves an identical notice at EOF without claiming it' test_agent_bundle_notice_preserves_an_identical_notice_at_eof_without_claiming_it
+run_case 'Agent bundle files preserves an unmanaged agent at EOF without claiming it' test_agent_bundle_files_preserves_an_unmanaged_agent_at_eof_without_claiming_it
 run_case 'Agent bundle helper prompts before refusing a dangling canonical agent symlink' test_agent_bundle_helper_prompts_before_refusing_a_dangling_canonical_agent_symlink
 run_case 'Agent bundle helper replaces a dangling canonical agent symlink after consent' test_agent_bundle_helper_replaces_a_dangling_canonical_agent_symlink_after_consent
 run_case 'Claude installer fails closed for a double-quoted escaped agent identity value' test_claude_installer_fails_closed_for_a_double_quoted_escaped_agent_identity_value

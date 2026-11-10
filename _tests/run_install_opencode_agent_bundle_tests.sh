@@ -1224,7 +1224,7 @@ EOF
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
     return 1
   fi
-  if ! grep -Fq "Replace existing agent 'architect-reviewer.md'? [y/Y]" "$session_log"; then
+  if ! grep -Fq "Replace existing agent 'architect-reviewer.md'? [y/n]" "$session_log"; then
     printf '[FAIL] %s: canonical agent replacement prompt was not displayed\n' "$name"
     return 1
   fi
@@ -1295,7 +1295,7 @@ EOF
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
     return 1
   fi
-  if ! grep -Fq "Replace existing agent 'architect-reviewer.md'? [y/Y]" "$session_log"; then
+  if ! grep -Fq "Replace existing agent 'architect-reviewer.md'? [y/n]" "$session_log"; then
     printf '[FAIL] %s: canonical agent replacement prompt was not displayed\n' "$name"
     return 1
   fi
@@ -1365,7 +1365,7 @@ EOF
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
     return 1
   fi
-  if ! grep -Fq "Replace existing agent 'architect-reviewer.md'? [y/Y]" "$session_log"; then
+  if ! grep -Fq "Replace existing agent 'architect-reviewer.md'? [y/n]" "$session_log"; then
     printf '[FAIL] %s: canonical agent replacement prompt was not displayed\n' "$name"
     return 1
   fi
@@ -1437,7 +1437,7 @@ EOF
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
     return 1
   fi
-  if ! grep -Fq "Replace existing notice 'agents.LICENSE'? [y/Y]" "$session_log"; then
+  if ! grep -Fq "Replace existing notice 'agents.LICENSE'? [y/n]" "$session_log"; then
     printf '[FAIL] %s: notice replacement prompt was not displayed\n' "$name"
     return 1
   fi
@@ -1513,7 +1513,7 @@ EOF
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
     return 1
   fi
-  if ! grep -Fq "Replace existing notice 'agents.LICENSE'? [y/Y]" "$session_log"; then
+  if ! grep -Fq "Replace existing notice 'agents.LICENSE'? [y/n]" "$session_log"; then
     printf '[FAIL] %s: notice replacement prompt was not displayed\n' "$name"
     return 1
   fi
@@ -1599,7 +1599,7 @@ EOF
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
     return 1
   fi
-  if ! grep -Fq "Replace existing notice 'agents.LICENSE'? [y/Y]" "$session_log"; then
+  if ! grep -Fq "Replace existing notice 'agents.LICENSE'? [y/n]" "$session_log"; then
     printf '[FAIL] %s: notice replacement prompt was not displayed\n' "$name"
     return 1
   fi
@@ -1973,7 +1973,7 @@ EOF
     printf '[FAIL] aliased canonical agent: installer rejected its selected target\n'
     return 1
   fi
-  if ! grep -Fq "Replace existing agent 'architect-reviewer.md'? [y/Y]" "$session_log"; then
+  if ! grep -Fq "Replace existing agent 'architect-reviewer.md'? [y/n]" "$session_log"; then
     printf '[FAIL] aliased canonical agent: replacement prompt was not displayed\n'
     return 1
   fi
