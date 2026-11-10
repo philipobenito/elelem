@@ -44,6 +44,23 @@ return upstream gaps to the coordinator rather than repairing them inline.
 
 ## Reuse and recovery
 
+### Context maintenance evidence
+
+In the existing `workflow.md` phase entries, record the mechanism, phases and
+revision, capability and inheritance evidence, and a completion reference or
+error, unavailable, deferred or no-op outcome. Include the relevant input and
+recoverability checkpoint references, cause and next action, without copying
+the ledger or transcript. Keep maintenance outcomes distinct from phase status.
+
+Retain original evidence and permission references through reduction;
+inaccessible or stale provenance blocks the affected transition and destructive
+reduction. Skill invocation or a state-file write is not context reduction.
+Completed compaction is not measured token reduction. Record only observed
+facts and usage metrics when exposed, with their source; absent measurements
+remain unverified. A request acknowledgement alone is not completion evidence.
+
+### Evidence validity
+
 Record legitimate prior evidence later only with accessible provenance showing
 the procedure actually occurred. Reuse it only after validating scope, revision
 and assumptions against the baseline and accepted checkpoints. An absent local

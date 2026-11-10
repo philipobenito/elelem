@@ -12,8 +12,8 @@ Owns workflow transitions and shared workflow state. Detailed research, design,
 review, planning and execution procedures belong to their phase skills. Model
 metadata expresses a capability target; it does not switch the active model.
 Phase skills return findings and proposed content; the coordinator alone
-persists shared workflow files. The intention is to keep context under control
-by using workflow files and clean up between transistions.
+persists shared workflow files. Bound phase context through the shared input,
+dispatch, persistence and evidence contracts below, not assumed isolation.
 
 ## Entry and transitions
 
@@ -107,6 +107,11 @@ questions and blockers against user instructions, approval, the current phase,
 approved revision and relevant workflow state. Record the result and next
 action in existing `workflow.md`, in the applicable phase or task entry.
 
+After recording the validated result, construct only the next phase's necessary
+inputs under `../_shared/task-briefs.md`, then assess safe native context
+maintenance below before invoking that phase. Complete implementation briefs
+and required broad-review inputs remain intact.
+
 If the return is sufficient and the next required phase has no outstanding
 user choice or approval, invoke that phase through `{{INVOKE_SKILL_TOOL}}`
 without routine prompting. Continue only along the approved workflow order and
@@ -135,6 +140,50 @@ its outcome is unknown or repeating would be unsafe, pause and surface the
 uncertainty rather than duplicate the action. Reuse still-valid work, and
 continue at the next required action without repeating satisfied phases or
 routine prompts.
+
+### Native context maintenance
+
+Consider native compaction at settled phase boundaries when completed-phase
+detail is no longer needed and would otherwise carry forward. Use observable
+usage metrics where available, with no universal threshold. This is not after
+every tool call, question or small task return.
+
+Retain conversational primary-session phases. Do not move the coordinator or
+executor wholesale into nested children or change dialogue defaults. Fixed
+applicable instructions, tools and managed policy remain loaded. Delegated
+isolation follows `../_shared/subagent-dispatch.md`; invoking a skill is not a
+reset.
+
+Record `deferred` while active tasks or callbacks, uncertain external side
+effects or unsettled inputs make reduction unsafe. Resolve those safety
+conditions before maintenance or dependent actions; only safe independent work
+may continue. Record `no-op` when there is no meaningful history to discard;
+this is not a failure and needs no manual fallback.
+
+Before reduction, require the recoverability checkpoint in
+`../_shared/workflow-artifacts.md` and valid original provenance under
+`../_shared/phase-evidence.md`. Automatic compaction requires an existing safe
+native control for the known current session, authorised access and observable
+completion. External SDK/API documentation alone does not establish live
+capability. No improvised shell/API self-calls, guessed session IDs or second
+session owner. Reuse capability checks only under the unchanged-harness rule in
+`../_shared/subagent-dispatch.md`.
+
+When safe and supported, request native compaction automatically. Request
+acceptance is not completion. Await the native completion signal, then reload
+only relevant current state and validate ownership, revision, approval and
+evidence under the shared resume contract. Record the observed result and
+continue at the next required action without routine prompts, preserving all
+workflow gates. Completion and measured reduction remain separate evidence.
+
+On error or unavailable native control, preserve the checkpoint, pause the
+dependent transition, explain the cause and offer native manual compaction. Do
+not blindly retry, silently downgrade or claim reduction. Manual recovery
+requires observable completion where available and normal state validation. If
+reduction cannot be established, label it unverified and require explicit
+authorisation for unreduced continuation. Fallback permission does not skip
+other gates. Record the outcome and provenance in the existing phase entry as
+specified by `../_shared/phase-evidence.md`.
 
 Wave planning finishes before dispatch. By default, its independent readiness
 review must return `READY`. If the user explicitly authorised skipping only

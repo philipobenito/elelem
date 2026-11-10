@@ -4,6 +4,24 @@ The workflow coordinator owns dispatch and shared state. These procedures
 supplement `../../rules/common/subagents.md`. Read this file before every
 dispatch.
 
+## Context isolation
+
+Delegated work starts fresh without inherited parent transcript. Verify the
+actual current interface, schema and version against accessible harness evidence.
+A documented fresh-child creation interface suffices without an explicit
+inheritance parameter. Use an exposed inheritance control when required by the
+actual schema; do not invent fields or assume that an omitted field means fresh.
+Supply the bounded sufficient inputs from `./task-briefs.md`, not parent history.
+
+Do not reuse accumulated child history as a fresh start or silently fall back to
+history forks. Missing required isolation is a capability blocker; obtain
+explicit alternative authorisation before continuing under different semantics.
+Record capability and inheritance evidence under `./phase-evidence.md`.
+
+Reuse still-valid isolation or compaction capability checks only while the
+harness, schema and configuration remain unchanged. This never waives the
+per-dispatch model enumeration and routing checks below.
+
 ## Subagent type selection
 
 Before each dispatch, select the most specific available subagent type that
