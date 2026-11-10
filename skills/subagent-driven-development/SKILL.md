@@ -110,6 +110,9 @@ corrections to a worker within the same boundaries, then re-review. A missing
 requirement, contract or architecture decision is a blocker to return to
 planning, not a prompt to silently redesign.
 
+Batch related in-scope review corrections within the approved task boundaries;
+retain independent re-review and fresh task checks after the batch.
+
 After review or its recorded skip, the orchestrator reads the actual changed
 paths and evidence, then runs fresh task verification by default. Do not trust
 a worker's report alone. Honour an explicitly authorised verification skip only
@@ -160,7 +163,7 @@ the coordinator and planning for user-authorised resolution.
 
 ## Final feature review and verification
 
-After all requested tasks and integration barriers are resolved, invoke
+After the cumulative audit and all requested tasks and integration barriers are resolved, invoke
 `requesting-code-review` for the cumulative, current uncommitted changes,
 including tracked and untracked files, by default. If the user explicitly
 skipped final review, record that scoped skip and do not imply a review verdict

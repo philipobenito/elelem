@@ -139,6 +139,12 @@ Cross-references between files use relative paths from the citing file's locatio
 
 `research` gathers bounded evidence and discusses findings. The existing `brainstorming` modes shape Planning. `design-review` independently reviews the design, `wave-planning` decomposes approved work and checks readiness, and `subagent-driven-development` executes approved tasks. `create-tickets` creates durable tickets only when requested, while `work-on-ticket` recovers ticket context and returns it to the coordinator for current-baseline validation. `skills/_shared/project-context-discovery.md` is a bounded, repository-first helper, not a substitute for conversational Research or Planning.
 
+Wave planning places ready independent tasks in the earliest safe wave up to
+verified harness and resource capacity, recording concrete reasons for
+serialisation, including concurrency one. Cohesive bounded tasks may contain
+multiple genuine sequential RED/GREEN cycles; related in-scope corrections may
+be batched without skipping independent re-review or checks.
+
 Active workflow state and temporary phase files live under `.elelem/workflows/<ticket-or-slug>/`: `workflow.md`, `research.md`, `plan.md`, and `waves.md`, created as needed. At workflow start, the coordinator adds the exact `/.elelem/workflows/` entry to the consuming project's root `.gitignore` and verifies the path is ignored. These files are local and uncommitted by default. Resumption uses local files, so deleting them or using another checkout loses that temporary state; durable ticket bodies retain the approved design. After successful requested work, the coordinator removes only registered workflow-created files. Paused or blocked workflows retain state for resumption. User-requested deliverables such as Markdown ticket fallback files are permanent and are never workflow cleanup targets. Installers do not modify arbitrary consuming projects to add this ignore rule.
 
 ### Workflow verification

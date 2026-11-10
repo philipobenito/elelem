@@ -20,6 +20,7 @@ workflow_files=(
   "skills/brainstorming/SKILL.md"
   "skills/work-on-ticket/SKILL.md"
   "skills/fast-path-implementation/SKILL.md"
+  "skills/fast-path-implementation/fast-path-reviewer-prompt.md"
   "skills/wave-planning/SKILL.md"
   "skills/_shared/phase-evidence.md"
   "skills/_shared/workflow-artifacts.md"
@@ -1000,12 +1001,462 @@ test_phase_evidence_installed_links_resolve() {
   done
 }
 
+test_required_files_check_is_registered() {
+  local test_call_count
+  test_call_count="$(sed -n '/^_check_skill_frontmatter$/,/^total=/p' "$0" | grep -Fxc 'test_required_files_exist' || true)"
+  if [[ "$test_call_count" != 1 ]]; then
+    _fail "required_files_check_is_registered" "expected test_required_files_exist once in the suite invocation block, found $test_call_count"
+    return
+  fi
+  _pass "required_files_check_is_registered"
+}
+
+test_required_files_exist() {
+  _check_required_files || true
+}
+
+test_wave_planning_maximises_safe_static_width() {
+  local file content requirement pattern missing=0
+  local requirements=(
+    'skills/wave-planning/SKILL.md|earliest safe wave.{0,100}verified.{0,40}capacity'
+    'skills/wave-planning/SKILL.md|concrete reasons.{0,100}serialisation.{0,100}concurrency one'
+    'skills/wave-planning/SKILL.md|cohesive.{0,100}multiple.{0,100}RED/GREEN cycles'
+    'skills/_shared/wave-readiness.md|earliest safe wave.{0,100}verified.{0,40}capacity'
+    'skills/_shared/wave-readiness.md|concrete reasons.{0,100}serialisation.{0,100}concurrency one'
+    'skills/_shared/task-briefs.md|multiple.{0,100}RED/GREEN cycles'
+    'skills/subagent-driven-development/SKILL.md|batch.{0,100}in-scope.{0,100}corrections.{0,100}re-review'
+  )
+  for requirement in "${requirements[@]}"; do
+    file="${requirement%%|*}"
+    pattern="${requirement#*|}"
+    content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "wave_width_${file//\//_}" "expected safe wave-width behaviour: $pattern"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "wave_planning_maximises_safe_static_width"
+  fi
+}
+
+test_cumulative_audit_follows_reviews_and_barriers() {
+  local file content requirement pattern missing=0
+  local requirements=(
+    'rules/common/workflow.md|cumulative.{0,100}audit.{0,160}task reviews.{0,100}wave barriers.{0,160}final.{0,40}review'
+    'rules/common/skills-policy.md|cumulative.{0,100}audit.{0,140}task reviews.{0,100}wave barriers'
+    'skills/workflow-coordinator/SKILL.md|cumulative.{0,100}audit.{0,140}task reviews.{0,100}wave barriers.{0,140}final.{0,40}review'
+    'skills/subagent-driven-development/SKILL.md|cumulative.{0,100}audit.{0,140}task reviews.{0,100}wave barriers.{0,140}final.{0,40}review'
+    'skills/_shared/test-pruning.md|union of actual.{0,100}test-bearing.{0,100}tasks.{0,100}corrections'
+    'skills/_shared/test-pruning.md|newly touched files.{0,100}audit.{0,40}full'
+    'skills/_shared/test-pruning.md|unaffected decisions.{0,100}stable.{0,40}evidence'
+    'skills/subagent-driven-development/reviewer-prompt.md|task review.{0,100}deferred.{0,100}final.{0,40}audit'
+    'skills/fast-path-implementation/fast-path-reviewer-prompt.md|task review.{0,100}deferred.{0,100}final.{0,40}audit'
+    'skills/test-driven-development/SKILL.md|cumulative.{0,100}final.{0,40}audit'
+    'README.md|cumulative.{0,100}audit.{0,140}task reviews.{0,100}wave barriers'
+    '_tests/workflow_scenarios.md|cumulative.{0,100}audit.{0,140}task reviews.{0,100}wave barriers'
+  )
+  for requirement in "${requirements[@]}"; do
+    file="${requirement%%|*}"
+    pattern="${requirement#*|}"
+    content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "cumulative_audit_${file//\//_}" "expected cumulative audit behaviour: $pattern"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "cumulative_audit_follows_reviews_and_barriers"
+  fi
+}
+
+_write_expected_installed_skill() {
+  perl -0777 -e '
+    my @names = qw(ASK_USER_QUESTION_TOOL ENTER_PLAN_TOOL EXIT_PLAN_TOOL TASK_TRACKER_TOOL DISPATCH_AGENT_TOOL INVOKE_SKILL_TOOL READ_FILE_TOOL WRITE_FILE_TOOL EDIT_FILE_TOOL GREP_TOOL GLOB_TOOL SHELL_EXEC_TOOL MODEL_ENUMERATION);
+    my %values = (
+      claude => [q~AskUserQuestion~, q~EnterPlanMode~, q~ExitPlanMode~, q~TodoWrite~, q~Agent~, q~Skill~, q~Read~, q~Write~, q~Edit~, q~Grep~, q~Glob~, q~Bash~, q~reading the `model` enum on the Agent tool schema, which is the set of values the harness will accept~],
+      opencode => [q~question~, q~entering plan mode (in OpenCode, plan mode is toggled by the user pressing Tab; ask the user to enter plan mode before reviewing the design)~, q~exiting plan mode (in OpenCode, the user toggles out of plan mode with Tab after approving the design; present the design and wait for explicit approval before any code edit)~, q~todowrite~, q~subagent~, q~skill~, q~read~, q~write~, q~edit~, q~grep~, q~glob~, q~bash~, q~running `opencode models` with the bash tool, which lists every available model, one per line~],
+      codex => [q~request_user_input~, q~STOP and ask the user to switch to Plan mode, do not continue until in Plan mode~, q~ask the user to approve the plan and then leave plan mode~, q~update_plan task list~, q~spawn_agent~, q~/skills or $skill-name~, q~read the file~, q~write or create the file~, q~apply_patch~, q~exec_command with rg~, q~exec_command with rg --files or find~, q~exec_command~, q~running `codex debug models` with exec_command, which prints the raw model catalogue~],
+    );
+    my $harness = shift;
+    my $substitutions = $values{$harness} or die "Unknown harness: $harness\n";
+    my $content = <>;
+    for my $index (0 .. $#names) {
+      my $placeholder = "{{" . $names[$index] . "}}";
+      $content =~ s/\Q$placeholder\E/$substitutions->[$index]/g;
+    }
+    print $content;
+  ' "$1" "$2"
+}
+
+test_changed_workflow_skills_are_installed_in_all_harnesses() {
+  local harness file relative question_tool skill_tool dispatch_tool expected missing=0
+  local files=(
+    'wave-planning/SKILL.md' '_shared/wave-readiness.md' '_shared/task-briefs.md'
+    '_shared/test-pruning.md' 'workflow-coordinator/SKILL.md'
+    'subagent-driven-development/SKILL.md' 'subagent-driven-development/reviewer-prompt.md'
+    'fast-path-implementation/fast-path-reviewer-prompt.md' 'test-driven-development/SKILL.md'
+  )
+  for harness in claude opencode codex; do
+    case "$harness" in
+      claude) question_tool='AskUserQuestion'; skill_tool='Skill'; dispatch_tool='Agent' ;;
+      opencode) question_tool='question'; skill_tool='skill'; dispatch_tool='subagent' ;;
+      codex) question_tool='request_user_input'; skill_tool='/skills or $skill-name'; dispatch_tool='spawn_agent' ;;
+    esac
+    for file in "${files[@]}"; do
+      if [[ ! -f "$TEST_TMP/$harness/skills/$file" ]] || grep -Fq '{{' "$TEST_TMP/$harness/skills/$file"; then
+        _fail "installed_workflow_${harness}_${file//\//_}" "missing installed file or unresolved placeholder"
+        missing=1
+      fi
+    done
+    for file in "${workflow_files[@]}"; do
+      relative="${file#skills/}"
+      expected="$TEST_TMP/expected-$harness/$relative"
+      mkdir -p "$(dirname "$expected")"
+      if ! _write_expected_installed_skill "$harness" "$REPO_ROOT/$file" > "$expected" || ! cmp -s "$expected" "$TEST_TMP/$harness/skills/$relative"; then
+        _fail "installed_content_${harness}_${relative//\//_}" "installed skill differs from its correctly substituted source"
+        missing=1
+      fi
+    done
+    if ! grep -Fxq "\`$question_tool\` to resolve the task identity and any user choices." "$TEST_TMP/$harness/skills/workflow-coordinator/SKILL.md"; then
+      _fail "installed_tool_${harness}_question" "expected the harness question tool in its source context"
+      missing=1
+    fi
+    if ! grep -Fxq "\`$skill_tool\`, using the skill name. The paths below identify" "$TEST_TMP/$harness/skills/workflow-coordinator/SKILL.md"; then
+      _fail "installed_tool_${harness}_skill" "expected the harness skill tool in its source context"
+      missing=1
+    fi
+    if ! grep -Fxq "$dispatch_tool ([VERIFIED_TEST_OR_QUALITY_SPECIALIST]):" "$TEST_TMP/$harness/skills/_shared/test-pruning.md"; then
+      _fail "installed_tool_${harness}_dispatch" "expected the harness dispatch tool in its source context"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "changed_workflow_skills_are_installed_in_all_harnesses"
+  fi
+}
+
+test_changed_common_rules_are_installed_in_all_harnesses() {
+  local harness file target skill_tool expected actual codex_output missing=0
+  local rule_files=('workflow.md' 'skills-policy.md')
+  local manifest=() languages=()
+  RULES_SOURCE="$REPO_ROOT/rules"
+  for harness in claude opencode; do
+    target="$TEST_TMP/$harness/rules/common"
+    install_files_from_dir "$RULES_SOURCE/common" "$target" rules/common manifest rule_files
+    if [[ "$harness" == claude ]]; then
+      substitute_tool_names "$target" CLAUDE_PLACEHOLDERS CLAUDE_SUBSTITUTIONS
+      skill_tool='Skill'
+    else
+      substitute_tool_names "$target" OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
+      skill_tool='skill'
+    fi
+    for file in "${rule_files[@]}"; do
+      if [[ ! -f "$target/$file" ]] || grep -Fq '{{' "$target/$file" || ! grep -Fq 'cumulative' "$target/$file"; then
+        _fail "installed_rule_${harness}_${file}" "missing installed cumulative policy or unresolved placeholder"
+        missing=1
+      else
+        expected="$(sed "s|{{INVOKE_SKILL_TOOL}}|$skill_tool|g" "$RULES_SOURCE/common/$file")"
+        actual="$(cat "$target/$file")"
+        if [[ "$actual" != "$expected" ]]; then
+          _fail "installed_rule_${harness}_${file}" "installed rule differs from its correctly substituted source"
+          missing=1
+        fi
+      fi
+    done
+  done
+  target="$TEST_TMP/codex/AGENTS.md"
+  _codex_render_agents_payload "$TEST_TMP/codex/payload.md" rule_files languages
+  _codex_upsert_managed_block "$target" "$TEST_TMP/codex/payload.md"
+  codex_output="$(test_codex_common_rules_are_in_the_managed_block)"
+  for file in "${rule_files[@]}"; do
+    if ! grep -Fq "## rules/common/$file" "$target" || ! grep -Fq 'cumulative' "$target" || grep -Fq '{{' "$target"; then
+      _fail "installed_rule_codex_${file}" "missing rendered rule or unresolved placeholder"
+      missing=1
+    elif grep -Fq "[FAIL] codex_rule_content_${file}" <<< "$codex_output"; then
+      _fail "installed_rule_codex_${file}" "managed rule differs from its correctly substituted source"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "changed_common_rules_are_installed_in_all_harnesses"
+  fi
+}
+
+test_final_audit_rechecks_only_affected_evidence_after_corrections() {
+  local file content requirement pattern missing=0
+  local requirements=(
+    'skills/_shared/test-pruning.md|targeted recheck.{0,160}affected.{0,100}transitive.{0,100}survivor'
+    'skills/_shared/test-pruning.md|newly touched files.{0,100}audit.{0,40}full'
+    'skills/_shared/test-pruning.md|missing.{0,100}evidence.{0,100}block'
+    'skills/_shared/test-pruning.md|coverage gap.{0,120}in-scope.{0,120}TDD.{0,120}review.{0,120}checks'
+    'skills/subagent-driven-development/SKILL.md|final.{0,40}review.{0,160}audit evidence.{0,160}actual.{0,40}diff.{0,80}pruning'
+    'skills/subagent-driven-development/SKILL.md|repeat affected review and checks.{0,100}final verification'
+    'skills/subagent-driven-development/implementer-prompt.md|multiple.{0,100}RED/GREEN cycles'
+    'skills/fast-path-implementation/SKILL.md|cumulative.{0,100}audit.{0,100}final.{0,40}review'
+    'README.md|earliest safe wave.{0,100}verified.{0,40}capacity'
+    '_tests/workflow_scenarios.md|concurrency one.{0,140}concrete reason'
+    '_tests/workflow_scenarios.md|multiple.{0,100}RED/GREEN cycles'
+  )
+  for requirement in "${requirements[@]}"; do
+    file="${requirement%%|*}"
+    pattern="${requirement#*|}"
+    content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "final_audit_recheck_${file//\//_}" "expected correction lifecycle: $pattern"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "final_audit_rechecks_only_affected_evidence_after_corrections"
+  fi
+}
+
+test_cumulative_audit_preserves_each_task_baseline_and_skip_provenance() {
+  local content requirement pattern missing=0
+  local requirements=(
+    'all task baselines|each task.{0,100}immutable task-start.{0,100}(dirty|untracked)'
+    'baseline inputs|each task.{0,80}baseline.{0,100}pre-existing.{0,100}snapshots'
+    'skip provenance|skip.{0,100}exact.{0,40}source.{0,100}scope.{0,100}reason.{0,100}consequence'
+    'final prompt inputs|each task.{0,80}baseline.{0,100}pre-existing.{0,100}snapshots'
+  )
+  content="$(tr '\n' ' ' < "$REPO_ROOT/skills/_shared/test-pruning.md" | tr -s '[:space:]' ' ')"
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "cumulative_baseline_${requirement%%|*}" "expected cumulative provenance: $pattern"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "cumulative_audit_preserves_each_task_baseline_and_skip_provenance"
+  fi
+}
+
+test_codex_common_rules_are_in_the_managed_block() {
+  local target="$TEST_TMP/codex/AGENTS.md" file actual expected missing=0
+  if ! grep -Fxq "$CODEX_MANAGED_START" "$target" || ! grep -Fxq "$CODEX_MANAGED_END" "$target"; then
+    _fail "codex_common_rules_are_in_the_managed_block" "expected the installed Codex managed block"
+    return
+  fi
+  for file in workflow.md skills-policy.md; do
+    actual="$(awk -v start="$CODEX_MANAGED_START" -v end="$CODEX_MANAGED_END" -v label="## rules/common/$file" '
+      $0 == start {inside=1; next}
+      $0 == end {inside=0; capture=0; next}
+      inside && $0 == label {count++; capture=1; skip=1; next}
+      capture && /^## rules\/common\// {capture=0}
+      capture && skip {skip=0; if ($0 == "") next}
+      capture {print}
+      END {if (count != 1) exit 1}
+    ' "$target")" || actual=''
+    expected="$(sed 's|{{INVOKE_SKILL_TOOL}}|/skills or $skill-name|g' "$REPO_ROOT/rules/common/$file")"
+    if [[ "$actual" != "$expected" ]]; then
+      _fail "codex_rule_content_${file}" "expected the complete substituted rule inside the managed block"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "codex_common_rules_are_in_the_managed_block"
+  fi
+}
+
+test_coordinator_runs_the_audit_once_within_executor_phase() {
+  local file content requirement pattern missing=0
+  local requirements=(
+    'skills/workflow-coordinator/SKILL.md|coordinator owns and executes.{0,80}cumulative.{0,40}audit.{0,120}executor.{0,80}phase'
+    'skills/workflow-coordinator/SKILL.md|executor returns.{0,80}audit.{0,80}final review.{0,80}verification evidence'
+    'skills/workflow-coordinator/SKILL.md|coordinator.{0,120}reuses.{0,100}evidence.{0,100}(never|not).{0,80}automatically repeat'
+    'skills/subagent-driven-development/SKILL.md|coordinator owns and executes.{0,80}cumulative.{0,40}audit.{0,120}executor.{0,80}phase'
+  )
+  for requirement in "${requirements[@]}"; do
+    file="${requirement%%|*}"
+    pattern="${requirement#*|}"
+    content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "audit_phase_ownership_${file//\//_}" "expected one audit handoff: $pattern"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "coordinator_runs_the_audit_once_within_executor_phase"
+  fi
+}
+
+test_final_review_dispatch_receives_audit_evidence_and_criteria() {
+  local file content requirement pattern missing=0
+  local requirements=(
+    'skills/subagent-driven-development/SKILL.md|final review dispatch.{0,200}audit record.{0,160}approved scope'
+    'skills/subagent-driven-development/SKILL.md|final review dispatch.{0,255}.{0,45}skip.{0,80}provenance.{0,80}none'
+    'skills/subagent-driven-development/SKILL.md|final review dispatch.{0,250}.{0,250}reviewer.prompt.md.{0,160}criteria'
+    'skills/subagent-driven-development/SKILL.md|final review dispatch.{0,250}.{0,250}.{0,200}actual post-prune diff'
+    'skills/subagent-driven-development/SKILL.md|DESCRIPTION.{0,160}inspect.{0,80}audit evidence'
+    'skills/subagent-driven-development/reviewer-prompt.md|FINAL_AUDIT_RECORD'
+    'skills/subagent-driven-development/reviewer-prompt.md|APPROVED_CUMULATIVE_SCOPE'
+    'skills/subagent-driven-development/reviewer-prompt.md|ACTUAL_POST_PRUNE_DIFF'
+    'skills/subagent-driven-development/reviewer-prompt.md|missing.{0,100}audit.{0,100}BLOCKED'
+  )
+  for requirement in "${requirements[@]}"; do
+    file="${requirement%%|*}"
+    pattern="${requirement#*|}"
+    content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "final_review_handoff_${file//\//_}" "expected review dispatch input: $pattern"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "final_review_dispatch_receives_audit_evidence_and_criteria"
+  fi
+}
+
+test_installed_skill_checks_reject_wrong_harness_tool_mappings() {
+  local harness copy fixture expected output missing=0
+  for harness in claude opencode codex; do
+    fixture="$TEST_TMP/wrong-mapping-$harness"
+    for copy in claude opencode codex; do
+      mkdir -p "$fixture/$copy"
+      cp -R "$TEST_TMP/$copy/skills" "$fixture/$copy/skills"
+    done
+    case "$harness" in
+      claude) expected='AskUserQuestion' ;;
+      opencode) expected='question' ;;
+      codex) expected='request_user_input' ;;
+    esac
+    perl -i -pe "s/${expected}/wrong_tool/g" "$fixture/$harness/skills/workflow-coordinator/SKILL.md"
+    output="$(TEST_TMP="$fixture"; passed=0; failed=0; test_changed_workflow_skills_are_installed_in_all_harnesses)"
+    if ! grep -Fq "[FAIL] installed_tool_${harness}_question" <<< "$output"; then
+      _fail "wrong_mapping_${harness}" "the installer check accepted an incorrect question tool"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "installed_skill_checks_reject_wrong_harness_tool_mappings"
+  fi
+}
+
+test_installed_skill_checks_reject_wrong_tracker_mappings() {
+  local harness copy fixture output missing=0
+  for harness in claude opencode codex; do
+    fixture="$TEST_TMP/wrong-tracker-$harness"
+    for copy in claude opencode codex; do
+      mkdir -p "$fixture/$copy"
+      cp -R "$TEST_TMP/$copy/skills" "$fixture/$copy/skills"
+    done
+    output="$(
+      TEST_TMP="$fixture"
+      passed=0
+      failed=0
+      if [[ "$harness" == claude ]]; then
+        CLAUDE_SUBSTITUTIONS[3]='wrong_tracker'
+        _copy_and_substitute_harness claude "$fixture/claude/skills" _skill_resolve_dst CLAUDE_PLACEHOLDERS CLAUDE_SUBSTITUTIONS
+      elif [[ "$harness" == opencode ]]; then
+        OPENCODE_SUBSTITUTIONS[3]='wrong_tracker'
+        _copy_and_substitute_harness opencode "$fixture/opencode/skills" _skill_resolve_dst OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
+      else
+        CODEX_SUBSTITUTIONS[3]='wrong_tracker'
+        test_codex_installer_copy_and_substitution
+      fi
+      if ! grep -Fq 'wrong_tracker' "$fixture/$harness/skills/subagent-driven-development/SKILL.md"; then
+        printf 'MUTATION_NOT_APPLIED\n'
+      fi
+      test_changed_workflow_skills_are_installed_in_all_harnesses
+    )"
+    if grep -Fq 'MUTATION_NOT_APPLIED' <<< "$output" || ! grep -Fq "[FAIL] installed_content_${harness}_subagent-driven-development_SKILL.md" <<< "$output"; then
+      _fail "wrong_tracker_mapping_${harness}" "the installer check accepted an incorrect tracker mapping"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "installed_skill_checks_reject_wrong_tracker_mappings"
+  fi
+}
+
+test_codex_rule_check_rejects_content_moved_outside_the_managed_block() {
+  local file fixture target output missing=0
+  for file in workflow.md skills-policy.md; do
+    fixture="$TEST_TMP/outside-block-$file"
+    mkdir -p "$fixture/codex"
+    target="$fixture/codex/AGENTS.md"
+    awk -v label="## rules/common/$file" -v end="$CODEX_MANAGED_END" -v moved="$fixture/moved.md" '
+      $0 == label {moving=1; print > moved; next}
+      moving && ($0 ~ /^## rules\/common\// || $0 == end) {moving=0}
+      moving {print > moved; next}
+      {print}
+    ' "$TEST_TMP/codex/AGENTS.md" > "$target"
+    cat "$fixture/moved.md" >> "$target"
+    output="$(TEST_TMP="$fixture"; passed=0; failed=0; test_codex_common_rules_are_in_the_managed_block)"
+    if ! grep -Fq "[FAIL] codex_rule_content_${file}" <<< "$output"; then
+      _fail "codex_rule_outside_${file}" "the rule check accepted content outside the managed block"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "codex_rule_check_rejects_content_moved_outside_the_managed_block"
+  fi
+}
+
+test_codex_rule_check_rejects_changed_rule_content() {
+  local fixture="$TEST_TMP/codex-altered-rule" output
+  mkdir -p "$fixture/codex"
+  cp "$TEST_TMP/codex/AGENTS.md" "$fixture/codex/AGENTS.md"
+  perl -i -pe 's/cumulative pruning audit/per-task pruning audit/' "$fixture/codex/AGENTS.md"
+  output="$(TEST_TMP="$fixture"; passed=0; failed=0; test_codex_common_rules_are_in_the_managed_block)"
+  if grep -Fq '[FAIL] codex_rule_content_workflow.md' <<< "$output"; then
+    _pass "codex_rule_check_rejects_changed_rule_content"
+  else
+    _fail "codex_rule_check_rejects_changed_rule_content" "the rule check accepted altered policy content"
+  fi
+}
+
+test_common_rule_checks_reject_wrong_skill_tool_mappings() {
+  local harness fixture output missing=0
+  for harness in claude opencode codex; do
+    fixture="$TEST_TMP/wrong-rule-tool-$harness"
+    mkdir -p "$fixture/codex"
+    output="$(
+      TEST_TMP="$fixture"
+      passed=0
+      failed=0
+      if [[ "$harness" == claude ]]; then
+        CLAUDE_SUBSTITUTIONS[5]='wrong_tool'
+      elif [[ "$harness" == opencode ]]; then
+        OPENCODE_SUBSTITUTIONS[5]='wrong_tool'
+      else
+        CODEX_SUBSTITUTIONS[5]='wrong_tool'
+      fi
+      test_changed_common_rules_are_installed_in_all_harnesses
+    )"
+    if ! grep -Fq "[FAIL] installed_rule_${harness}_skills-policy.md" <<< "$output"; then
+      _fail "wrong_rule_mapping_${harness}" "the common rule check accepted an incorrect skill tool"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass "common_rule_checks_reject_wrong_skill_tool_mappings"
+  fi
+}
+
 _check_skill_frontmatter
+test_coordinator_runs_the_audit_once_within_executor_phase
+test_final_review_dispatch_receives_audit_evidence_and_criteria
+test_wave_planning_maximises_safe_static_width
+test_cumulative_audit_follows_reviews_and_barriers
+test_final_audit_rechecks_only_affected_evidence_after_corrections
+test_cumulative_audit_preserves_each_task_baseline_and_skip_provenance
+test_required_files_check_is_registered
 test_phase_evidence_contract
 test_phase_evidence_boundary_references
 test_claude_installer_copy_and_substitution
 test_opencode_installer_copy_and_substitution
 test_codex_installer_copy_and_substitution
+test_changed_workflow_skills_are_installed_in_all_harnesses
+test_installed_skill_checks_reject_wrong_harness_tool_mappings
+test_installed_skill_checks_reject_wrong_tracker_mappings
+test_changed_common_rules_are_installed_in_all_harnesses
+test_common_rule_checks_reject_wrong_skill_tool_mappings
+test_codex_common_rules_are_in_the_managed_block
+test_codex_rule_check_rejects_content_moved_outside_the_managed_block
+test_codex_rule_check_rejects_changed_rule_content
 test_test_pruning_contract_is_documented
 test_auditor_policy_categories_and_decisions_are_explicit
 test_auditor_rule_discovery_freezes_complete_harness_sources

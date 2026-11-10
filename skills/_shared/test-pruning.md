@@ -133,8 +133,10 @@ and perform no delta review. Final verification still follows.
 
 A TDD-only skip does not waive this audit. A TDD skip, audit skip, and check
 skip are separate decisions. Only explicit user authorisation can skip the
-audit or a check. Record each skip's exact scope, reason, and consequence in
-`workflow.md`. A skipped audit is not evidence and permits no test removals.
+audit or a check. Record each skip's exact user instruction source, scope, reason,
+and consequence in `workflow.md`. A skipped audit is not evidence and permits no
+test removals or merges in the skipped scope; unskipped scope remains subject to
+the audit.
 
 ### Scoped skip inputs and acceptance
 
@@ -170,6 +172,7 @@ Freeze and record stable input identities for current-live test files and
 cases, exercised production code, fixtures, configuration, and resources that
 affect the assertions. Archived removed-source records are not current-live
 cases. Account for test-command side effects before running checks. Run the
+pre-prune checks against stable live inputs and record exact commands,
 pre-prune checks for the final union against stable live inputs and record exact
 commands,
 outputs, exit codes, discovered test and case counts per current-live file, and
@@ -305,6 +308,10 @@ targeted fresh audit;
 if the correction is outside the approved task, return to the coordinator for
 planning and approval. Unrelated old gaps are reported only.
 
+For a coverage gap, delegate an approved in-scope correction with TDD where
+applicable, then repeat relevant task review and checks before targeted audit
+rechecks. A substantive scope or architecture change returns for user approval.
+
 ## Evidence, invalidation, and handoff
 
 The coordinator records the accepted post-prune snapshot in `workflow.md`,
@@ -324,6 +331,15 @@ relevant resource invalidates the affected evidence. A changed live test
 inventory requires a fresh inventory; changed exercised behaviour inputs
 require a targeted audit of affected live cases and survivors. Record
 decision-to-survivor dependencies.
+For newly touched files, audit every case in full. Preserve unaffected decisions
+with stable supporting evidence; independently recheck only affected decisions
+and their transitive survivor dependencies. Refresh the live inventory first.
+For a targeted recheck, identify affected decisions and transitive dependent
+survivor decisions, preserve stable unaffected decisions, and supply the fresh
+inventory, relevant prior decisions and supporting evidence to the independent
+auditor. Missing supporting evidence blocks the affected decision; never invent
+history. Audit newly touched files in full. A retained, unchanged current-audit
+KEEP decision may support a merge only while its evidence remains stable.
 Unexpected changes to a survivor cause transitive survivor-dependency
 invalidation. After GREEN and stable passing checks for live cases, re-audit the
 affected live cases and survivors. For a previously removed source, present its
@@ -404,7 +420,7 @@ missing context from session history.
 
     ## Final task and approved workflow behaviours
 
-    Task: [TASK_ID]
+    Tasks and corrections in cumulative scope: [TASK_ID]
     Approved design revision: [DESIGN_REVISION]
     Approved workflow behaviours, each with its requirement identifier:
     [APPROVED_BEHAVIOUR_TO_REQUIREMENT_MAP]
@@ -443,6 +459,10 @@ missing context from session history.
     Every current-live test-bearing file and every test or parameterised case,
     including older live tests, with archived cases excluded:
     [COMPLETE_FILE_AND_CASE_INVENTORY]
+    Audit mode (initial cumulative audit or targeted recheck), affected decision
+    identifiers, transitive dependencies, newly touched files, and retained
+    unaffected decisions with their stable supporting evidence:
+    [AUDIT_MODE_SCOPE_AND_PRIOR_EVIDENCE]
     Exact source and surrounding context for each current-live case:
     [TEST_SOURCE_AND_CONTEXT]
     Archived removed-source reassessments, separate from current-live cases:
@@ -497,8 +517,12 @@ missing context from session history.
 
     ## Audit
 
-    Assess every current-live test and case in the supplied live inventory using
-    the supplied canonical rule and applicable project rules. Archived removed
+    For the initial audit, assess every current-live test and case in the supplied
+    live inventory using the supplied canonical rule and applicable project rules.
+    For a targeted recheck, assess only affected cases and transitive survivor
+    dependencies, plus every case in newly touched files; preserve unaffected
+    decisions only with stable supporting evidence. Block affected decisions if
+    required evidence is missing. Archived removed
     sources are not live cases and are not required to execute in the current
     trace. For every archived source require its exact preserved source and
     context, pre-removal snapshot identities, and actual prior check and
@@ -511,7 +535,7 @@ missing context from session history.
     fabricate prior evidence. Return separate decisions and evidence for
     current-live cases and archived reassessments.
     Return exactly one KEEP,
-    REMOVE, or MERGE decision for each. Identify the category, behaviour,
+    REMOVE, or MERGE decision for each case assessed. Identify the category, behaviour,
     rationale, and evidence. For REMOVE decisions, apply the supplied
     category-first rule, then the authorised defect and duplicate criteria.
     Do not claim that inability to name a production defect proves no defect
@@ -553,7 +577,9 @@ missing context from session history.
 
     Verdict: READY only when the inventory and evidence are complete and there
     is no Important finding for required behaviour coverage; otherwise BLOCKED.
-    Complete inventory: one KEEP, REMOVE, or MERGE row per test or case.
+    Complete inventory: one KEEP, REMOVE, or MERGE row per test or case,
+    identifying retained unaffected rows and their stable prior evidence on a
+    targeted recheck.
     For each row: path, stable test/case identifier, category, decision, named
     behaviour, rationale, and evidence from the supplied stable inputs.
     For each REMOVE: the applicable reason and any required survivor mapping.
