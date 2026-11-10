@@ -14,10 +14,11 @@ high-capability reasoning. Verify that the active primary-session model is
 appropriate before conversational planning. Metadata does not switch the
 active model. If unsuitable, stop and ask the user to switch models; do not
 switch silently. Record the confirmed model and reuse that confirmation while
-it remains active, without prompting again. Before dispatch, read
-`../_shared/subagent-dispatch.md` at execution time, enumerate supported
-models, verify routing and select a concrete capable identifier separately.
-If that capability is unavailable, report a blocker; do not silently fall back.
+it remains active, without prompting again. Delegated preparation and reviewer
+selection follow `../_shared/subagent-dispatch.md`: enumerate supported models
+and verify explicit routing and required capability. Their policy is unchanged
+by implementation configuration or its fallback; missing required preparation
+or reviewer capability remains a blocker.
 
 ## Preconditions
 
@@ -42,11 +43,20 @@ per worker. Do not manufacture splits or unapproved architecture to increase wid
 
 For each task, name exact allowed writes and known formatter, generator, build
 and test outputs; stable reads; interfaces and assumptions; dependencies;
-acceptance criteria; verification commands; specialist type; and required
-model tier. Include resource constraints such as ports, databases, fixtures,
+acceptance criteria; verification commands; and specialist type with its own
+rationale, independent of the model. Assign the lowest capable implementation tier
+(`low`, `medium` or `high`) with a short task-specific rationale. Include resource
+constraints such as ports, databases, fixtures,
 temporary outputs and global tools. Same-wave writes must not overlap. A task
 must not read a file another concurrent task can change. Shared stable reads
 are allowed. Do not schedule tasks whose external resources conflict.
+
+Require native resolution under `../_shared/subagent-dispatch.md` before first
+implementation dispatch, including only its warned, checked current-model
+configuration fallback.
+Use `../_shared/task-briefs.md` for selection provenance and the coordinator's
+retained actual task pin. Do not choose concrete models during decomposition,
+infer reasoning effort from a tier, or change specialist to obtain a model.
 
 Assign stable wave identifiers and cap concurrency at verified harness and
 resource capacity. If capacity cannot be verified, report the limitation and

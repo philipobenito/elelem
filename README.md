@@ -147,6 +147,200 @@ be batched without skipping independent re-review or checks.
 
 Active workflow state and temporary phase files live under `.elelem/workflows/<ticket-or-slug>/`: `workflow.md`, `research.md`, `plan.md`, and `waves.md`, created as needed. At workflow start, the coordinator adds the exact `/.elelem/workflows/` entry to the consuming project's root `.gitignore` and verifies the path is ignored. These files are local and uncommitted by default. Resumption uses local files, so deleting them or using another checkout loses that temporary state; durable ticket bodies retain the approved design. After successful requested work, the coordinator removes only registered workflow-created files. Paused or blocked workflows retain state for resumption. User-requested deliverables such as Markdown ticket fallback files are permanent and are never workflow cleanup targets. Installers do not modify arbitrary consuming projects to add this ignore rule.
 
+### Implementation model selection
+
+Implementation uses `low`, `medium` and `high`: assign the lowest capable tier
+with a short task-specific rationale, then resolve the user's native mapping.
+Choose the specialist independently of the model. Tier names do not prescribe
+reasoning effort. The preparation and reviewer algorithms remain unchanged.
+
+Setup is manual: choose concrete IDs from your own available catalogue and edit
+only the intended native scope, preserving unrelated settings. There are no automatic
+configuration, default or model writes, no new plugin and no implementation-only
+top-level tier map. Existing installers still copy/substitute instructions, not
+model configuration. Re-install updated instructions to migrate existing installs;
+do not duplicate or change specialists to select their implementation models.
+Every value in angle brackets below is a placeholder, not a selected model.
+
+#### OpenCode
+
+For OpenCode V2 (checked against 2.2.6, 2026-11-10), use
+`providers.<provider>.models.low|medium|high.modelID`. User configuration is
+`~/.config/opencode/opencode.json(c)` (or under `$XDG_CONFIG_HOME/opencode`).
+Project discovery searches the current directory and ancestors through the
+filesystem root, merging direct `opencode.json(c)` files farthest to closest,
+then `.opencode/opencode.json(c)` files farthest to closest. All discovered
+`.opencode` documents override direct documents; global files rank below them.
+System/managed configuration has highest precedence, including managed macOS
+preferences above the system directory. See the configuration reference for
+platform-specific managed paths and policies.
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "providers": {
+    "<provider-id>": {
+      "models": {
+        "low": {
+          "modelID": "<concrete-low-api-model-id>",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 32768, "output": 4096 }
+        },
+        "medium": {
+          "modelID": "<concrete-medium-api-model-id>",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 32768, "output": 4096 }
+        },
+        "high": {
+          "modelID": "<concrete-high-api-model-id>",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 32768, "output": 4096 }
+        }
+      }
+    }
+  }
+}
+```
+
+Use an already configured provider, or configure its native package/connection
+separately. These capability flags and numeric example values are illustrative;
+replace them with known actual metadata for each target before use. Each alias
+needs its own accurate capabilities, limits and variants, not values assumed
+inherited from its target. Unknown-model fallback metadata is not detection;
+missing capability evidence is a blocker, not permission to infer support.
+Add only verified native variants when needed: `#variant` is not a tier.
+
+Selectors are `<provider-id>/low`, `<provider-id>/medium` and
+`<provider-id>/high`, optionally with a verified `#variant`, independently of
+the agent. `modelID` is an opaque provider-local API target, including slashes;
+these are not cross-provider redirects or alias chains. Tiers may live under
+different providers, but each tier must have one unique effective mapping.
+
+For diagnostics, `GET /api/config` returns an array of `Config.Entry`
+document/directory records, not a merged object. Inspect relevant records safely,
+apply native precedence, and count effective provider+alias identities, not
+repeated layers overriding one identity. Include disabled and inactive candidates
+in ambiguity checks. Cross-check the alias in the current models catalogue and
+its own full metadata via `GET /api/model`. Redact credentials and other secrets;
+never paste complete configuration or catalogue payloads into task records.
+
+#### Claude Code
+
+The accepted slots are `low=haiku`, `medium=sonnet`, `high=opus`. Explicitly pin
+each family through supported settings `env` or process environment, rather
+than relying on changing native defaults. Settings locations are user
+`~/.claude/settings.json`, shared project `.claude/settings.json` and personal
+project `.claude/settings.local.json` (or the configured `CLAUDE_CONFIG_DIR`).
+
+```json
+{
+  "env": {
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "<concrete-haiku-model-id>",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "<concrete-sonnet-model-id>",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "<concrete-opus-model-id>"
+  }
+}
+```
+
+Settings precedence, highest first, is managed, command-line settings, local,
+shared project, then user. An `env` block follows settings precedence; process
+environment is not another settings layer. In most sessions settings `env`
+replaces an inherited shell value for the same variable. Check documented
+exceptions and the effective environment, including managed/embedding-host
+restrictions, rather than assuming a shell export wins. Project settings can also
+depend on workspace trust. These are shared aliases affecting other native uses,
+not isolated implementation settings.
+
+Pass `haiku`, `sonnet` or `opus` only when allowed by the actual per-invoke model
+enum, not arbitrary concrete IDs in that restricted argument. Check same-family
+parent resolution, force settings, specialist overrides and separate reasoning
+controls against the actual version/schema. Restrictions or native overrides
+can change the resolved target: record the call alias and effective model, not
+just the intended pin. Claude provider/deployment resolution is native, not an
+OpenCode-style cross-provider alias mechanism. Official documentation was checked
+2026-11-10; no local Claude runtime was available for routing acceptance.
+
+#### Codex
+
+Use `$CODEX_HOME/` (default `~/.codex/`) files `low.config.toml`,
+`medium.config.toml` and `high.config.toml`, respectively:
+
+```toml
+model = "<concrete-low-model-id>"
+model_reasoning_effort = "low"
+```
+
+```toml
+model = "<concrete-medium-model-id>"
+model_reasoning_effort = "medium"
+```
+
+```toml
+model = "<concrete-high-model-id>"
+model_reasoning_effort = "high"
+```
+
+Since Codex 0.134, native profile files use top-level keys, not `[profiles.low]`
+tables in `config.toml`. Migrate legacy tables into the named files yourself.
+The illustrated efforts are independent choices, not a tier-to-effort rule;
+replace each with a value supported by the chosen model/provider.
+For native launches, precedence increases from system/user base configuration
+through the selected user profile, trusted project `.codex/config.toml` layers
+(closest wins), and CLI overrides, subject to managed requirements.
+
+In this workflow the files are a declarative source only: the coordinator reads
+model, effort and provider compatibility. Never pass `--profile` to a child,
+apply unrelated settings or change the parent session. Classic Codex 0.163.0
+source exposes independent `agent_type`, `model` and `reasoning_effort` fields;
+V2 exposure can be gated, so inspect the actual session tool schema before use.
+Pass those independent native fields only when supported. The child's inherited
+provider or custom specialist model/effort overrides may block the mapping.
+Do not assume the source profile switches provider, duplicate a specialist, or
+change its definition to disguise an unsupported route. Checked 2026-11-10;
+installed classic 0.163.0 source/schema evidence is not live dispatch proof.
+
+#### Faults, corrections and runtime boundary
+
+A confirmed configuration-resolution fault (missing, malformed, ambiguous,
+disabled/inactive or unavailable selected mapping) triggers a visible warning
+naming the fault, source, requested tier and exact current-model fallback.
+Continue without a routine prompt only after the current selection is available,
+capable and explicitly routable to the same specialist. Preserve its applicable
+effort/variant, and keep requested tier distinct from effective selection.
+An illustrative warning, with placeholders rather than selected models:
+
+```text
+Warning: requested tier low is missing from <config-source>.
+Using current-model fallback <current-provider>/<current-model>, with its existing effort/variant, for <same-specialist>; availability, capability and explicit routing checked.
+```
+
+Inability to inspect or enumerate is missing evidence, not a mapping fault.
+A valid but incapable mapping, unsupported route or unusable current model
+requires a user decision. No arbitrary defaults, working-model search, omitted
+model inheritance or workflow tier escalation is allowed; an execution failure
+is not a configuration fallback opportunity.
+
+Before first dispatch record the source/revision, tier/rationale, independent
+specialist, selector/provider/API target, effort/variant, fallback reason/warning
+and evidence in the existing task record. In-scope corrections must reuse the
+actual selected or fallback pin; do not reselect the then-current session model.
+Relevant drift or a requested workflow model change requires explicit authorisation.
+
+Existing external plugins' runtime retries and model-switch recovery are outside
+this policy and remain unchanged. Do not block solely because of their mere
+existence; workflow pins do not control external runtime changes. Requested
+selection is not observed runtime proof. Native availability, catalogue/docs
+and structural tests are not successful live-route evidence, nor is worker
+self-report. Live runtime acceptance for this implementation was explicitly
+waived and remains unverified, not passed. Optional future manual scenarios in
+`_tests/workflow_scenarios.md` are not a completion gate for this change.
+
+Native references (checked 2026-11-10):
+
+- OpenCode [configuration](https://opencode.ai/docs/config), [models/aliases](https://opencode.ai/docs/models), [providers](https://opencode.ai/docs/providers) and [API](https://opencode.ai/docs/api).
+- Claude Code [settings/precedence](https://code.claude.com/docs/en/settings), [environment precedence](https://code.claude.com/docs/en/env-vars#precedence), [model pins](https://code.claude.com/docs/en/model-config) and [subagent models](https://code.claude.com/docs/en/sub-agents#choose-a-model).
+- Codex [profile files](https://developers.openai.com/codex/config-file/config-advanced.md), [subagents](https://developers.openai.com/codex/subagents) and version-pinned [classic field definitions](https://github.com/openai/codex/blob/rust-v0.163.0/codex-rs/core/src/tools/handlers/multi_agents_spec.rs) / [registration gates](https://github.com/openai/codex/blob/rust-v0.163.0/codex-rs/core/src/tools/spec_plan.rs).
+
 ### Workflow verification
 
 The shared phase-evidence contract is a procedural gate, not runtime enforcement.
@@ -168,9 +362,11 @@ See `_tests/workflow_scenarios.md` for manual handoff scenarios in Claude Code,
 OpenCode and Codex. Structural checks do not prove that a live agent follows the
 rule.
 
-Run the automated workflow checks with:
+Run the automated workflow checks with the existing shell tools and Python 3.11+
+(standard-library JSON/TOML parsing in the focused suite, no packages to install):
 
 ```sh
+bash _tests/run_implementation_model_selection_tests.sh
 bash _tests/run_workflow_tests.sh
 bash _tests/run_workflow_continuation_tests.sh
 ```

@@ -25,6 +25,7 @@ workflow_files=(
   "skills/_shared/phase-evidence.md"
   "skills/_shared/workflow-artifacts.md"
   "skills/_shared/task-briefs.md"
+  "skills/_shared/subagent-dispatch.md"
   "skills/_shared/wave-readiness.md"
   "skills/_shared/test-pruning.md"
   "skills/test-pruning/SKILL.md"
@@ -1184,7 +1185,7 @@ _write_expected_installed_skill() {
     my @names = qw(ASK_USER_QUESTION_TOOL ENTER_PLAN_TOOL EXIT_PLAN_TOOL TASK_TRACKER_TOOL DISPATCH_AGENT_TOOL INVOKE_SKILL_TOOL READ_FILE_TOOL WRITE_FILE_TOOL EDIT_FILE_TOOL GREP_TOOL GLOB_TOOL SHELL_EXEC_TOOL MODEL_ENUMERATION);
     my %values = (
       claude => [q~AskUserQuestion~, q~EnterPlanMode~, q~ExitPlanMode~, q~TodoWrite~, q~Agent~, q~Skill~, q~Read~, q~Write~, q~Edit~, q~Grep~, q~Glob~, q~Bash~, q~reading the `model` enum on the Agent tool schema, which is the set of values the harness will accept~],
-      opencode => [q~question~, q~entering plan mode (in OpenCode, plan mode is toggled by the user pressing Tab; ask the user to enter plan mode before reviewing the design)~, q~exiting plan mode (in OpenCode, the user toggles out of plan mode with Tab after approving the design; present the design and wait for explicit approval before any code edit)~, q~todowrite~, q~subagent~, q~skill~, q~read~, q~write~, q~edit~, q~grep~, q~glob~, q~bash~, q~running `opencode models` with the bash tool, which lists every available model, one per line~],
+      opencode => [q~question~, q~entering plan mode (in OpenCode, plan mode is toggled by the user pressing Tab; ask the user to enter plan mode before reviewing the design)~, q~exiting plan mode (in OpenCode, the user toggles out of plan mode with Tab after approving the design; present the design and wait for explicit approval before any code edit)~, q~todowrite~, q~subagent~, q~skill~, q~read~, q~write~, q~edit~, q~grep~, q~glob~, q~shell~, q~running `opencode models` with the shell tool, which lists every available model, one per line~],
       codex => [q~request_user_input~, q~STOP and ask the user to switch to Plan mode, do not continue until in Plan mode~, q~ask the user to approve the plan and then leave plan mode~, q~update_plan task list~, q~spawn_agent~, q~/skills or $skill-name~, q~read the file~, q~write or create the file~, q~apply_patch~, q~exec_command with rg~, q~exec_command with rg --files or find~, q~exec_command~, q~running `codex debug models` with exec_command, which prints the raw model catalogue~],
     );
     my $harness = shift;
@@ -1202,8 +1203,10 @@ test_changed_workflow_skills_are_installed_in_all_harnesses() {
   local harness file relative question_tool skill_tool dispatch_tool expected missing=0
   local files=(
     'wave-planning/SKILL.md' '_shared/wave-readiness.md' '_shared/task-briefs.md'
+    '_shared/subagent-dispatch.md' '_shared/workflow-artifacts.md'
     '_shared/test-pruning.md' 'workflow-coordinator/SKILL.md'
     'subagent-driven-development/SKILL.md' 'subagent-driven-development/reviewer-prompt.md'
+    'subagent-driven-development/implementer-prompt.md'
     'fast-path-implementation/fast-path-reviewer-prompt.md' 'test-driven-development/SKILL.md'
   )
   for harness in claude opencode codex; do
@@ -1564,6 +1567,76 @@ test_common_rule_checks_reject_wrong_skill_tool_mappings() {
   fi
 }
 
+_check_implementation_selection_consumers() {
+  local root="$1" scope="$2" requirement file pattern content missing=0
+  local requirements=(
+    'wave-planning/SKILL.md|lowest capable implementation tier.{0,80}`low`.{0,30}`medium`.{0,30}`high`.{0,100}rationale'
+    'wave-planning/SKILL.md|specialist.{0,100}independent.{0,80}model'
+    'wave-planning/SKILL.md|native resolution.{0,100}subagent-dispatch.md.{0,180}current-model configuration fallback'
+    '_shared/wave-readiness.md|requested implementation tier.{0,100}rationale.{0,100}independent specialist'
+    '_shared/wave-readiness.md|native mapping.{0,120}configuration fallback.{0,160}availability.{0,80}capability.{0,80}routing'
+    '_shared/wave-readiness.md|before first dispatch.{0,100}actual task pin'
+    '_shared/wave-readiness.md|drift.{0,100}authorisation'
+    'subagent-driven-development/SKILL.md|native resolution.{0,100}subagent-dispatch.md'
+    'subagent-driven-development/SKILL.md|consume the retained actual task pin.{0,100}fallback'
+    'subagent-driven-development/SKILL.md|Do not reselect.{0,100}current-session model'
+    'subagent-driven-development/SKILL.md|Preparation and reviewer.{0,100}unchanged'
+    'subagent-driven-development/SKILL.md|runtime.{0,100}outside.{0,100}policy'
+    'subagent-driven-development/implementer-prompt.md|configured source/revision.{0,100}requested tier.{0,100}rationale'
+    'subagent-driven-development/implementer-prompt.md|native selector.{0,60}provider.{0,60}API target/resolved model.{0,80}effort.{0,40}variant'
+    'subagent-driven-development/implementer-prompt.md|fallback flag.{0,60}reason.{0,60}warning.{0,60}evidence'
+    'subagent-driven-development/implementer-prompt.md|schema.{0,60}catalogue/capability.{0,60}routing evidence'
+    'subagent-driven-development/implementer-prompt.md|corrections.{0,100}retained actual task pin.{0,80}fallback'
+    'subagent-driven-development/implementer-prompt.md|Do not reselect.{0,100}current-session model'
+    'subagent-driven-development/implementer-prompt.md|drift.{0,100}authorisation'
+  )
+  for requirement in "${requirements[@]}"; do
+    file="${requirement%%|*}"; pattern="${requirement#*|}"
+    content="$(tr '\n' ' ' < "$root/$file" | tr -s '[:space:]' ' ')"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "${scope}_implementation_selection_${file//\//_}" "missing consumer contract: $pattern"
+      missing=1
+    fi
+  done
+  (( missing != 0 )) || _pass "${scope}_implementation_selection_consumers"
+}
+
+test_implementation_selection_consumers_use_the_shared_contract() {
+  _check_implementation_selection_consumers "$REPO_ROOT/skills" source
+}
+
+test_implementation_selection_consumers_are_installed_in_all_harnesses() {
+  local harness
+  for harness in claude opencode codex; do
+    _check_implementation_selection_consumers "$TEST_TMP/$harness/skills" "$harness"
+  done
+}
+
+test_opencode_installs_the_actual_shell_enumeration_tools() {
+  local target="$TEST_TMP/opencode-tools"
+  mkdir -p "$target"
+  printf 'Execute with {{SHELL_EXEC_TOOL}}.\nEnumerate by {{MODEL_ENUMERATION}}.\n' > "$target/tools.md"
+  substitute_tool_names "$target" OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
+  if [[ "$(cat "$target/tools.md")" != $'Execute with shell.\nEnumerate by running `opencode models` with the shell tool, which lists every available model, one per line.' ]]; then
+    _fail 'opencode_installs_the_actual_shell_enumeration_tools' 'installed instructions must name shell for execution and model enumeration'
+    return
+  fi
+  _pass 'opencode_installs_the_actual_shell_enumeration_tools'
+}
+
+test_implementation_consumers_do_not_override_configuration_fallback() {
+  local file content missing=0
+  local files=('wave-planning/SKILL.md' '_shared/wave-readiness.md' 'subagent-driven-development/SKILL.md' 'subagent-driven-development/implementer-prompt.md')
+  for file in "${files[@]}"; do
+    content="$(tr '\n' ' ' < "$REPO_ROOT/skills/$file" | tr -s '[:space:]' ' ')"
+    if grep -Eiq 'select a concrete capable identifier separately|Resolve a concrete, harness-verified lower-cost capable model|Use bounded lower-cost capable specialist workers' <<< "$content"; then
+      _fail "implementation_unconstrained_selection_${file//\//_}" 'obsolete concrete-model selection overrides native configuration and retained pins'
+      missing=1
+    fi
+  done
+  (( missing != 0 )) || _pass 'implementation_consumers_do_not_override_configuration_fallback'
+}
+
 _check_skill_frontmatter
 test_required_files_exist
 test_coordinator_reuses_the_executors_final_gate_evidence
@@ -1581,6 +1654,10 @@ test_phase_evidence_boundary_references
 test_claude_installer_copy_and_substitution
 test_opencode_installer_copy_and_substitution
 test_codex_installer_copy_and_substitution
+test_implementation_selection_consumers_use_the_shared_contract
+test_implementation_consumers_do_not_override_configuration_fallback
+test_implementation_selection_consumers_are_installed_in_all_harnesses
+test_opencode_installs_the_actual_shell_enumeration_tools
 test_changed_workflow_skills_are_installed_in_all_harnesses
 test_installed_skill_checks_reject_wrong_harness_tool_mappings
 test_installed_skill_checks_reject_wrong_tracker_mappings

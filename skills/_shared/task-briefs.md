@@ -42,7 +42,17 @@ Every task brief records:
   fixtures, temporary outputs or global tools.
 - Acceptance criteria and task-local verification commands with expected
   evidence.
-- Required model tier and specialist rationale.
+- Required implementation tier (`low`, `medium` or `high`) and short lowest-capable
+  tier rationale, separate from the independent specialist rationale. Preparation
+  and reviewer selection retain their scope/capability policy.
+- Before dispatch: configured source/revision, requested tier and rationale,
+  native selector, provider, API target/resolved model, reasoning effort or
+  variant, fallback flag, reason, warning and evidence. Record explicit absence
+  or inapplicability rather than guessing metadata. Include actual schema,
+  catalogue/capability and routing evidence and the independent specialist.
+- The retained actual task pin from the existing workflow record. In-scope
+  corrections consume that retained actual selection, including fallback, with
+  fresh drift/routing checks, not a newly selected current-session model.
 
 The complete requirement map must cover every approved requirement. Same-wave
 tasks have disjoint writes and may not read one another's changing files.
@@ -56,11 +66,16 @@ without splitting work artificially or changing approved architecture.
 Before each dispatch, read `subagent-dispatch.md` and follow its current
 context-isolation, specialist-selection and model-resolution procedure.
 Enumerate available model identifiers and verify that the harness can route
-the selected capability. Use a high-capability tier for preparation and
-independent reviews, and a low-cost capable tier for bounded implementation.
-The `model` metadata in a skill does not switch the primary agent. If model
-enumeration, routing or required capability is unavailable, report a blocker;
-do not invent identifiers, silently downgrade, or retry at another tier.
+the selected capability to the independently chosen specialist. Use a
+high-capability tier for preparation and independent design/readiness reviews;
+other reviewers remain scope/capability-selected. Implementation uses the lowest
+capable named tier and native resolution, with only the warned, checked
+current-model configuration fallback defined in `subagent-dispatch.md`. The
+`model` metadata in a skill does not switch the primary agent. Missing model
+enumeration, routing or required capability remains a blocker; do not invent
+identifiers, silently downgrade or retry at another tier. Keep requested
+workflow selection distinct from observed runtime execution; external runtime
+plugin behaviour is outside this policy and is not controlled by task pins.
 
 The orchestrator supplies only the task brief and necessary source context.
 Workers may change only allowed files and must not commit, push, create

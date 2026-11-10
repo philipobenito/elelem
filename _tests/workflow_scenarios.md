@@ -2,6 +2,42 @@
 
 These are manual harness smoke tests. They exercise conversational behaviour and are not covered by the executable structural test runner. They were not run as part of the automated suite, and no live agent tests are claimed.
 
+## Implementation model selection
+
+These are optional future manual checks, not a completion gate for this change.
+Live runtime acceptance was explicitly waived and remains unverified, not passed.
+Run only in separately authorised disposable native configurations, recording
+harness version, actual schema, active instruction sources and redacted selection
+evidence. Catalogue availability and structural checks are not live routing proof.
+
+1. Supply explicit user-chosen low/medium/high native mappings and dispatch a
+   bounded task at the lowest capable tier with an independent specialist.
+   - Expected evidence: source/precedence, tier rationale, explicit selector and
+     actual provider/API target plus effort/variant are recorded. Check OpenCode
+     alias-owned metadata, Claude effective family resolution, and Codex native
+     independent fields with source-only profiles in the relevant harness.
+   - Failure: tier is treated as effort, provider target slashes redirect across
+     providers, a child profile is invented, or specialist selection changes.
+2. Separately supply missing, malformed, ambiguous, disabled/inactive and
+   unavailable selected mappings, then withhold inspection/enumeration evidence.
+   - Expected evidence: confirmed configuration faults warn with source/tier and
+     exact current-model fallback, retaining effort/variant after capability and
+     explicit same-specialist routing checks, without routine prompts. Missing
+     evidence blocks instead of being relabelled as a configuration fault.
+   - Failure: an arbitrary default is used, an incapable valid mapping triggers
+     fallback, or an unusable current model is dispatched without a decision.
+3. After a current-model fallback, request an in-scope correction while the
+   parent uses another model; separately introduce relevant configuration drift.
+   - Expected evidence: the retained actual task pin is reused after fresh checks;
+     relevant drift or requested workflow model change requires authorisation.
+   - Failure: corrections silently reselect the then-current parent model.
+4. Observe an existing external runtime recovery plugin without modifying it.
+   - Expected evidence: external plugins' runtime retries and model switches stay
+     outside this policy. Distinguish requested selection from observed runtime
+     execution using available native evidence, retaining uncertainty where absent.
+   - Failure: workflow pins are claimed to prevent external recovery, plugin
+     existence alone blocks dispatch, or worker self-report proves routing.
+
 ## Coordinator-managed handoff continuation
 
 These manual scenarios must be run separately in Claude Code, OpenCode and

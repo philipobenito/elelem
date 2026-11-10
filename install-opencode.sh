@@ -71,8 +71,8 @@ OPENCODE_SUBSTITUTIONS=(
   'edit'
   'grep'
   'glob'
-  'bash'
-  'running `opencode models` with the bash tool, which lists every available model, one per line'
+  'shell'
+  'running `opencode models` with the shell tool, which lists every available model, one per line'
 )
 
 # Resolves a source skill file to its destination by stripping $SKILLS_SOURCE
