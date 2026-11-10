@@ -36,6 +36,18 @@ required file cannot be materialised, block before execution.
   the original starting baseline, including contents of relevant dirty paths,
   immutable throughout the workflow.
 - Task status, owner, review result, verification result, evidence and blockers.
+- In each existing task record, pin actual implementation selection before first
+  dispatch: configured source/revision, requested tier and rationale, independent
+  specialist, native selector, provider, API target/resolved model, reasoning
+  effort or variant, fallback flag, reason, warning and evidence. Retain source
+  precedence, catalogue/capability and actual schema/routing evidence without
+  secrets. Mark absent/inapplicable values explicitly. This is the requested
+  workflow selection, not proof of observed execution; record observed execution
+  evidence and uncertainty separately. External runtime retries/model switches
+  remain outside workflow-selection policy and are not prevented by this pin.
+  Corrections reuse the actual pin, including fallback; preserve drift checks
+  and explicit authorisation for any workflow model change. Never reselect a
+  changed current-session model or overwrite original selection provenance.
 - Accepted-change checkpoints and wave integration results, including whether
   each checkpoint is verified or explicitly accepted-unverified.
 - Current artefact revisions and links or references to evidence.

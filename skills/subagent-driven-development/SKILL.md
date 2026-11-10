@@ -63,13 +63,27 @@ after the relevant checks; workers do not perform Git operations. Never push.
 Use the persisted task briefs and dependency graph as the execution contract;
 do not recreate or broaden them. Each brief defines exact allowed writes,
 stable reads, prohibited concurrent reads, dependencies, resources, acceptance
-criteria, verification commands, specialist type and model tier. Same-wave
-tasks must have disjoint writes and must not consume another task's changing
+criteria, verification commands, independent specialist type and rationale, and
+lowest-capable implementation tier (`low`, `medium` or `high`) with rationale.
+Same-wave tasks must have disjoint writes and must not consume another task's changing
 files or results. Stable shared reads are allowed. Respect resource constraints
-and verified harness concurrency. Invoke the dispatch procedure in
-`../_shared/subagent-dispatch.md` for each worker, including concrete model
-identifiers confirmed by the harness. Use bounded lower-cost capable specialist
-workers; do not invent model identifiers or infer routing from metadata.
+and verified harness concurrency. Use native resolution under
+`../_shared/subagent-dispatch.md` for first implementation dispatch, with only its
+warned, checked current-model configuration fallback. The coordinator records
+the actual task pin and complete `../_shared/task-briefs.md` provenance before
+dispatch. Do not independently choose another concrete model or change specialist
+to obtain a model. Preparation and reviewer model policies are unchanged.
+
+For in-scope corrections, consume the retained actual task pin, including fallback,
+with fresh enumeration, availability, capability, routing and configuration-drift
+checks under the shared procedure. Do not reselect the then-current-session model.
+Relevant drift or any workflow model change requires explicit authorisation and
+a revised recorded pin. Use the actual native schema to route the independent
+specialist and retained selection explicitly, not omitted-model inheritance or
+invented fields. Runtime retries and model switches by external plugins remain
+outside this workflow-selection policy; do not disable or block solely because
+of them or claim pins prevent runtime changes. Requested selection is not
+observed execution evidence; worker self-report is not routing proof.
 
 Send each worker only its self-contained brief and required source context. Do
 not pass session history as a substitute. Specify its exact writes, stable
@@ -111,7 +125,9 @@ requirement, contract or architecture decision is a blocker to return to
 planning, not a prompt to silently redesign.
 
 Batch related in-scope review corrections within the approved task boundaries;
-retain independent re-review and fresh task checks after the batch.
+retain independent re-review and fresh task checks after the batch. Correction
+dispatch reuses the retained implementation pin above, including fallback; it
+does not restart model selection.
 
 After review or its recorded skip, the orchestrator reads the actual changed
 paths and evidence, then runs fresh task verification by default. Do not trust

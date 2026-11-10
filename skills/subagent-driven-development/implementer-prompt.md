@@ -10,9 +10,22 @@ schedule, ownership, dependency, resource, input or capacity checks. Follow
 `../_shared/task-briefs.md`, `../_shared/subagent-dispatch.md`, and
 `../../rules/common/subagents.md`.
 
-Select the most specific capable specialist type for the task. Resolve a
-concrete, harness-verified lower-cost capable model using the current shared
-dispatch procedure. Do not rely on skill metadata to switch models.
+Select the most specific capable specialist independently of its model. Before
+first dispatch, apply native resolution and only the warned, checked current-model
+configuration fallback in the shared dispatch procedure. Have the coordinator
+retain the actual task pin with complete provenance before invoking the worker.
+For in-scope corrections, consume the retained actual task pin, including fallback.
+Do not reselect the then-current-session model. Recheck availability, capability,
+explicit routing and configuration drift; relevant drift or workflow model changes
+require explicit authorisation. Preparation and reviewer policies are unchanged.
+
+Bind the independent specialist and retained selection through the actual exposed
+native dispatch fields, not guessed parameters or omitted-model inheritance. The
+selection record below is prompt context, not a portable tool argument schema.
+Do not rely on skill metadata to switch models. External runtime plugin recovery
+is outside workflow-selection policy; do not block solely because of it or claim
+task pins control runtime switches. Requested selection and observed execution
+evidence are distinct; a worker self-report is not routing proof.
 
 ```text
 {{DISPATCH_AGENT_TOOL}} ([SPECIALISED_SUBAGENT_TYPE]):
@@ -26,6 +39,17 @@ dispatch procedure. Do not rely on skill metadata to switch models.
     objective, acceptance criteria, interfaces, dependencies, exclusions,
     exact allowed writes, stable reads, prohibited concurrent reads, resources,
     verification commands and expected evidence.]
+
+    ## Retained implementation selection
+
+    [Paste the coordinator's retained actual task pin: configured source/revision,
+    requested tier (low, medium or high) and lowest-capable rationale; independent
+    specialist and rationale; native selector, provider, API target/resolved model,
+    reasoning effort or variant; fallback flag, reason, warning and evidence;
+    source precedence, actual schema, catalogue/capability and routing evidence.
+    Mark absent or inapplicable values explicitly. Include fresh drift checks and
+    any explicit authorisation for a revised pin. Corrections reuse this actual
+    selection, including fallback, rather than a changed current model.]
 
     ## Required context
 

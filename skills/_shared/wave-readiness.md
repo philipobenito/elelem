@@ -42,8 +42,22 @@ skipped. Check:
   where appropriate, without manufactured splits or architecture changes.
 - Task-local checks use stable inputs. Full suite and integration barriers run
   only after all relevant writers stop.
-- Specialist and model tiers fit each task, and no task depends on workers
-  discovering architecture outside the brief.
+- The requested implementation tier (`low`, `medium` or `high`) has a
+  lowest-capable rationale and an independent specialist rationale. No task
+  depends on workers discovering architecture outside the brief.
+- The native mapping or bounded current-model configuration fallback path under
+  `./subagent-dispatch.md` requires fresh availability, capability and explicit
+  routing checks. Confirm the configuration source and actual schema can be
+  inspected; missing evidence is not a configuration fault. Require, before first dispatch,
+  the actual task pin and full provenance from `./task-briefs.md`, including any
+  fallback warning and reason. Readiness does not select concrete models or
+  replace per-dispatch checks. Corrections retain the pin, including fallback;
+  relevant drift or workflow model changes require explicit authorisation.
+
+Preparation and reviewer model policies remain unchanged. Implementation
+configuration fallback does not waive non-configuration capability or routing
+blockers. External runtime plugin recovery remains outside workflow-selection
+policy; it neither blocks readiness by itself nor is prevented by task pins.
 
 ## Verdict and response
 
