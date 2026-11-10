@@ -54,6 +54,27 @@ next required action without repeating valid completed phases or routine
 prompts. A phase's
 "stop after handoff" ends that phase procedure, not the overall workflow.
 
+### Context-reduction checkpoint
+
+Before requesting native compaction, persist the authorised current revision,
+original evidence and permission references, next action and ownership in the
+existing workflow state. Retain the immutable baseline, accepted checkpoints,
+exact-source skips, pending questions, blockers and unaccepted task status.
+This recoverability checkpoint is not task acceptance or a new approval.
+
+Missing recoverable decisions, draft proposals or evidence blocks destructive
+reduction. Preserve draft content through accessible original sources or
+authorised staging before it can be lost. Never persist an unapproved design
+into `plan.md`. A summary is not a substitute for exact permission or procedure
+provenance. Follow `./phase-evidence.md` for the concise maintenance record;
+do not create another ledger, transcript dump or per-phase artefact family.
+
+Respect Plan-mode restrictions and authorised staging permissions. Do not
+trigger reduction requiring unauthorised recovery writes. After native or
+manual completion, reload only the state needed for the next action and apply
+the normal resume validation below, including ownership, revision, approval,
+baseline/checkpoints and evidence validity. Do not repeat valid completed work.
+
 Task statuses use `queued`, `running`, `review`, `verified`, `integrated`,
 `accepted-unverified`, `blocked` or `skipped`. `integrated` requires task review,
 task verification and the appropriate wave integration check. A task with an

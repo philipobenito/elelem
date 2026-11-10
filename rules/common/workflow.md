@@ -90,6 +90,17 @@ workflow state. This standing rule applies to phase or task handoffs, not to
 each tool call or each interactive question. Record the result and next action
 in the existing `workflow.md`.
 
+Construct bounded sufficient phase inputs and returns under
+`skills/_shared/task-briefs.md`; delegated isolation follows
+`skills/_shared/subagent-dispatch.md`. Assess native context maintenance under
+`workflow-coordinator`, with recoverability in
+`skills/_shared/workflow-artifacts.md` and evidence in
+`skills/_shared/phase-evidence.md`. Preserve conversational defaults, the same
+owner and all gates. Use automatic native reduction only when safe and actually
+available; errors or unavailable controls pause the dependent transition and
+offer manual compaction. Deferred unsafe boundaries and no-op outcomes are not
+failures. State-file writes and skill invocation alone do not reduce context.
+
 When the return supports the next required phase, invoke that phase without
 routine prompting. Pause for an actual user choice or approval, a Plan-mode
 limitation, a real blocker, missing evidence, unsafe state, unavailable

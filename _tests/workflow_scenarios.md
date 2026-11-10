@@ -55,6 +55,107 @@ compliance. These scenarios were not run unless explicitly reported otherwise.
    - Failure: the entire workflow stops without reason or a recursive
      coordinator is created.
 
+## Context boundaries and native maintenance
+
+Run these acceptance scenarios separately in each available Claude Code,
+OpenCode and Codex runtime. They were not run as part of the automated suite.
+Policy delivery through installer fixtures is not observed context reduction or
+runtime enforcement. Record the active harness version, interface/schema,
+installed instruction sources and configuration for each observation; do not
+treat an uninstalled checkout as active policy. Unavailable runtimes remain
+unverified. Do not add runtime wrappers or configuration to make a test possible.
+
+1. Hand off from Research to conversational Planning, then from approved
+   Planning to a broad independent review.
+   - Expected evidence: inspect the next phase's actual input. It contains the
+     objective/method, scope/revision, constraints, required outputs, unresolved
+     decisions, precise artefact sections and accessible approval, exact-source
+     skip, baseline/checkpoint and evidence references as applicable, without a
+     whole ledger or transcript. Broad review retains the full approved design
+     and cumulative changes; implementation still receives its complete brief.
+     Inspect the return for matching scope/revision, outcome, concise findings,
+     original evidence provenance, questions/blockers and next-action advice.
+   - Failure: a size target removes necessary inputs, a missing fact is guessed
+     instead of `NEEDS_CONTEXT`, or dialogue is silently moved into a child.
+2. Put a unique parent-only marker in earlier conversational history, then
+   dispatch bounded work through the actual documented fresh-child interface.
+   - Expected evidence: inspect the child creation request and initial input
+     capture, including supplied messages and inheritance semantics. The parent
+     transcript and parent-only marker are absent while necessary task inputs
+     and fixed applicable instructions, tools and managed policy remain present.
+     Record the actual interface/schema/version evidence. A documented fresh
+     creation API needs no invented inheritance flag. Reusing a child with
+     accumulated history or a history fork is not a fresh start.
+   - Failure: freshness is inferred only from a failed sentinel recall probe,
+     an omitted undocumented field or skill invocation. A child's inability to
+     recall the marker alone is not proof of isolation.
+3. At a settled boundary with disposable completed-phase detail, inspect live
+   native compaction capability before automatic maintenance.
+   - Expected evidence: the control targets the known current session, access
+     is authorised and completion is observable. Capture a recoverable checkpoint
+     before the request, then the request and native completion signal. Request
+     acceptance alone is not completion. Reload only relevant state and validate
+     ownership, revision, approval, baseline/checkpoints and original evidence
+     before the same coordinator continues without a routine prompt.
+   - Failure: external SDK/API documentation substitutes for live capability,
+     session identity is guessed, shell/API self-calls are improvised, or a
+     second owner is created. Do not attempt those actions to test failure.
+4. If usage metrics are exposed, capture comparable before/after readings with
+   their source, session, units and timing around the completion signal.
+   - Expected evidence: report measured differences only from actual readings;
+     retain distinct evidence for policy delivery, completed compaction and
+     measured context reduction. Without metrics, record completion if observed
+     but leave token reduction unverified. Do not invent a universal threshold.
+   - Failure: a state-file write, successful install, smaller report, recall
+     failure or accepted request is presented as measured reduction.
+5. Exercise a native-control error and, separately, an unavailable control using
+   existing safe harness facilities only.
+   - Expected evidence: preserve the checkpoint, record the cause, pause the
+     dependent transition and offer native manual compaction without blind
+     retries or silent downgrade. After manual action, inspect its completion
+     evidence where available and revalidate normal workflow state. If reduction
+     cannot be established, label it unverified and obtain explicit permission
+     before unreduced continuation; that permission skips no other gate.
+   - Failure: an error is relabelled as no-op, a manual offer implies completion,
+     or dependent execution resumes without required recovery/authorisation.
+6. Test an active task or callback, an uncertain external side effect and
+   unsettled input separately, then test a boundary with no meaningful history.
+   - Expected evidence: unsafe cases record `deferred`, resolve safety conditions
+     before maintenance or dependent actions, and permit only safe independent
+     work. No meaningful history records `no-op`, not failure or manual fallback.
+     Maintenance is not requested after every tool call, question or small return.
+   - Failure: callbacks are lost, an uncertain side effect is repeated, or
+     deferred, no-op, unavailable and error outcomes are conflated.
+7. Withhold recoverable decision content, a draft proposal, original permission
+   evidence or an accessible procedure source separately; also supply stale
+   provenance and a Plan-mode restriction that prevents recovery writes.
+   - Expected evidence: destructive reduction or the affected transition blocks
+     until authorised recoverability and current evidence exist. Drafts are
+     recovered from original accessible sources or authorised staging, never
+     persisted as an approved `plan.md`. Exact-source skips retain their scope,
+     reason and consequence. No unauthorised recovery writes are requested.
+   - Failure: a summary replaces exact permission/procedure provenance, a draft
+     is approved by persistence, or a reduction request precedes its checkpoint.
+8. Change the harness/schema/configuration after a valid isolation/maintenance
+   check, then repeat with those inputs unchanged.
+   - Expected evidence: changed capability inputs require rechecking actual
+     semantics. Only still-valid capability evidence is reused when unchanged;
+     model enumeration and routing are checked for every dispatch. Missing
+     required isolation blocks until explicit alternative authorisation exists,
+     rather than silently inheriting parent history.
+   - Failure: capability reuse waives model checks or an unavailable fresh-child
+     interface is silently replaced with an inherited-history fork.
+9. Resume after native or manual maintenance with valid completed phases, then
+   introduce a changed approval revision or inaccessible evidence reference.
+   - Expected evidence: valid work is reused without repeated dialogue or
+     approval. A stale revision or provenance gap blocks affected work under
+     the existing recovery contract. Existing `workflow.md` phase entries hold
+     the mechanism, phases/revision, capability/inheritance evidence, completion
+     reference or distinct error/unavailable/deferred/no-op outcome and next move.
+   - Failure: a new maintenance ledger or transcript dump is created, satisfied
+     labels substitute for evidence, or approval, review, TDD, debugging,
+     verification, wave barriers, ownership or clean-up gates are bypassed.
+
 ## Conversational research and planning
 
 1. Start a new request that requires research before the work plan can be trusted. Provide only the initial goal and the relevant uncertainty.

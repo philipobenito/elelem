@@ -5,6 +5,28 @@ approved design. The coordinator and wave planner use it to keep workers
 bounded, specialised and isolated. Workers do not infer architecture from
 repository discovery or inherit conversational context.
 
+## Phase inputs and returns
+
+Apply this boundary contract to phase skills as well as delegated work. Phase
+inputs include objective, method, scope and revision, applicable constraints,
+required outputs and unresolved decisions. Supply precise artefact sections and
+accessible source references, including relevant approval, exact-source skips,
+baseline, checkpoint and evidence references. Select only what the next phase
+needs; references must be accessible to its actual recipient.
+
+Sufficiency takes precedence over arbitrary size caps. Broad reviews still
+receive the full approved design and cumulative changes where required. Preserve
+complete implementation briefs and all existing gates. Do not copy the whole
+ledger or transcript. If necessary inputs are missing, return `NEEDS_CONTEXT`
+rather than guess or rediscover broadly.
+
+Phase returns include scope and revision, outcome, concise findings or proposed
+content, evidence provenance, questions and blockers, and a next-action
+recommendation. Return to the owning phase or coordinator under the existing
+handoff path; a concise report does not replace original evidence or grant
+approval. Implementation workers also follow the complete brief and structured
+return below.
+
 ## Required task brief
 
 Every task brief records:

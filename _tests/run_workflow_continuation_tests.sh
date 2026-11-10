@@ -264,7 +264,44 @@ test_resume_reuses_valid_phase_evidence() {
   _pass "$1"
 }
 
-handoff_skill_files=(workflow-coordinator/SKILL.md _shared/workflow-artifacts.md research/SKILL.md brainstorming/SKILL.md brainstorming-standard/SKILL.md brainstorming-guided/SKILL.md brainstorming-committee/SKILL.md brainstorming-skip/SKILL.md design-review/SKILL.md work-on-ticket/SKILL.md debugging/SKILL.md wave-planning/SKILL.md subagent-driven-development/SKILL.md)
+context_policy_cases=(
+  'phase_briefs_select_sufficient_inputs|skills/_shared/task-briefs.md|Phase inputs include.{0,120}objective.{0,80}method.{0,80}scope.{0,80}revision.{0,180}constraints.{0,100}required outputs.{0,100}unresolved decisions'
+  'phase_briefs_reference_precise_provenance|skills/_shared/task-briefs.md|precise artefact sections.{0,100}accessible source references.{0,160}approval.{0,100}exact-source skips.{0,100}baseline.{0,100}checkpoint.{0,100}evidence'
+  'phase_briefs_do_not_truncate_required_review_context|skills/_shared/task-briefs.md|Sufficiency takes precedence over.{0,60}size.{0,180}full approved design.{0,80}cumulative changes.{0,180}complete implementation briefs'
+  'phase_briefs_exclude_accumulated_history|skills/_shared/task-briefs.md|Do not copy the whole ledger or transcript.{0,180}NEEDS_CONTEXT.{0,120}(guess|rediscover)'
+  'phase_returns_carry_revision_and_actionable_evidence|skills/_shared/task-briefs.md|Phase returns include.{0,80}scope.{0,60}revision.{0,80}outcome.{0,100}findings.{0,100}evidence provenance.{0,100}questions.{0,80}blockers.{0,100}next-action recommendation'
+  'dispatch_checks_actual_fresh_child_semantics|skills/_shared/subagent-dispatch.md|Delegated work starts fresh without inherited parent transcript[.].{0,80}actual current interface, schema and version.{0,180}fresh-child creation interface.{0,100}without.{0,80}inheritance parameter'
+  'dispatch_rejects_accumulated_child_history|skills/_shared/subagent-dispatch.md|Do not reuse accumulated child history.{0,100}history forks.{0,160}Missing required isolation.{0,100}blocker.{0,100}explicit alternative authorisation'
+  'isolation_capability_reuse_preserves_model_checks|skills/_shared/subagent-dispatch.md|Reuse.{0,100}isolation.{0,80}compaction.{0,160}harness, schema and configuration remain unchanged.{0,160}per-dispatch model enumeration and routing'
+  'handoff_prepares_next_inputs_before_maintenance|skills/workflow-coordinator/SKILL.md|After recording.{0,100}construct.{0,100}next phase.{0,100}task-briefs.md.{0,100}assess.{0,100}native context maintenance'
+  'maintenance_runs_at_meaningful_settled_boundaries|skills/workflow-coordinator/SKILL.md|settled phase boundaries.{0,100}completed-phase detail.{0,180}usage metrics.{0,100}no universal threshold.{0,160}not after every tool call, question or small task return'
+  'maintenance_requires_safe_live_native_capability|skills/workflow-coordinator/SKILL.md|existing safe native control.{0,80}known current session.{0,80}authorised access.{0,80}observable completion.{0,180}SDK/API documentation alone.{0,100}live capability'
+  'maintenance_forbids_improvised_self_calls|skills/workflow-coordinator/SKILL.md|No improvised shell/API self-calls, guessed session IDs or second session owner'
+  'maintenance_distinguishes_defer_from_no_op|skills/workflow-coordinator/SKILL.md|deferred.{0,120}active tasks or callbacks.{0,120}uncertain external side effects.{0,120}unsettled inputs.{0,220}no-op.{0,80}no meaningful history.{0,100}not a failure'
+  'maintenance_waits_for_completion_before_reload|skills/workflow-coordinator/SKILL.md|When safe and supported, request native compaction automatically[.].{0,80}Request acceptance is not completion.{0,120}Await.{0,80}native completion signal.{0,100}reload only relevant current state.{0,100}validate.{0,100}ownership.{0,80}revision.{0,80}approval.{0,80}evidence'
+  'maintenance_errors_offer_manual_recovery|skills/workflow-coordinator/SKILL.md|On error or unavailable native control.{0,100}preserve the checkpoint.{0,100}pause the dependent transition.{0,100}explain the cause.{0,100}offer native manual compaction.{0,100}Do not blindly retry'
+  'manual_recovery_does_not_imply_reduction|skills/workflow-coordinator/SKILL.md|Manual recovery.{0,100}observable completion.{0,120}state validation.{0,180}unverified.{0,120}explicit authorisation for unreduced continuation.{0,100}does not skip other gates'
+  'context_maintenance_preserves_dialogue_and_fixed_policy|skills/workflow-coordinator/SKILL.md|Retain conversational primary-session phases.{0,160}coordinator or executor wholesale into nested children.{0,180}Fixed applicable instructions, tools and managed policy remain loaded'
+  'reduction_checkpoint_precedes_request|skills/_shared/workflow-artifacts.md|Before requesting.{0,80}compaction.{0,100}persist.{0,120}current revision.{0,120}original evidence.{0,100}permission references.{0,100}next action.{0,100}ownership'
+  'reduction_blocks_on_unrecoverable_drafts|skills/_shared/workflow-artifacts.md|Missing recoverable decisions, draft proposals or evidence blocks destructive reduction.{0,180}Never persist an unapproved design into `plan.md`'
+  'reduction_respects_authorised_staging|skills/_shared/workflow-artifacts.md|Plan-mode.{0,120}authorised staging.{0,160}Do not trigger reduction requiring unauthorised recovery writes'
+  'maintenance_records_observations_not_token_claims|skills/_shared/phase-evidence.md|mechanism.{0,80}phases.{0,80}revision.{0,100}capability.{0,80}inheritance evidence.{0,120}completion reference.{0,100}error.{0,80}unavailable.{0,80}deferred.{0,80}no-op'
+  'maintenance_retains_original_provenance|skills/_shared/phase-evidence.md|original evidence and permission references.{0,140}inaccessible or stale provenance.{0,100}blocks.{0,140}Skill invocation or a state-file write is not context reduction'
+  'completion_is_not_measured_context_reduction|skills/_shared/phase-evidence.md|Completed compaction is not measured token reduction.{0,140}only observed facts.{0,100}metrics'
+  'standing_rule_uses_shared_boundary_contracts|rules/common/workflow.md|task-briefs.md.{0,140}subagent-dispatch.md.{0,180}native context maintenance.{0,100}workflow-coordinator.{0,140}workflow-artifacts.md.{0,100}phase-evidence.md'
+)
+
+test_context_boundary_policy() {
+  local name="$1" relative="$2" pattern="$3" content
+  content="$(tr '\n' ' ' < "$REPO_ROOT/$relative" | tr -s '[:space:]' ' ')"
+  if ! grep -Eiq "$pattern" <<< "$content"; then
+    _fail "$name" "missing boundary requirement in $relative"
+    return
+  fi
+  _pass "$name"
+}
+
+handoff_skill_files=(workflow-coordinator/SKILL.md _shared/workflow-artifacts.md _shared/task-briefs.md _shared/subagent-dispatch.md _shared/phase-evidence.md research/SKILL.md brainstorming/SKILL.md brainstorming-standard/SKILL.md brainstorming-guided/SKILL.md brainstorming-committee/SKILL.md brainstorming-skip/SKILL.md design-review/SKILL.md work-on-ticket/SKILL.md debugging/SKILL.md wave-planning/SKILL.md subagent-driven-development/SKILL.md)
 
 _prepare_claude_install() {
   local root="$1"
@@ -386,9 +423,37 @@ test_supported_installers_deliver_workflow_continuation_policy() {
   _pass "$1"
 }
 
+_delivered_policy_content() {
+  local root="$1" harness="$2" relative="$3"
+  if [[ "$relative" == rules/* && "$harness" == codex ]]; then
+    awk '/^<!-- elelem:codex:start -->$/ {inside=1; next} /^<!-- elelem:codex:end -->$/ {inside=0} inside' "$root/AGENTS.md"
+  elif [[ "$relative" == rules/* ]]; then
+    cat "$root/rules/${relative##*/}"
+  else
+    cat "$root/$relative"
+  fi
+}
+
+test_installer_delivers_context_boundary_policy() {
+  local name="$1" harness="$2" root="$TEST_TMP/$2-context" requirement case_name relative pattern content
+  if ! "_prepare_${harness}_install" "$root"; then
+    _fail "$name" "$harness installer fixture failed"
+    return
+  fi
+  for requirement in "${context_policy_cases[@]}"; do
+    IFS='|' read -r case_name relative pattern <<< "$requirement"
+    if ! content="$(_delivered_policy_content "$root" "$harness" "$relative" | tr '\n' ' ' | tr -s '[:space:]' ' ')" || ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "$name" "$harness installed content lacks $case_name in $relative"
+      return
+    fi
+  done
+  _pass "$name"
+}
+
 run_case() {
   local name="$1"
-  local function_name="test_$name"
+  local function_name="${2:-test_$name}"
+  if (( $# > 1 )); then shift 2; else shift; fi
   local function_status=0
   case_result_count=0
   case_result_status=""
@@ -397,7 +462,7 @@ run_case() {
     case_result_count=1
     case_result_status="FAIL"
     case_result_detail="test function is missing: $function_name"
-  elif "$function_name" "$name"; then
+  elif "$function_name" "$name" "$@"; then
     function_status=0
   else
     function_status=$?
@@ -445,5 +510,14 @@ for name in "${test_names[@]}"; do
   run_case "$name"
 done
 
-printf 'Cases: %d, Passed: %d, Failed: %d\n' "${#test_names[@]}" "$passed" "$failed"
+for requirement in "${context_policy_cases[@]}"; do
+  IFS='|' read -r name relative pattern <<< "$requirement"
+  run_case "$name" test_context_boundary_policy "$relative" "$pattern"
+done
+
+for harness in claude opencode codex; do
+  run_case "${harness}_installer_delivers_context_boundary_policy" test_installer_delivers_context_boundary_policy "$harness"
+done
+
+printf 'Cases: %d, Passed: %d, Failed: %d\n' "$(( ${#test_names[@]} + ${#context_policy_cases[@]} + 3 ))" "$passed" "$failed"
 (( failed == 0 ))
