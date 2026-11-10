@@ -35,9 +35,10 @@ final verification,
 and clean-up. A user may explicitly skip any phase. Do not request routine
 task or wave approvals after the approved design and READY schedule.
 
-The coordinator owns the cumulative test-pruning audit after task reviews and
-wave barriers and before final cumulative review and verification. Follow the
-shared test-pruning procedure; a task review does not claim this deferred audit.
+The coordinator owns the separate final test-pruning task after task reviews,
+wave barriers and cumulative final reviewer `PASS`, before final verification.
+Follow the shared test-pruning procedure; a task review does not claim this
+deferred audit.
 
 For bug fixes, use `debugging` by default to reproduce the issue and establish
 root cause. An explicit scoped skip does not create evidence or permit a false

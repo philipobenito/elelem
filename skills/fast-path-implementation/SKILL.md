@@ -40,9 +40,11 @@ Do not improvise batch scope or parallel dispatch.
 
 By default, run the same independent task review using
 `./fast-path-reviewer-prompt.md`, fresh orchestrator verification, any required
-integration barrier, then the coordinator-owned cumulative pruning audit before
-final cumulative review and verification as the
-standard executor. Honour only explicitly authorised, scoped review or check
+integration barrier, then final cumulative review. Only after cumulative final
+reviewer `PASS`, run the coordinator-owned separate final test-pruning task,
+bounded independent pruning-delta review only for actual pruning edits, and
+final verification after the last edit and review correction, as the standard
+executor. Honour only explicitly authorised, scoped review or check
 skips recorded by the coordinator. For a skipped task review, do not invoke the
 reviewer prompt or fabricate a verdict. Record skipped reviews and checks as
 `SKIPPED`, with their authorisation and consequence; a skipped review is not

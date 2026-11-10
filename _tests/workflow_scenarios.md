@@ -235,9 +235,9 @@ unverified. Do not add runtime wrappers or configuration to make a test possible
 
 These adversarial test-pruning scenarios are manual. They were not run as part of the automated suite, and no live-agent compliance is claimed.
 
-0. Inspect the cumulative test-pruning audit after task reviews and wave barriers, before final cumulative review and verification, across multiple tasks and corrections.
-   - Expected evidence: one audit covers the union of actually changed test-bearing files, including older and parameterised cases; task reviews do not claim the deferred audit occurred. Later affected changes refresh inventory and trigger targeted independent rechecks, including full audits of newly touched files; unaffected decisions retain stable evidence.
-   - Failure: per-task pruning runs before review, a correction file is omitted, or a final review ignores pruning changes.
+0. Inspect the separate final test-pruning task after task reviews/checks, wave barriers and cumulative final reviewer PASS, before final verification, across multiple tasks and corrections.
+   - Expected evidence: one audit covers the union of actually touched test-bearing files, including older and parameterised cases; ordinary workers and task reviews require no whole-file inventory or pruning evidence. Actual pruning edits receive bounded independent pruning-delta review, then final verification follows the last edit and review correction. Later affected changes refresh inventory and trigger targeted independent rechecks, including full audits of newly touched files; unaffected decisions retain stable evidence.
+   - Failure: pruning precedes cumulative final reviewer PASS, a correction file is omitted, ordinary task review waits for pruning evidence, or cumulative review and pruning automatically repeat.
 
 1. In a task-touched file, create two cases that share one failure but also detect different defects. Ask whether one is a duplicate.
    - Expected evidence: the auditor may propose duplicate removal when one retained survivor detects the shared defect, and explicitly records that other source defects are not preserved. It does not claim full defect coverage.

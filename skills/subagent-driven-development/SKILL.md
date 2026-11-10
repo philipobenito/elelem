@@ -163,7 +163,7 @@ the coordinator and planning for user-authorised resolution.
 
 ## Final feature review and verification
 
-After the cumulative audit and all requested tasks and integration barriers are resolved, invoke
+After all requested tasks, task reviews/checks and integration barriers are resolved, invoke
 `requesting-code-review` for the cumulative, current uncommitted changes,
 including tracked and untracked files, by default. If the user explicitly
 skipped final review, record that scoped skip and do not imply a review verdict

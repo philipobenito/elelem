@@ -172,7 +172,6 @@ Freeze and record stable input identities for current-live test files and
 cases, exercised production code, fixtures, configuration, and resources that
 affect the assertions. Archived removed-source records are not current-live
 cases. Account for test-command side effects before running checks. Run the
-pre-prune checks against stable live inputs and record exact commands,
 pre-prune checks for the final union against stable live inputs and record exact
 commands,
 outputs, exit codes, discovered test and case counts per current-live file, and
