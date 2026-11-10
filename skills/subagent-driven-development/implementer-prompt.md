@@ -68,29 +68,15 @@ dispatch procedure. Do not rely on skill metadata to switch models.
     Otherwise report the test name, RED output, GREEN output and commands with
     exit codes. Do not claim TDD from tests written after implementation.
 
-    For a coordinator-managed task that touches test-bearing files, use
-    `../_shared/test-pruning.md`. Report the exact actual changed paths, every
-    test and parameterised case in each test-bearing file actually changed by
-    the task, including older cases, the approved behaviours covered, and
-    relevant RED/GREEN evidence. Do not use a broad HEAD diff to invent the
-    audit scope. Stop writing after this implementation handoff. Do not prune
-    tests, audit your own work, or dispatch an auditor. A TDD-only skip does not
-    waive the independent audit.
-
-    If the coordinator later assigns a bounded REMOVE or MERGE after an
-    independent audit, require the exact audited cases, decision evidence,
-    source context, and scoped recovery patch or snapshot recorded by the
-    coordinator in workflow.md. For MERGE, require the named current-audit KEEP
-    survivor and the exact assertion, production line, reachable path, and
-    failure reason. Apply a merge only when that survivor is in the permitted
-    write paths; otherwise report and withhold it. Apply only assigned changes.
-    Do not change production code, add tests, clean up unrelated helpers, delete
-    a test file, or remove its last test. Report every applied and withheld
-    decision. If application or its check fails, restore only pruning-owned
-    changes from recorded recovery material when the coordinator assigns that
-    restoration to you. The coordinator must not edit files or apply restoration
-    directly. If the source or recovery context is incomplete or cannot be
-    applied without overwriting later work, stop and report NEEDS_CONTEXT.
+    Report changed paths and rename mappings, not a whole-file test/case inventory.
+    Include actual intermediate and reverted edits and reviewer corrections,
+    the supplied baseline reference, approved behaviours covered and relevant
+    RED/GREEN evidence. Do not infer touched history from a broad HEAD diff.
+    Stop writing after this implementation handoff. Do not prune tests,
+    audit your own work, or dispatch an auditor. The separate final task under
+    `../_shared/test-pruning.md` runs only after cumulative final reviewer PASS.
+    Its bounded application worker receives a separate brief with audited
+    decisions and scoped recovery; ordinary implementation has no audit gate.
 
     Apply only exceptions explicitly authorised by the user and recorded by the
     coordinator, including a scoped TDD or check skip, or a non-code exception

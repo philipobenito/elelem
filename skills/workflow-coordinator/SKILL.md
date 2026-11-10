@@ -48,12 +48,27 @@ harness:
 5. Wave planning with the `wave-planning` skill (`../wave-planning/SKILL.md`).
 6. Execute approved tasks using the `subagent-driven-development` skill
    (`../subagent-driven-development/SKILL.md`).
-7. The executor runs each final gate once per current cumulative revision and
-    returns its final review and verification evidence to the coordinator. The
+7. After the cumulative final reviewer result is validated as `PASS` under the
+    shared helper's consumer adaptation, the executor invokes
+    `test-pruning` as one separate final review-phase task, following
+    `../test-pruning/SKILL.md` and `../_shared/test-pruning.md`. Only actual
+    pruning edits require an independent bounded pruning-delta review. Final
+    verification follows the last edit and review correction, then clean-up.
+    The executor returns final review, pruning and verification evidence. The
     coordinator records or reuses matching, fresh evidence rather than invoking
     the same gate again, then cleans up under the shared artefact contract.
     Rerun a gate only when a relevant change invalidates its evidence or
     required evidence is missing.
+
+Do not use user approval as the pruning trigger or require pruning evidence
+before ordinary task review. Accumulate actual touched-path history from every
+task and reviewer correction, including reverted edits and rename mappings;
+build the final union inventory once after all relevant writers stop. Preserve
+the immutable workflow baseline, pre-existing dirty/untracked contents and task
+checkpoints. A final-review skip is not `PASS`: require explicit sequencing
+authorisation before pruning. A pruning skip permits no pruning removals and
+skips neither review nor verification. Failures block completion. Recover only
+affected evidence, not an automatic cumulative-review/pruning loop.
 
 Every phase is on by default. The user may explicitly skip any phase, including
 reviews, checks and clean-up. Record each skip's scope, reason and consequence.
@@ -209,7 +224,7 @@ claiming it stopped. Preserve state, report the blocker, and resume only after
 its authorisation is resolved. Do not silently retry with a different model or
 expand approved scope.
 
-Final review, final verification and clean-up are separate phases. Default
-behaviour is to run each. Clean-up is allowed after requested work has passed
+Final review, the final pruning task, final verification and clean-up are
+separate phases. Default behaviour is to run each. Clean-up is allowed after requested work has passed
 final review and verification, or after explicit scoped skips are honestly
 recorded. Apply the safety contract in `../_shared/workflow-artifacts.md`.

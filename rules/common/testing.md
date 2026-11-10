@@ -74,9 +74,17 @@ or its last test. MERGE and removal survivors must be stable, retained, and
 non-cyclic. Treat parameterised cases independently when their inputs or
 outcomes differ, and include older tests in every task-touched test file.
 
-Use the shared test-pruning procedure for the audit, evidence, application,
-recovery, and invalidation lifecycle. This section is the sole canonical value
-rule. Auditor prompts receive this section verbatim; they must not substitute
+Use the shared test-pruning procedure as a separate final task after cumulative
+final reviewer `PASS`, not during ordinary implementation or task review. Build
+one final live inventory across the union of actually touched test files from
+all tasks, including reviewer corrections, reverted edits and rename mappings.
+Ordinary workers report paths, not whole-file inventories. Preserve the
+immutable workflow baseline and task baselines. The procedure governs evidence,
+application, recovery and targeted invalidation; only actual pruning edits need
+bounded independent delta review, then final verification follows the last edit.
+This lifecycle wording does not change value decisions above.
+This section is the sole canonical value rule. Auditor prompts receive this
+section verbatim; they must not substitute
 or paraphrase it.
 
 ## Test-Driven Development

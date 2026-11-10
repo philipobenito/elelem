@@ -181,9 +181,22 @@ The scenarios in `_tests/workflow_scenarios.md` are manual live-harness checks, 
 
 ### Test pruning
 
-When a task changes a test-bearing file, the coordinator uses the shared
-test-pruning procedure to inventory every test and parameterised case in each
-actually touched file, including older cases. The independent auditor receives
+After all implementation tasks, task reviews/checks and integration barriers,
+the cumulative final reviewer must return `PASS`. That verdict, not user
+approval, triggers one separate final review-phase task through the invocable
+`test-pruning` skill. Its thin entry delegates the single detailed procedure to
+`skills/_shared/test-pruning.md`. Ordinary workers report changed paths and
+rename mappings, not whole-file case inventories; task reviewers do not wait
+for pruning evidence.
+
+The coordinator preserves the immutable workflow baseline, relevant task
+baselines/checkpoints and pre-existing dirty/untracked contents. It accumulates
+actual touched-path history across tasks and reviewer corrections, including
+reverted edits and renames. Once all writers stop, build one live inventory
+across that union, including every older test and independent parameterised
+case. Resolve renames to live destinations; missing or unexplained deleted
+paths block. A broad HEAD diff cannot replace history or include unrelated user
+work. The independent auditor receives
 the complete canonical Meaningful Assertions rule and applicable project test
 rules from the complete active instruction sources for Claude Code, OpenCode,
 or Codex. Source identities and applicability are frozen and rechecked; an
@@ -210,6 +223,17 @@ scope is recorded as not applicable, not as an audit. Automated workflow checks
 verify policy and installation contracts; they do not establish live agent
 compliance. The adversarial scenarios in `_tests/workflow_scenarios.md` are
 manual and remain unrun unless explicitly reported otherwise.
+
+Only actual pruning edits require independent bounded pruning-delta review of
+those edits and affected coverage. No-change audits need no delta review. Final
+verification follows the last pruning edit and review correction, then clean-up.
+Do not automatically repeat cumulative review or restart pruning; invalidated
+inputs require targeted evidence recovery. Failures block completion and
+substantive corrections return to implementation/review, not production edits
+inside pruning. An explicit pruning skip permits no pruning removals and skips
+neither review nor verification. A cumulative-review skip is not `PASS` and
+requires explicit sequencing authorisation before pruning. Source edits alone
+do not activate installed policy or establish live compliance.
 
 ## Writing a new language pack
 

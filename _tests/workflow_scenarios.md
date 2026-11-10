@@ -239,7 +239,7 @@ These adversarial test-pruning scenarios are manual. They were not run as part o
    - Expected evidence: a blocked category guard does not stop a later removal decision; project rules may override generic category guards but not higher-priority instructions or the canonical rule; wrong-layer is used only when project rules define it.
    - Failure: the category guard permanently blocks later criteria, or a project rule overrides the canonical rule.
 4. Touch a file containing older tests and parameterised cases, then propose pruning only a new case.
-   - Expected evidence: the initial and final inventories include every case in each touched file, older cases, stable identifiers, and the source context.
+    - Expected evidence: after cumulative final reviewer PASS, one final union inventory includes every live case in each touched file, older cases, stable identifiers and source context. Ordinary implementation reports contain changed paths, not whole-file inventories.
    - Failure: the inventory is limited to newly added cases.
 5. Change active instruction sources between preparation and dispatch. Exercise Claude Code user and project rules with applicable globs and the user-scope caveat, OpenCode configured globs and project instructions with Claude fallback both enabled and disabled, and Codex user/project `AGENTS.md` including selected managed packs.
    - Expected evidence: each harness's complete active source set, applicability, authority, and identities are frozen and rechecked; a source-set change blocks or invalidates the audit. `none` is supplied only when the complete applicable project-rule set is established empty.
@@ -272,8 +272,21 @@ These adversarial test-pruning scenarios are manual. They were not run as part o
     - Expected evidence: the first change blocks or defers review until inputs are stable; the later change invalidates affected evidence and triggers a fresh targeted audit and checks.
     - Failure: stale audit evidence is accepted against changed inputs.
 15. Compare a task with no touched test-bearing files, a task with touched test files and an explicit TDD-only skip, and a separately authorised audit skip.
-    - Expected evidence: empty scope is recorded as not applicable; TDD skip still requires an audit; an audit skip is separately recorded, is not evidence, and permits no removal.
+    - Expected evidence: aggregate the workflow union first; empty live scope is NOT APPLICABLE with no audit or delta review, but final verification remains. TDD skip still requires the separate final task; an audit skip is separately recorded, is not evidence, and permits no removal. A cumulative-review skip is not PASS and requires explicit sequencing authorisation before pruning.
     - Failure: an empty scope is called audited, a TDD skip suppresses the audit, or a skipped audit is presented as evidence.
+
+16. Implement two tasks touching different test files, then correct one in task review and another in cumulative final review. Withhold a passing cumulative reviewer verdict despite user design approval.
+    - Expected evidence: task reviews/checks and integration barriers proceed without pruning evidence. No audit or whole-file inventory is required from ordinary workers. Only cumulative final reviewer PASS schedules one separate final pruning task over the union, including the corrections, not two per-task audits.
+    - Failure: user approval triggers pruning, pruning precedes cumulative PASS, or task review waits for an audit.
+17. Touch an older test file and revert that edit, then rename a different touched test file twice. Leave unrelated user changes elsewhere and a separately unexplained deleted path.
+    - Expected evidence: actual history retains the reverted path, maps rename chains to deduplicated live destinations and preserves task/workflow baselines. The final inventory includes older tests and independent parameterised cases in that union only. The unexplained missing path blocks until reconciled; a broad final diff is insufficient.
+    - Failure: reverted edits disappear from scope, rename sources are silently omitted, unrelated user work enters scope, or missing files authorise pruning.
+18. Return an audit with no applied changes, then separately apply authorised pruning edits and introduce a bounded delta-review correction.
+    - Expected evidence: only actual edits trigger independent pruning-delta review, limited to the pruning diff and affected coverage. Final verification runs after the last edit and review correction. Neither branch automatically repeats cumulative review or restarts pruning.
+    - Failure: no-change audits trigger unnecessary delta review, verification precedes the last edit, or an automatic review-prune loop starts.
+19. Fail a precheck, return incomplete audit evidence, fail application/postchecks, and introduce unexpected frozen-input drift separately.
+    - Expected evidence: each failure blocks completion; no production fixes or scope expansion occur inside pruning. Use worker-only safe recovery and targeted invalidation/reassessment within the one scheduled final task. Substantive corrections return to implementation/review, with renewed approval when required.
+    - Failure: a failure is recorded as success, recovery overwrites later work, or every issue restarts a whole-workflow audit.
 
 ## Phase evidence boundary and recovery
 

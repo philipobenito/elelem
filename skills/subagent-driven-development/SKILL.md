@@ -88,22 +88,14 @@ Before the first RED step, the coordinator records or validates the immutable
 task-start HEAD and relevant dirty or untracked contents in `workflow.md`.
 Preserve that baseline separately from later task and audit snapshots.
 
-## Test pruning audit and application
+## Touched-path history
 
-For each task that actually changes a test-bearing file, complete the
-coordinator-owned procedure in `../_shared/test-pruning.md` before independent
-task review. That helper owns scope, safety gates, source retrieval, audit
-evidence, recovery, and invalidation. An empty test-bearing scope is recorded as
-`NOT APPLICABLE`.
-
-The stage order is fixed: after the implementation worker stops, the coordinator
-freezes inputs and runs pre-prune checks, then alone dispatches the independent
-read-only auditor. After its verdict, the coordinator records exact source and
-recovery context and assigns any supported removal or restoration to the
-implementation worker. Once that worker stops, the coordinator inspects the
-diff, runs post-prune checks, and records the accepted snapshot. No nested audit
-dispatch or worker self-audit is allowed. A TDD-only skip does not skip the
-audit.
+Ordinary implementation tasks return changed paths and rename mappings, not
+whole-file test inventories. The coordinator accumulates actual touched-path
+history across tasks and reviewer corrections, including reverted edits and
+renames, against the immutable workflow baseline and task checkpoints. Task
+review and task verification have no pruning-audit prerequisite. Defer the one
+whole-file inventory and audit to the final task below.
 
 ## Task lifecycle and barriers
 
@@ -177,7 +169,36 @@ insufficient when work is uncommitted. Resolve critical and important findings
 by delegating within approved task boundaries and repeat the relevant review
 and checks. Record minor findings for the user.
 
-Then invoke `verification-before-completion` against the full current state by
+At this consumer boundary, map to `PASS` only an actually performed favourable
+cumulative review with Status `REVIEWED` and Ready to merge `Yes`, no unresolved
+Critical or Important findings, and evidence for the exact current cumulative
+revision. Retain the raw reviewer result and reviewer provenance, including
+reviewer identity, session/source reference and reviewed revision. `REVIEWED`
+alone is not sufficient. Adverse results, `With fixes`, `No`, `BLOCKED` and
+`SKIPPED`, plus stale or missing results, never map to `PASS`. Missing provenance
+or revision evidence also blocks that mapping. A skipped cumulative review needs
+explicit sequencing authorisation to enter pruning without inventing `PASS`.
+
+After the cumulative final reviewer result is validated as `PASS`, invoke `test-pruning`
+through `{{INVOKE_SKILL_TOOL}}` as one separate final review-phase task. User
+approval is not this trigger. Follow `../test-pruning/SKILL.md` and
+`../_shared/test-pruning.md`; the coordinator alone owns audit dispatch and
+state, with no nested audit dispatch. Freeze the union inventory once, run
+stable pre-prune checks, obtain the independent audit, assign supported edits
+to a bounded worker, and run post-prune checks. Empty scope is `NOT APPLICABLE`.
+If final review was skipped, require explicit sequencing authorisation under
+the helper before pruning; a skip is not a `PASS`. A pruning skip permits no
+pruning edits and waives neither review nor verification.
+
+Only actual pruning edits require an independent bounded pruning-delta review
+of those edits and affected coverage. A no-change audit needs none. Resolve
+in-scope findings within that delta; substantive corrections return to the
+proper implementation/review boundary. Do not automatically repeat cumulative
+review or restart pruning. Use targeted invalidation and evidence recovery
+under the helper when necessary, not a review-prune loop.
+
+Run final verification after the last pruning edit and review correction.
+Invoke `verification-before-completion` against the full current state by
 default. Honour an explicitly authorised final verification skip only for its
 recorded scope, and record it as `SKIPPED`; do not imply that checks passed or
 verification occurred. Run all other applicable checks and report the skipped

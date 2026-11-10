@@ -1,7 +1,9 @@
 # Test Pruning
 
-This procedure governs audits and supported removal of tests from task-touched
-test-bearing files. The coordinator owns audit dispatch, snapshots, workflow
+This procedure governs one separate final review-phase task over workflow-touched
+test-bearing files, invoked through `../test-pruning/SKILL.md`. It does not run
+inside ordinary implementation, TDD handoffs or task reviews.
+The coordinator owns audit dispatch, snapshots, workflow
 state, and recovery. The implementation worker never dispatches an auditor,
 delegates an audit, or substitutes a self-audit. The Meaningful Assertions
 section in `rules/common/testing.md` is the sole canonical value rule. Retrieve
@@ -75,6 +77,24 @@ the repository source when Codex's active managed rule is unavailable.
 
 ## Scope and entry conditions
 
+Enter only after all implementation tasks, task reviews/checks and integration
+barriers are resolved and the cumulative final reviewer result validates as `PASS` for the
+current cumulative revision. User design approval is not the trigger. Record
+that verdict and revision before scheduling the final task. A cumulative-review
+skip is not a passing verdict and requires explicit sequencing authorisation
+from the user before pruning; missing authorisation blocks this transition.
+Do not infer it from the review skip itself. Failures block completion.
+
+At this consumer boundary, map to `PASS` only an actually performed favourable
+cumulative review with Status `REVIEWED` and Ready to merge `Yes`, no unresolved
+Critical or Important findings, and evidence for the exact current cumulative
+revision. Retain the raw reviewer result and reviewer provenance, including
+reviewer identity, session/source reference and reviewed revision. `REVIEWED`
+alone is not sufficient. Adverse results, `With fixes`, `No`, `BLOCKED` and
+`SKIPPED`, plus stale or missing results, never map to `PASS`. Missing provenance
+or revision evidence also blocks that mapping. A skipped cumulative review needs
+explicit sequencing authorisation to enter pruning without inventing `PASS`.
+
 Before the first RED step, the coordinator records in `workflow.md` the
 immutable task-start HEAD and relevant working-tree state, including exact
 contents or equivalent snapshots of relevant pre-existing dirty and untracked
@@ -82,29 +102,67 @@ paths. An existing supplied baseline may be used only after validating its
 source, revision, scope, and current contents. Never move or replace the
 original baseline with a later task checkpoint.
 
+Retain the immutable workflow baseline, relevant task-start baselines and all
+accepted task/review checkpoints. Preserve pre-existing dirty and untracked
+content separately, even when it overlaps a touched path. These protections
+remain required before implementation; deferring pruning does not defer them.
+
 Keep the current-live inventory separate from archived removed-source cases.
 Before pruning begins, record the complete initial live inventory: every test
 and parameterised case currently present in each test-bearing file in scope,
-including older live tests. After implementation work stops,
-derive the final audit scope from the worker's actual changed paths within the
-task's allowed writes.
-Do not use a broad HEAD diff to select tests. Inventory every case still
-present in each actually touched test-bearing file and record stable test and
-case identifiers and source identities. Archived removed-source records are
-separate from the current live inventory; do not add archived cases to it or
-count them as live execution cases. If no test-bearing file was touched, record
-the audit as `NOT APPLICABLE` with the empty live scope and do not invent an
-audit or evidence.
+including older live tests. Build this inventory once, after all relevant
+writers stop, from the union of actually touched test-bearing paths across all
+implementation tasks.
+The coordinator accumulates actual touched-path history from ordinary workers'
+changed-path reports and checkpoints, including reviewer corrections, reverted
+edits and rename mappings.
+Ordinary workers supply paths and renames, not whole-file inventories. Include
+a touched file even when its final contents equal its baseline; resolve rename
+chains to current live destinations, deduplicate destinations and preserve the
+source mappings. Missing or unexplained deleted paths block, rather than
+silently dropping their tests or authorising deletion. Explain any legitimate
+non-live path against recorded approved changes before excluding it; an empty
+live scope, including an explained all-non-live history, is `NOT APPLICABLE`.
+Do not include unrelated user work or infer scope from a broad HEAD diff.
+Record stable case identifiers, independent parameterised cases and source
+identities for every live file. Archived removed-source records are separate
+from the current live inventory; do not add archived cases to it or count them
+as live execution cases. With no live test-bearing files, record
+`NOT APPLICABLE` and the empty live scope, dispatch no auditor, apply no edits
+and perform no delta review. Final verification still follows.
 
 A TDD-only skip does not waive this audit. A TDD skip, audit skip, and check
 skip are separate decisions. Only explicit user authorisation can skip the
 audit or a check. Record each skip's exact scope, reason, and consequence in
 `workflow.md`. A skipped audit is not evidence and permits no test removals.
 
+### Scoped skip inputs and acceptance
+
+For this final task, supply `[PRUNING_AUDIT_SKIP_RECORDS_OR_NONE]`, explicitly
+`none` when no pruning-audit skip was authorised. Each record contains the
+exact source and instruction text, skipped test-bearing file/case scope,
+reason and consequence. If the skip record is absent or incomplete, report BLOCKED.
+Do not infer an authorised skip from a missing record or audit evidence.
+Confirm the exact user authorisation and the skipped file/case scope, inspect
+the actual changes and confirm no removal or merge was applied in that scope.
+Report the audit as `SKIPPED` and unverified; it is not pruning-audit evidence
+or approval. Do not dispatch or repeat a pruning audit for the skipped scope,
+and do not invent decisions. A pruning skip authorises no pruning edits and
+waives neither ordinary coverage review nor final verification.
+Prior task and cumulative reviews remain required for all task changes,
+including changes in files with skipped pruning audits. Reuse valid prior
+review evidence; a pruning skip does not require rerunning those reviews.
+Only skip pruning-evidence inspection for the explicitly skipped file/case scope.
+Continue all unskipped checks and audit the remaining live scope. A check skip
+does not supply passing/non-zero evidence: if required safe-removal evidence is
+missing, withhold pruning edits and block acceptance unless pruning itself is
+explicitly skipped. Report every skipped scope truthfully.
+
 ## Freeze inputs and establish the pre-prune state
 
 The coordinator must ensure that no relevant writer is active. If an audit
-input may change during another task, defer the audit to a safe wave barrier.
+input may change, defer the final task until the cumulative review and stable
+final boundary are restored.
 Never rely on tests owned or changed by another active task as removal
 survivors.
 
@@ -112,7 +170,8 @@ Freeze and record stable input identities for current-live test files and
 cases, exercised production code, fixtures, configuration, and resources that
 affect the assertions. Archived removed-source records are not current-live
 cases. Account for test-command side effects before running checks. Run the
-pre-prune task checks against stable live inputs and record exact commands,
+pre-prune checks for the final union against stable live inputs and record exact
+commands,
 outputs, exit codes, discovered test and case counts per current-live file, and
 total counts. Establish non-zero discovery counts per current-live file and
 total for the live inventory. Where execution uses an indirect runner, capture
@@ -184,7 +243,8 @@ multiple authorised merges target one survivor, validate the combined
 authorised edits and include those exact edits in the accepted post-prune
 snapshot.
 
-The auditor maps every approved behaviour in the task design to retained tests.
+The auditor maps every approved behaviour across the workflow design to
+retained tests.
 Recalculate coverage using decisions actually applied and withheld, not only
 proposed decisions. A required approved behaviour without retained coverage is
 an Important finding and blocks acceptance. Report unrelated pre-existing
@@ -206,6 +266,12 @@ context for a merge. Record expected per-file and total discovery-count
 changes. If exact source or safe recovery material cannot be preserved, do not
 apply the change.
 
+Give the assigned application worker a separate bounded brief: exact permitted
+test paths, audited decisions and source context, survivor requirements,
+authorised assertions, expected counts, stable inputs and recorded scoped
+recovery. Require the named current-audit KEEP survivor for MERGE, with its
+assertion, production line, reachable path and failure reason; withhold an
+out-of-scope survivor. This is not the ordinary implementer handoff.
 The assigned implementation worker applies only audited removals and
 authorised merges. It must not change production code, add tests, perform
 unrelated helper cleanup, delete a test file, or remove the last test in a
@@ -249,7 +315,7 @@ merge changes in this snapshot. Record the content difference between the
 pre-prune snapshot and this accepted snapshot. That difference must contain
 only the exact authorised pruning changes. Exact authorised pruning changes,
 including merges, do not invalidate their audit decisions. The original
-task-start baseline remains immutable and distinct from both snapshots.
+workflow and task-start baselines remain immutable and distinct from both snapshots.
 
 Before acceptance, compare current-live audit inputs with the accepted
 post-prune snapshot, not with the pre-prune snapshot. Any additional change to
@@ -271,14 +337,56 @@ Re-run applicable checks and dispatch a fresh independent audit on stable
 inputs only for unexpected changes. Record new recovery material before any
 further removal. Do not repeat the audit merely because the accepted snapshot
 contains exact authorised changes. Changes outside frozen audit inputs do not
-invalidate evidence merely because they are in the same repository. Final
-review inspects the audit and accepted snapshot, and repeats neither unless
-evidence has been invalidated.
+invalidate evidence merely because they are in the same repository.
+
+## Bounded pruning-delta review and final handoff
+
+Only if pruning actually edits tests, request an independent bounded
+pruning-delta review
+through `requesting-code-review`, with a read-only reviewer, the exact pruning
+diff, accepted post-prune snapshot, decisions/recovery and affected coverage.
+No-change audits need no delta review. Check authorised application, the
+canonical decisions and survivor requirements, including current-audit KEEP
+merge evidence, actual applied/withheld coverage and transitive invalidation.
+Required coverage loss is an Important finding. Do not expand this review into
+another cumulative implementation review or whole-workflow pruning audit.
+
+Require non-zero per-file and total discovery counts. For indirect runners,
+require trace-to-case execution evidence. For direct runners, accept actual
+check output and discovery evidence without requiring a trace. No file or last
+test may be deleted, and post-prune discovery counts must match actual applied
+decisions and remain non-zero per file and in total.
+For archived reassessment, verify exact preserved source and context,
+pre-removal snapshot identity, and actual prior check and discovery evidence for
+each archived source. Require historical trace evidence only for an indirect
+original runner; for a direct original runner, prior check and discovery
+evidence is sufficient without a trace. Missing or unstable required archived
+evidence blocks reassessment. Do not fabricate history or require current
+execution of archived sources.
+
+Delegate in-scope delta corrections or scoped recovery to the bounded worker,
+then refresh checks, discovery and affected review/evidence. Unexpected input
+changes use the targeted invalidation procedure above; accepted authorised
+edits do not trigger reassessment. Substantive corrections return to the proper
+implementation/review boundary, with renewed approval if scope changes, rather
+than allowing production fixes or scope expansion inside pruning.
+Do not repeat cumulative review or restart pruning by default. The
+one scheduled final task permits targeted evidence recovery, not routine repeated
+whole-workflow audits or an automatic review-prune loop.
+
+Return the final task status, union scope/history, accepted evidence, any
+conditional delta-review result, skips, questions and blockers through the
+executor to the same coordinator. Failures block completion. Run final
+verification only after the last pruning edit and review correction, using
+`verification-before-completion`; post-prune checks do not replace it.
+Then proceed to clean-up under the workflow contract. A final verification skip
+remains unverified and is never reported as passing or complete.
 
 ## Auditor prompt template
 
-The coordinator fills every bracketed field from the approved task, actual
-diff, stable source, and workflow record before dispatch. Paste the complete
+The coordinator fills every bracketed field from the approved workflow, final
+task, actual touched-path history, stable source and workflow record before
+dispatch. Paste the complete
 current canonical Meaningful Assertions section into its slot verbatim. Do not
 send the prompt with unresolved bracketed fields or make the auditor recover
 missing context from session history.
@@ -294,21 +402,29 @@ missing context from session history.
     scope or evidence is incomplete, unstable, or inconsistent. Do not infer
     missing authority or write scope from inherited session history.
 
-    ## Approved task and required behaviours
+    ## Final task and approved workflow behaviours
 
     Task: [TASK_ID]
     Approved design revision: [DESIGN_REVISION]
-    Approved behaviours, each with its requirement identifier:
+    Approved workflow behaviours, each with its requirement identifier:
     [APPROVED_BEHAVIOUR_TO_REQUIREMENT_MAP]
+    Validated cumulative final reviewer PASS, raw result, reviewer provenance
+    and exact current revision, or exact user
+    sequencing authorisation when cumulative review was explicitly skipped:
+    [CUMULATIVE_FINAL_REVIEW_PASS_AND_REVISION_OR_SEQUENCING_AUTHORISATION]
+    Final-task pruning-audit skip records, explicitly none when not authorised;
+    omitted skipped cases are identified separately from the audited live scope:
+    [PRUNING_AUDIT_SKIP_RECORDS_OR_NONE]
 
     ## Immutable baseline and audit scope
 
-    Task-start HEAD and baseline source:
+    Immutable workflow baseline and relevant task-start HEAD/checkpoints:
     [TASK_START_HEAD_AND_BASELINE_REFERENCE]
     Relevant pre-existing dirty and untracked contents, preserved separately
     from task changes:
     [PRE_EXISTING_CONTENT_IDENTITIES_OR_SNAPSHOTS]
-    Actual task-changed paths and evidence used to derive scope:
+    Actual touched-path union across all tasks and reviewer corrections,
+    including reverted edits, rename mappings and resolved non-live paths:
     [ACTUAL_TASK_DIFF_PATHS_AND_SCOPE_EVIDENCE]
     Active harness, complete instruction source set, identities,
     applicability, and authority frozen for this audit:

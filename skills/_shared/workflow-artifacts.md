@@ -39,6 +39,16 @@ required file cannot be materialised, block before execution.
 - Accepted-change checkpoints and wave integration results, including whether
   each checkpoint is verified or explicitly accepted-unverified.
 - Current artefact revisions and links or references to evidence.
+- Actual touched-path history across all implementation tasks and reviewer
+  corrections, including reverted edits and rename mappings. Record paths even
+  when their final contents match a baseline; a final diff is not that history.
+  Preserve task-start baselines and pre-existing dirty/untracked contents, not
+  only the immutable workflow baseline and accepted checkpoints.
+- Final cumulative reviewer `PASS` and its revision, separate final pruning
+  task scope and status, final union live inventory and frozen source/input
+  identities, prechecks/postchecks and discovery, decision/recovery evidence,
+  conditional pruning-delta review and targeted invalidation. Record empty
+  scope as `NOT APPLICABLE`; skipped or failed gates are not passing evidence.
 
 Keep the concise phase evidence required by `./phase-evidence.md` in these
 existing `workflow.md` records. Preserve procedure and user-choice provenance,
