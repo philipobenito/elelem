@@ -67,6 +67,8 @@ dispatch procedure. Do not rely on skill metadata to switch models.
     do not claim RED-to-GREEN evidence. Report the skip and its consequence.
     Otherwise report the test name, RED output, GREEN output and commands with
     exit codes. Do not claim TDD from tests written after implementation.
+    A cohesive task may contain multiple genuine sequential RED/GREEN cycles;
+    report each cycle separately.
 
     For a coordinator-managed task that touches test-bearing files, use
     `../_shared/test-pruning.md`. Report the exact actual changed paths, every

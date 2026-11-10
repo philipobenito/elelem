@@ -26,9 +26,31 @@ recorded skip.
     exact allowed writes, acceptance criteria, stable inputs and relevant
     contracts.]
 
+    ## Review stage
+
+    [TASK_REVIEW_OR_FINAL_AUDIT_EVIDENCE_REVIEW]
+    During task review the pruning evidence is deferred to the final audit;
+    review the task changes and TDD evidence without requiring or claiming an
+    audit. Apply the pruning-evidence instructions below only in final audit
+    evidence review, after the coordinator has run or explicitly skipped it.
+
+    ## Final cumulative audit inputs
+
+    For final audit evidence review, the coordinator supplies the current audit
+    record, approved cumulative scope, exact skip provenance or `none`, and the
+    actual post-prune diff including tracked and untracked changes:
+    [FINAL_AUDIT_RECORD]
+    [APPROVED_CUMULATIVE_SCOPE]
+    [ACTUAL_POST_PRUNE_DIFF]
+    A missing or ambiguous required audit input is BLOCKED. The record must
+    identify an empty audit scope as NOT APPLICABLE or an explicitly authorised
+    skipped scope as SKIPPED; neither is an audit verdict. Inspect the supplied
+    audit evidence against the final audit evidence review criteria below.
+    These inputs are not required during task review.
+
     ## Pruning-audit skip record
 
-    The coordinator supplies exact user-authorised pruning-audit skip records,
+    For final audit evidence review, the coordinator supplies exact user-authorised pruning-audit skip records,
     or `none` when no pruning-audit skip was authorised:
     [PRUNING_AUDIT_SKIP_RECORDS_OR_NONE]
     Each record includes the exact source and instruction text, skipped
@@ -71,9 +93,9 @@ recorded skip.
     file/case scope. Continue all unskipped checks. Apply the pruning-evidence
     review below only to unskipped test-bearing scopes.
 
-    For a task that touched test-bearing files, inspect the pruning evidence
+    For the final audit evidence review of test-bearing files, inspect the pruning evidence
     under `../_shared/test-pruning.md`. Check that scope came from actual task
-    changes and includes every test and parameterised case in each touched
+    and correction changes across all tasks and includes every test and parameterised case in each touched
     test-bearing file, including older cases. Inspect the immutable baseline,
     frozen active instruction-source identities and applicable project test
     rules, stable input identities, pre-prune checks, non-zero per-file and

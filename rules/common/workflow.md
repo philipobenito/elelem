@@ -13,8 +13,8 @@ Apply `skills/_shared/phase-evidence.md` at workflow boundaries. Phase status,
 skill loading and later approval do not prove required procedures occurred.
 
 Every phase runs by default: Research, Planning, design review, Wave Planning,
-readiness review, implementation, task reviews and checks, final review,
-final verification, and clean-up. Only an explicit, scoped user instruction
+readiness review, implementation, task reviews and checks, cumulative audit,
+final review, final verification, and clean-up. Only an explicit, scoped user instruction
 may skip a phase. Record its scope, reason and consequences. Every phase is
 skippable, including reviews, checks and clean-up, but a skipped review is not
 approval and skipped verification is not evidence. Do not imply a skipped gate
@@ -76,7 +76,10 @@ wave tasks must not read one another's changing files.
 Run independent tasks concurrently when harness routing and concurrency are
 verified. Each task receives independent review and fresh task-local checks.
 After all writers in a wave stop, run its integration barrier before starting
-the next wave. Final review and fresh verification follow all waves. Do not ask
+the next wave. The coordinator owns one cumulative pruning audit after all task
+reviews and wave barriers, before final cumulative review and fresh verification.
+Derive its scope from actual test-bearing paths changed by tasks and corrections.
+Do not ask
 for routine task or wave approvals. Keep the coordinator thin: invoke phase
 skills and track state, rather than rereading or substituting for their
 procedures.

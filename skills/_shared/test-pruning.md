@@ -1,7 +1,8 @@
 # Test Pruning
 
-This procedure governs audits and supported removal of tests from task-touched
-test-bearing files. The coordinator owns audit dispatch, snapshots, workflow
+This procedure governs one cumulative final audit and supported removal of tests
+from task-touched test-bearing files after implementation, task reviews and wave
+barriers, before final cumulative review and verification. The coordinator owns audit dispatch, snapshots, workflow
 state, and recovery. The implementation worker never dispatches an auditor,
 delegates an audit, or substitutes a self-audit. The Meaningful Assertions
 section in `rules/common/testing.md` is the sole canonical value rule. Retrieve
@@ -82,12 +83,18 @@ paths. An existing supplied baseline may be used only after validating its
 source, revision, scope, and current contents. Never move or replace the
 original baseline with a later task checkpoint.
 
+For each task preserve its immutable task-start baseline, including relevant
+dirty and untracked contents, separately from ordered accepted task checkpoints.
+Supply each task baseline and its pre-existing content identities or snapshots
+to the cumulative auditor so user work is not mistaken for task changes.
+
 Keep the current-live inventory separate from archived removed-source cases.
 Before pruning begins, record the complete initial live inventory: every test
 and parameterised case currently present in each test-bearing file in scope,
-including older live tests. After implementation work stops,
-derive the final audit scope from the worker's actual changed paths within the
-task's allowed writes.
+including older live tests. After all implementation work, corrections, task
+reviews and wave barriers finish and relevant writers stop, derive the final
+audit scope from the union of actual changed test-bearing paths across approved
+tasks and corrections within their allowed writes.
 Do not use a broad HEAD diff to select tests. Inventory every case still
 present in each actually touched test-bearing file and record stable test and
 case identifiers and source identities. Archived removed-source records are
@@ -98,8 +105,10 @@ audit or evidence.
 
 A TDD-only skip does not waive this audit. A TDD skip, audit skip, and check
 skip are separate decisions. Only explicit user authorisation can skip the
-audit or a check. Record each skip's exact scope, reason, and consequence in
-`workflow.md`. A skipped audit is not evidence and permits no test removals.
+audit or a check. Record each skip's exact user instruction source, scope, reason,
+and consequence in `workflow.md`. A skipped audit is not evidence and permits no
+test removals or merges in the skipped scope; unskipped scope remains subject to
+the audit.
 
 ## Freeze inputs and establish the pre-prune state
 
@@ -112,7 +121,7 @@ Freeze and record stable input identities for current-live test files and
 cases, exercised production code, fixtures, configuration, and resources that
 affect the assertions. Archived removed-source records are not current-live
 cases. Account for test-command side effects before running checks. Run the
-pre-prune task checks against stable live inputs and record exact commands,
+pre-prune checks against stable live inputs and record exact commands,
 outputs, exit codes, discovered test and case counts per current-live file, and
 total counts. Establish non-zero discovery counts per current-live file and
 total for the live inventory. Where execution uses an indirect runner, capture
@@ -184,7 +193,7 @@ multiple authorised merges target one survivor, validate the combined
 authorised edits and include those exact edits in the accepted post-prune
 snapshot.
 
-The auditor maps every approved behaviour in the task design to retained tests.
+The auditor maps every approved behaviour in the design to retained tests.
 Recalculate coverage using decisions actually applied and withheld, not only
 proposed decisions. A required approved behaviour without retained coverage is
 an Important finding and blocks acceptance. Report unrelated pre-existing
@@ -239,6 +248,10 @@ targeted fresh audit;
 if the correction is outside the approved task, return to the coordinator for
 planning and approval. Unrelated old gaps are reported only.
 
+For a coverage gap, delegate an approved in-scope correction with TDD where
+applicable, then repeat relevant task review and checks before targeted audit
+rechecks. A substantive scope or architecture change returns for user approval.
+
 ## Evidence, invalidation, and handoff
 
 The coordinator records the accepted post-prune snapshot in `workflow.md`,
@@ -258,6 +271,15 @@ relevant resource invalidates the affected evidence. A changed live test
 inventory requires a fresh inventory; changed exercised behaviour inputs
 require a targeted audit of affected live cases and survivors. Record
 decision-to-survivor dependencies.
+For newly touched files, audit every case in full. Preserve unaffected decisions
+with stable supporting evidence; independently recheck only affected decisions
+and their transitive survivor dependencies. Refresh the live inventory first.
+For a targeted recheck, identify affected decisions and transitive dependent
+survivor decisions, preserve stable unaffected decisions, and supply the fresh
+inventory, relevant prior decisions and supporting evidence to the independent
+auditor. Missing supporting evidence blocks the affected decision; never invent
+history. Audit newly touched files in full. A retained, unchanged current-audit
+KEEP decision may support a merge only while its evidence remains stable.
 Unexpected changes to a survivor cause transitive survivor-dependency
 invalidation. After GREEN and stable passing checks for live cases, re-audit the
 affected live cases and survivors. For a previously removed source, present its
@@ -296,19 +318,20 @@ missing context from session history.
 
     ## Approved task and required behaviours
 
-    Task: [TASK_ID]
+    Tasks and corrections in cumulative scope: [TASK_ID]
     Approved design revision: [DESIGN_REVISION]
     Approved behaviours, each with its requirement identifier:
     [APPROVED_BEHAVIOUR_TO_REQUIREMENT_MAP]
 
     ## Immutable baseline and audit scope
 
-    Task-start HEAD and baseline source:
+    Each task baseline, its pre-existing content identities or snapshots, and
+    task-start HEAD and baseline source:
     [TASK_START_HEAD_AND_BASELINE_REFERENCE]
     Relevant pre-existing dirty and untracked contents, preserved separately
     from task changes:
     [PRE_EXISTING_CONTENT_IDENTITIES_OR_SNAPSHOTS]
-    Actual task-changed paths and evidence used to derive scope:
+    Union of actual task and correction changed paths and evidence used to derive scope:
     [ACTUAL_TASK_DIFF_PATHS_AND_SCOPE_EVIDENCE]
     Active harness, complete instruction source set, identities,
     applicability, and authority frozen for this audit:
@@ -327,6 +350,10 @@ missing context from session history.
     Every current-live test-bearing file and every test or parameterised case,
     including older live tests, with archived cases excluded:
     [COMPLETE_FILE_AND_CASE_INVENTORY]
+    Audit mode (initial cumulative audit or targeted recheck), affected decision
+    identifiers, transitive dependencies, newly touched files, and retained
+    unaffected decisions with their stable supporting evidence:
+    [AUDIT_MODE_SCOPE_AND_PRIOR_EVIDENCE]
     Exact source and surrounding context for each current-live case:
     [TEST_SOURCE_AND_CONTEXT]
     Archived removed-source reassessments, separate from current-live cases:
@@ -381,8 +408,12 @@ missing context from session history.
 
     ## Audit
 
-    Assess every current-live test and case in the supplied live inventory using
-    the supplied canonical rule and applicable project rules. Archived removed
+    For the initial audit, assess every current-live test and case in the supplied
+    live inventory using the supplied canonical rule and applicable project rules.
+    For a targeted recheck, assess only affected cases and transitive survivor
+    dependencies, plus every case in newly touched files; preserve unaffected
+    decisions only with stable supporting evidence. Block affected decisions if
+    required evidence is missing. Archived removed
     sources are not live cases and are not required to execute in the current
     trace. For every archived source require its exact preserved source and
     context, pre-removal snapshot identities, and actual prior check and
@@ -395,7 +426,7 @@ missing context from session history.
     fabricate prior evidence. Return separate decisions and evidence for
     current-live cases and archived reassessments.
     Return exactly one KEEP,
-    REMOVE, or MERGE decision for each. Identify the category, behaviour,
+    REMOVE, or MERGE decision for each case assessed. Identify the category, behaviour,
     rationale, and evidence. For REMOVE decisions, apply the supplied
     category-first rule, then the authorised defect and duplicate criteria.
     Do not claim that inability to name a production defect proves no defect
@@ -437,7 +468,9 @@ missing context from session history.
 
     Verdict: READY only when the inventory and evidence are complete and there
     is no Important finding for required behaviour coverage; otherwise BLOCKED.
-    Complete inventory: one KEEP, REMOVE, or MERGE row per test or case.
+    Complete inventory: one KEEP, REMOVE, or MERGE row per test or case,
+    identifying retained unaffected rows and their stable prior evidence on a
+    targeted recheck.
     For each row: path, stable test/case identifier, category, decision, named
     behaviour, rationale, and evidence from the supplied stable inputs.
     For each REMOVE: the applicable reason and any required survivor mapping.

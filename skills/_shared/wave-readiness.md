@@ -35,6 +35,11 @@ skipped. Check:
   fixtures, temp outputs and global tools.
 - Wave identifiers and concurrency limits fit verified harness and resource
   capacity. No assumed capacity or unverified routing is treated as available.
+- Ready independent tasks occupy the earliest safe wave up to verified harness
+  and resource capacity. Check concrete reasons for serialisation, including
+  concurrency one, against dependencies, ownership, stable reads and resources.
+- Cohesive bounded tasks allow multiple genuine sequential RED/GREEN cycles
+  where appropriate, without manufactured splits or architecture changes.
 - Task-local checks use stable inputs. Full suite and integration barriers run
   only after all relevant writers stop.
 - Specialist and model tiers fit each task, and no task depends on workers

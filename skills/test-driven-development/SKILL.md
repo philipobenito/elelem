@@ -216,8 +216,9 @@ For a coordinator-managed task, report the immutable baseline reference supplied
 by the coordinator, exact changed paths, every test and parameterised case in
 each test-bearing file actually changed by the task, including older cases, the
 approved behaviours those cases cover, and the RED/GREEN evidence. The
-coordinator derives the audit scope from actual task edits and owns the
-independent audit, any removal dispatch, and recovery record. Do not remove
+coordinator derives the cumulative final audit scope from actual task and
+correction edits and owns the independent audit, any removal dispatch, and
+recovery record. Do not remove
 tests as part of the ordinary TDD cycle, audit your own work, or dispatch an
 auditor. A TDD-only skip does not waive the pruning audit. An empty test-bearing
 scope is recorded as not applicable, not as a successful audit.

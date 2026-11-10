@@ -48,6 +48,8 @@ The complete requirement map must cover every approved requirement. Same-wave
 tasks have disjoint writes and may not read one another's changing files.
 Shared reads are allowed only when those inputs remain stable for the full
 wave. Integration work is a task, not an implicit assumption.
+Prefer cohesive bounded tasks that permit multiple genuine sequential RED/GREEN cycles
+without splitting work artificially or changing approved architecture.
 
 ## Dispatch constraints
 
