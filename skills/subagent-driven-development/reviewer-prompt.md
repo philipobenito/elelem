@@ -26,38 +26,6 @@ recorded skip.
     exact allowed writes, acceptance criteria, stable inputs and relevant
     contracts.]
 
-    ## Review stage
-
-    [TASK_REVIEW_OR_FINAL_AUDIT_EVIDENCE_REVIEW]
-    During task review the pruning evidence is deferred to the final audit;
-    review the task changes and TDD evidence without requiring or claiming an
-    audit. Apply the pruning-evidence instructions below only in final audit
-    evidence review, after the coordinator has run or explicitly skipped it.
-
-    ## Final cumulative audit inputs
-
-    For final audit evidence review, the coordinator supplies the current audit
-    record, approved cumulative scope, exact skip provenance or `none`, and the
-    actual post-prune diff including tracked and untracked changes:
-    [FINAL_AUDIT_RECORD]
-    [APPROVED_CUMULATIVE_SCOPE]
-    [ACTUAL_POST_PRUNE_DIFF]
-    A missing or ambiguous required audit input is BLOCKED. The record must
-    identify an empty audit scope as NOT APPLICABLE or an explicitly authorised
-    skipped scope as SKIPPED; neither is an audit verdict. Inspect the supplied
-    audit evidence against the final audit evidence review criteria below.
-    These inputs are not required during task review.
-
-    ## Pruning-audit skip record
-
-    For final audit evidence review, the coordinator supplies exact user-authorised pruning-audit skip records,
-    or `none` when no pruning-audit skip was authorised:
-    [PRUNING_AUDIT_SKIP_RECORDS_OR_NONE]
-    Each record includes the exact source and instruction text, skipped
-    test-bearing file/case scope, reason and consequence. If the skip record is
-    absent or incomplete, report BLOCKED. Do not infer an authorised skip from
-    a missing record or audit evidence.
-
     ## Worker report
 
     [Paste the worker's structured report and verification evidence.]
@@ -78,59 +46,12 @@ recorded skip.
     commands as fresh independent verification. Do not expand the approved
     design or suggest unrelated clean-up.
 
-    ## Explicit pruning-audit skips
-
-    For each user-authorised pruning-audit skip, verify that the supplied
-    workflow record identifies the exact user authorisation and the skipped
-    file/case scope. Inspect the actual diff and confirm no removal or merge
-    was applied in that scope. Report the pruning audit as `SKIPPED` and
-    unverified; it is not pruning-audit evidence or approval. Do not dispatch
-    or repeat a pruning audit for the skipped scope, or invent KEEP, REMOVE, or
-    MERGE decisions for it. If a removal or merge was applied in skipped scope,
-    report the scope violation without claiming audit evidence. Continue
-    reviewing all task changes, including changes in files with skipped pruning
-    audits. Only skip pruning-evidence inspection for the explicitly skipped
-    file/case scope. Continue all unskipped checks. Apply the pruning-evidence
-    review below only to unskipped test-bearing scopes.
-
-    For the final audit evidence review of test-bearing files, inspect the pruning evidence
-    under `../_shared/test-pruning.md`. Check that scope came from actual task
-    and correction changes across all tasks and includes every test and parameterised case in each touched
-    test-bearing file, including older cases. Inspect the immutable baseline,
-    frozen active instruction-source identities and applicable project test
-    rules, stable input identities, pre-prune checks, non-zero per-file and
-    total discovery counts, runner-appropriate execution evidence, and the
-    accepted post-prune snapshot. For indirect runners, require trace-to-case
-    execution evidence. For direct runners, accept actual check output and
-    discovery evidence without requiring a trace. Check that the independent
-    auditor returned one KEEP, REMOVE, or MERGE for each case under the complete
-    current canonical Meaningful Assertions section and applicable project
-    rules. For removals,
-    assess the stated category and authorised removal rationale, survivor
-    requirements, and scoped recovery. For each merge, verify the source,
-    current-audit KEEP survivor, assertion, production line, reachable path,
-    and failure reason; confirm unsupported merges were withheld and combined
-    authorised edits are reflected in the accepted post-prune snapshot. Check
-    decision dependencies and transitive invalidation evidence for later
-    survivor changes. No file or last test may be deleted, and post-prune
-    discovery counts must match actual applied decisions and remain non-zero per
-    file and in total.
-
-    When archived removed-source reassessments are included, verify exact
-    preserved source and context, pre-removal snapshot identity, and actual
-    prior check and discovery evidence for each archived source. Verify the
-    original runner and whether historical tracing applied. Require historical
-    trace evidence only for an indirect original runner; for a direct original
-    runner, prior check and discovery evidence is sufficient without a trace.
-    Missing or unstable required archived evidence blocks reassessment. Do not
-    fabricate prior evidence or require an archived case to execute now.
-
-    Check approved-behaviour coverage against decisions actually applied and
-    withheld. Required approved behaviour without retained coverage is an
-    Important finding. Report unrelated pre-existing gaps separately without
-    expanding scope. This review checks recorded audit evidence; do not dispatch
-    or repeat the independent pruning audit unless its inputs changed and the
-    coordinator requests a fresh audit under the approved procedure.
+    No pruning evidence or whole-file inventory is a task-review prerequisite.
+    Review ordinary test adequacy, required behaviour coverage and unintended
+    coverage loss from the actual changes. Missing required coverage is an
+    Important finding. Do not dispatch an auditor, require pruning skip records,
+    or invent pruning decisions. Pruning is a separate final task after the
+    cumulative final reviewer PASS, not a condition for this verdict.
 
     For each finding, provide severity (Critical, Important or Minor), exact
     path and line or a precise location, evidence, impact, and a bounded

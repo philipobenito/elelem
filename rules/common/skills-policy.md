@@ -30,13 +30,15 @@ not replace a phase skill's procedure with its own summary or manual substitute.
 The coordinator determines applicable phases and invokes their skills in the
 workflow order: Research, Planning via the selected `brainstorming` mode,
 design review, explicit user approval, Wave Planning and readiness review,
-implementation, task reviews and checks, final review, final verification,
+implementation, task reviews and checks, final review, final test pruning,
+final verification,
 and clean-up. A user may explicitly skip any phase. Do not request routine
 task or wave approvals after the approved design and READY schedule.
 
-The coordinator owns the cumulative test-pruning audit after task reviews and
-wave barriers and before final cumulative review and verification. Follow the
-shared test-pruning procedure; a task review does not claim this deferred audit.
+The coordinator owns the separate final test-pruning task after task reviews,
+wave barriers and cumulative final reviewer `PASS`, before final verification.
+Follow the shared test-pruning procedure; a task review does not claim this
+deferred audit.
 
 For bug fixes, use `debugging` by default to reproduce the issue and establish
 root cause. An explicit scoped skip does not create evidence or permit a false
@@ -53,6 +55,17 @@ For a ticket, `work-on-ticket` may recover the approved design and hand it to
 the coordinator. It does not bypass validation, missing inputs, or explicit
 approval requirements. A status question uses `verification-before-completion`
 before any passing or completion claim.
+
+Invoke `test-pruning` once as a separate final task only after cumulative final
+reviewer `PASS`, not user approval. Its shared helper owns the final union
+inventory, audit and safe application. Ordinary TDD/implementation/task review
+has no whole-file inventory or pruning-evidence prerequisite. Require bounded
+independent pruning-delta review only for actual edits, then final verification
+after the last edit and review correction. Do not automatically loop cumulative
+review and pruning. Record scoped skips; a review skip is not `PASS` and needs
+explicit sequencing authorisation before pruning. A pruning skip authorises no
+pruning removals and skips neither review nor verification. Failures block
+completion; targeted invalidation/recovery does not schedule another routine audit.
 
 ## Instruction precedence
 

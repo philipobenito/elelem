@@ -79,6 +79,15 @@ The worker returns exactly one outcome and enough evidence to act on it:
 - `BLOCKED`: state the blocking condition, attempted safe actions and required
   user or coordinator decision.
 
+Ordinary workers report exact actual changed paths and rename mappings,
+including intermediate or reverted edits and reviewer corrections, together
+with baseline references, checks and per-behaviour TDD evidence. They do not
+prepare whole-file test/case inventories or pruning evidence for task review.
+The coordinator retains that history for one final union inventory after
+cumulative final reviewer `PASS`. The separate final pruning brief supplies
+the full frozen union and safety evidence under `test-pruning.md`; it is not an
+ordinary implementation handoff requirement.
+
 The coordinator moves a returned task to `review`, not `verified`. Independent
 review and fresh verification remain default requirements. Task-local checks
 may run during other work only when their inputs are known stable. Broad

@@ -8,7 +8,7 @@ metadata:
 
 # Test-Driven Development
 
-This skill executes the red-green-refactor cycle. The iron-law rules (the iron law itself, when TDD applies, the verification requirement, YAGNI during GREEN, good-test criteria) live in `../../rules/common/testing.md` and apply throughout. The procedural rules that bind once this skill is running (the rationalisation table, the red-flags stop list) live in `RULES.md` alongside this file. For a coordinator-managed task that changes test-bearing files, the separate pruning audit and evidence handoff follow `../_shared/test-pruning.md`.
+This skill executes the red-green-refactor cycle. The iron-law rules (the iron law itself, when TDD applies, the verification requirement, YAGNI during GREEN, good-test criteria) live in `../../rules/common/testing.md` and apply throughout. The procedural rules that bind once this skill is running (the rationalisation table, the red-flags stop list) live in `RULES.md` alongside this file. Final pruning is a separate post-review task under `../_shared/test-pruning.md`, not part of this cycle or ordinary task review.
 
 Before running the cycle below, you **MUST** read `RULES.md` (sibling file in this skill directory) using the Read tool if you have not already read it in this session.
 
@@ -213,15 +213,14 @@ Before claiming a cycle complete, confirm every box:
 If any box is unchecked, you skipped part of the cycle. The rules in `../../rules/common/testing.md` apply.
 
 For a coordinator-managed task, report the immutable baseline reference supplied
-by the coordinator, exact changed paths, every test and parameterised case in
-each test-bearing file actually changed by the task, including older cases, the
-approved behaviours those cases cover, and the RED/GREEN evidence. The
-coordinator derives the cumulative final audit scope from actual task and
-correction edits and owns the independent audit, any removal dispatch, and
-recovery record. Do not remove
+by the coordinator, exact changed paths and rename mappings, including
+intermediate/reverted edits and reviewer corrections, not a whole-file test/case inventory.
+Report approved behaviours covered and per-behaviour RED/GREEN evidence. The
+coordinator accumulates actual touched history for one final union inventory
+after cumulative final reviewer PASS, separate from ordinary TDD handoffs.
+It owns the independent audit, removal dispatch and recovery record. Do not remove
 tests as part of the ordinary TDD cycle, audit your own work, or dispatch an
-auditor. A TDD-only skip does not waive the pruning audit. An empty test-bearing
-scope is recorded as not applicable, not as a successful audit.
+auditor. A TDD-only skip does not waive the separate final pruning task.
 
 ## When Stuck
 

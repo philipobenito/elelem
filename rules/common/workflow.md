@@ -13,8 +13,9 @@ Apply `skills/_shared/phase-evidence.md` at workflow boundaries. Phase status,
 skill loading and later approval do not prove required procedures occurred.
 
 Every phase runs by default: Research, Planning, design review, Wave Planning,
-readiness review, implementation, task reviews and checks, cumulative audit,
-final review, final verification, and clean-up. Only an explicit, scoped user instruction
+readiness review, implementation, task reviews and checks, final review,
+final test-pruning task, final verification, and clean-up. Only an explicit,
+scoped user instruction
 may skip a phase. Record its scope, reason and consequences. Every phase is
 skippable, including reviews, checks and clean-up, but a skipped review is not
 approval and skipped verification is not evidence. Do not imply a skipped gate
@@ -76,10 +77,21 @@ wave tasks must not read one another's changing files.
 Run independent tasks concurrently when harness routing and concurrency are
 verified. Each task receives independent review and fresh task-local checks.
 After all writers in a wave stop, run its integration barrier before starting
-the next wave. The coordinator owns one cumulative pruning audit after all task
-reviews and wave barriers, before final cumulative review and fresh verification.
-Derive its scope from actual test-bearing paths changed by tasks and corrections.
-Do not ask
+the next wave. Final review follows all waves. Only after cumulative final
+reviewer
+`PASS`, run one separate final test-pruning task through `test-pruning`, followed
+by independent bounded pruning-delta review only if tests were edited. Final
+verification runs after the last pruning edit and review correction, then
+clean-up. User approval is not the pruning trigger. A cumulative-review skip
+requires explicit sequencing authorisation before pruning and is not `PASS`.
+A pruning skip permits no pruning edits and skips neither review nor
+verification. Failures block completion. Do not automatically repeat cumulative
+review or restart pruning; recover affected evidence under the shared helper.
+Ordinary task review needs no pruning evidence or whole-file case inventory.
+The coordinator accumulates actual touched-path history across tasks and review
+corrections, including reverted edits and rename mappings, for one final union
+inventory. Preserve workflow and task baselines and unrelated user work. Do not
+ask
 for routine task or wave approvals. Keep the coordinator thin: invoke phase
 skills and track state, rather than rereading or substituting for their
 procedures.
