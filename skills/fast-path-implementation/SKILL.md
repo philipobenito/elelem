@@ -59,9 +59,17 @@ The coordinator owns progress, workflow state, Git preference and phase
 transitions. Do not ask for routine task or commit approvals. The default is to
 leave changes uncommitted. If the user's recorded preference is ask-before-
 commit, defer commits and report them rather than interrupting the task flow.
-Never push. Follow the standard blocker policy: stop new dispatch globally,
-cancel active work only when safe cancellation is supported, otherwise let it
-settle, preserve state and report the blocker.
+Never push. Follow `../_shared/subagent-dispatch.md` to classify blockers and
+pause only affected work and its dependency closure. A proven global safety
+failure stops all new dispatch. Unknown impact pauses potentially affected work.
+If no safe boundary can be demonstrated, provisionally pause all new dispatch
+until scope is established. Do not classify that uncertainty as a proven global
+safety failure. Continue already-authorised independent work only when
+its safe boundary and eligibility are demonstrated. Cancel affected work
+only when safe cancellation is supported, otherwise let it settle without
+claiming it stopped or accepting stale outputs. Preserve state and report the
+blocker. A review finding blocks acceptance of its affected task, not eligible
+independent progress.
 
 ## Reviewer prompt
 

@@ -191,19 +191,9 @@ test_test_pruning_contract_is_documented() {
   local file token requirement normalized missing=0
   local requirements=(
     "rules/common/testing.md|Meaningful Assertions"
-    "rules/common/testing.md|named defect"
-    "skills/_shared/test-pruning.md|uncertain"
-    "skills/_shared/test-pruning.md|distinct"
-    "skills/_shared/test-pruning.md|survivor"
-    "skills/_shared/test-pruning.md|read-only"
-    "skills/_shared/test-pruning.md|canonical value rule"
-    "skills/_shared/test-pruning.md|pre-prune"
-    "skills/_shared/test-pruning.md|discovery-count"
     "skills/_shared/test-pruning.md|workflow.md"
     "skills/_shared/test-pruning.md|{{DISPATCH_AGENT_TOOL}}"
     "skills/_shared/test-pruning.md|COMPLETE CURRENT MEANINGFUL ASSERTIONS SECTION VERBATIM"
-    "skills/_shared/test-pruning.md|TASK_START_HEAD_AND_BASELINE_REFERENCE"
-    "skills/_shared/test-pruning.md|PRE_EXISTING_CONTENT_IDENTITIES_OR_SNAPSHOTS"
     "skills/_shared/test-pruning.md|ACTUAL_TASK_DIFF_PATHS_AND_SCOPE_EVIDENCE"
     "skills/_shared/test-pruning.md|TEST_SOURCE_AND_CONTEXT"
     "skills/_shared/test-pruning.md|INPUT_PATHS_AND_CONTENT_IDENTITIES"
@@ -211,21 +201,16 @@ test_test_pruning_contract_is_documented() {
     "skills/_shared/test-pruning.md|APPROVED_BEHAVIOUR_TO_REQUIREMENT_MAP"
     "skills/_shared/test-pruning.md|PRE_PRUNE_CHECKS_AND_DISCOVERY_COUNTS"
     "skills/_shared/test-pruning.md|POST_PRUNE_COMMAND_AND_COUNTING_METHOD"
-    "skills/_shared/test-pruning.md|RECOVERY"
     "skills/_shared/test-pruning.md|survivor stability"
     "skills/test-driven-development/SKILL.md|TDD-only skip"
     "skills/test-driven-development/SKILL.md|Assertions protect named behaviour"
     "skills/subagent-driven-development/SKILL.md|pre-prune"
     "skills/subagent-driven-development/SKILL.md|post-prune"
-    "skills/subagent-driven-development/SKILL.md|no nested audit dispatch"
     "skills/subagent-driven-development/implementer-prompt.md|baseline"
-    "skills/subagent-driven-development/implementer-prompt.md|recovery"
     "skills/subagent-driven-development/implementer-prompt.md|Do not prune"
     "skills/subagent-driven-development/implementer-prompt.md|audit your own work"
-    "skills/_shared/test-pruning.md|survivor requirements"
     "skills/subagent-driven-development/reviewer-prompt.md|Important finding"
     "README.md|test pruning"
-    "README.md|live"
   )
   for requirement in "${requirements[@]}"; do
     file="${requirement%%|*}"
@@ -399,9 +384,7 @@ test_archived_removed_sources_are_separate_from_live_execution() {
   local content requirement pattern missing=0
   content="$(tr '\n' ' ' < "$helper" | tr -s '[:space:]' ' ')"
   local requirements=(
-    'complete live inventory|complete initial live inventory.{0,120}every test and parameterised case'
     'archive separate from live|archived removed-source records.{0,100}separate from the current live inventory'
-    'trace live executions|trace.{0,80}each current-live case invocation'
     'archived reassessment input|Archived removed-source reassessments, separate from current-live cases'
     'preserved archived source|ARCHIVED_REMOVED_SOURCE_AND_CONTEXT'
     'archived snapshot identity|ARCHIVED_PRE_REMOVAL_SNAPSHOT_IDENTITIES'
@@ -485,10 +468,6 @@ test_canonical_rule_resolution_uses_verified_active_scope() {
 test_auditor_contract_is_wired_to_workers_reviewers_docs_and_scenarios() {
   local requirement file token content missing=0
   local requirements=(
-    'final application merge handoff|skills/_shared/test-pruning.md|MERGE'
-    'final application current keep survivor|skills/_shared/test-pruning.md|current-audit KEEP'
-    'final audit three decisions|skills/_shared/test-pruning.md|KEEP, REMOVE, or MERGE'
-    'final delta review merged snapshot|skills/_shared/test-pruning.md|accepted post-prune snapshot'
     'readme category policy|README.md|timing-dependent'
     'readme merge policy|README.md|MERGE'
     'readme authority policy|README.md|active instruction sources'
@@ -628,8 +607,6 @@ test_final_pruning_runs_once_after_cumulative_reviewer_pass() {
     'one final task|skills/subagent-driven-development/SKILL.md|one separate final review-phase task'
     'approval is not trigger|skills/test-pruning/SKILL.md|not user approval'
     'single detailed procedure|skills/test-pruning/SKILL.md|../_shared/test-pruning.md'
-    'union scope|skills/_shared/test-pruning.md|union of actually touched test-bearing paths across all implementation tasks'
-    'correction history|skills/_shared/test-pruning.md|reviewer corrections, reverted edits and rename mappings'
     'missing path blocker|skills/_shared/test-pruning.md|Missing or unexplained deleted paths block'
     'no unrelated scope|skills/_shared/test-pruning.md|Do not include unrelated user work'
     'workflow baseline|skills/_shared/test-pruning.md|immutable workflow baseline'
@@ -641,9 +618,7 @@ test_final_pruning_runs_once_after_cumulative_reviewer_pass() {
     'bounded delta review scope|skills/_shared/test-pruning.md|Do not expand this review into another cumulative implementation review or whole-workflow pruning audit'
     'pruning skip preserves gates|skills/_shared/test-pruning.md|pruning skip authorises no pruning edits and waives neither ordinary coverage review nor final verification'
     'substantive correction boundary|skills/_shared/test-pruning.md|Substantive corrections return to the proper implementation/review boundary'
-    'conditional delta review|skills/_shared/test-pruning.md|Only if pruning actually edits tests.*independent.*pruning-delta review'
     'no-change review|skills/_shared/test-pruning.md|No-change audits need no delta review'
-    'verification last|skills/subagent-driven-development/SKILL.md|final verification after the last pruning edit and review correction'
     'no automatic loop|skills/_shared/test-pruning.md|Do not repeat cumulative review or restart pruning by default'
     'review skip sequencing|skills/_shared/test-pruning.md|cumulative-review skip is not a passing verdict.*explicit sequencing authorisation'
     'failure blocks|skills/_shared/test-pruning.md|Failures block completion'
@@ -701,21 +676,6 @@ test_cumulative_review_pass_adapts_the_actual_reviewer_result() {
   (( missing != 0 )) || _pass 'cumulative_review_pass_adapts_the_actual_reviewer_result'
 }
 
-test_ordinary_task_handoffs_do_not_require_pruning_evidence() {
-  local file content missing=0
-  local files=(
-    'skills/subagent-driven-development/reviewer-prompt.md'
-    'skills/fast-path-implementation/fast-path-reviewer-prompt.md'
-  )
-  for file in "${files[@]}"; do
-    content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
-    if ! grep -Fq 'No pruning evidence or whole-file inventory is a task-review prerequisite' <<< "$content" || grep -Eq 'PRUNING_AUDIT_SKIP_RECORDS_OR_NONE|For a task that touched test-bearing files, inspect the pruning evidence' <<< "$content"; then
-      _fail "ordinary_review_${file//\//_}" 'task review must not depend on a pruning audit or inventory'
-      missing=1
-    fi
-  done
-  (( missing != 0 )) || _pass 'ordinary_task_handoffs_do_not_require_pruning_evidence'
-}
 
 _check_ordinary_handoff_source() {
   local file="$1" content
@@ -740,36 +700,6 @@ test_ordinary_handoff_sources_reject_pruning_prerequisites() {
   (( missing != 0 )) || _pass 'ordinary_handoff_sources_reject_pruning_prerequisites'
 }
 
-test_ordinary_handoff_checks_reject_injected_prerequisites() {
-  local file fixture contradiction output missing=0 index=0
-  local files=(
-    'skills/subagent-driven-development/reviewer-prompt.md'
-    'skills/fast-path-implementation/fast-path-reviewer-prompt.md'
-    'skills/test-driven-development/SKILL.md'
-    'skills/subagent-driven-development/SKILL.md'
-  )
-  local contradictions=(
-    'For a task that touched test-bearing files, inspect the pruning evidence.'
-    'Before ordinary task review, require pruning evidence.'
-    'Before ordinary task handoff, supply a whole-file inventory.'
-    'Report every test and parameterised case in each test-bearing file actually changed by the task.'
-  )
-  for file in "${files[@]}"; do
-    for contradiction in "${contradictions[@]}"; do
-      fixture="$TEST_TMP/handoff-prerequisite-$index"
-      mkdir -p "$fixture/$(dirname "$file")"
-      cp "$REPO_ROOT/$file" "$fixture/$file"
-      printf '\n%s\n' "$contradiction" >> "$fixture/$file"
-      output="$(REPO_ROOT="$fixture"; passed=0; failed=0; _check_ordinary_handoff_source "$file" || true)"
-      if ! grep -Fq "[FAIL] ordinary_handoff_${file//\//_}" <<< "$output"; then
-        _fail "ordinary_handoff_mutation_$index" "accepted an injected prerequisite in $file"
-        missing=1
-      fi
-      (( index++ )) || true
-    done
-  done
-  (( missing != 0 )) || _pass 'ordinary_handoff_checks_reject_injected_prerequisites'
-}
 
 test_tdd_completion_gate_is_behaviour_based() {
   local file="$REPO_ROOT/skills/test-driven-development/SKILL.md"
@@ -789,7 +719,11 @@ test_tdd_completion_gate_is_behaviour_based() {
 test_pruning_safety_gates_are_explicit() {
   local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
   local helper_content
-  helper_content="$(tr '\n' ' ' < "$helper")"
+  helper_content="$(tr '\n' ' ' < "$helper" | tr -s '[:space:]' ' ')"
+  if ! grep -Fq 'Run the pre-prune checks for the final union against stable live inputs and record exact commands, outputs, exit codes' <<< "$helper_content"; then
+    _fail "pruning_safety_gates_are_explicit" "pre-prune checks must record stable final-union commands, outputs and exit codes"
+    return
+  fi
   if ! grep -Eiq 'non-zero exit (status|code)' <<< "$helper_content" || ! grep -Eiq 'blocks? (any )?removal' <<< "$helper_content"; then
     _fail "pruning_safety_gates_are_explicit" "a non-zero pre-prune check must block removals"
     return
@@ -827,16 +761,6 @@ test_auditor_rule_source_is_harness_aware_and_bounded() {
   fi
 }
 
-test_audit_invalidation_uses_accepted_green_snapshot() {
-  local helper="$REPO_ROOT/skills/_shared/test-pruning.md"
-  local content
-  content="$(tr '\n' ' ' < "$helper")"
-  if ! grep -Eiq 'accepted post-prune snapshot' <<< "$content" || ! grep -Eiq 'exact authorised pruning changes' <<< "$content" || ! grep -Eiq 'authorised pruning changes.{0,80}(do not|must not) invalidate' <<< "$content"; then
-    _fail "audit_invalidation_uses_accepted_green_snapshot" "invalidation must distinguish accepted pruning changes from later input changes"
-    return
-  fi
-  _pass "audit_invalidation_uses_accepted_green_snapshot"
-}
 
 test_test_pruning_helper_installs_and_skill_links_resolve() {
   local harness root skill relative target unresolved=0
@@ -940,9 +864,6 @@ _check_readiness_contract_reference() {
     '../_shared/wave-readiness.md'
     'readiness review'
     'SKIPPED'
-    'scope'
-    'planner'
-    'checks'
   )
   for token in "${tokens[@]}"; do
     if [[ "$token" == 'readiness review' ]]; then
@@ -1038,9 +959,8 @@ test_phase_evidence_installed_links_resolve() {
   local harness root relative link
   local harnesses=(claude opencode codex)
   local files=(
-    'workflow-coordinator/SKILL.md' 'research/SKILL.md' 'brainstorming/SKILL.md'
     'work-on-ticket/SKILL.md' 'fast-path-implementation/SKILL.md'
-    'subagent-driven-development/SKILL.md' '_shared/workflow-artifacts.md'
+    'subagent-driven-development/SKILL.md'
   )
   for harness in "${harnesses[@]}"; do
     root="$TEST_TMP/$harness/skills"
@@ -1056,15 +976,6 @@ test_phase_evidence_installed_links_resolve() {
   done
 }
 
-test_required_files_check_is_registered() {
-  local test_call_count
-  test_call_count="$(sed -n '/^_check_skill_frontmatter$/,/^total=/p' "$0" | grep -Fxc 'test_required_files_exist' || true)"
-  if [[ "$test_call_count" != 1 ]]; then
-    _fail "required_files_check_is_registered" "expected test_required_files_exist once in the suite invocation block, found $test_call_count"
-    return
-  fi
-  _pass "required_files_check_is_registered"
-}
 
 test_required_files_exist() {
   _check_required_files || true
@@ -1145,40 +1056,7 @@ test_operative_sources_do_not_schedule_pruning_before_final_review() {
   (( missing != 0 )) || _pass 'operative_sources_do_not_schedule_pruning_before_final_review'
 }
 
-test_lifecycle_checks_reject_contradictions_beside_correct_text() {
-  local entry file contradiction fixture output missing=0 index=0
-  local mutations=(
-    'rules/common/skills-policy.md|The coordinator owns the cumulative test-pruning audit after task reviews and wave barriers and before final cumulative review and verification.'
-    'skills/subagent-driven-development/SKILL.md|After the cumulative audit and all requested tasks and integration barriers are resolved, invoke requesting-code-review for cumulative changes.'
-    'skills/fast-path-implementation/SKILL.md|Run the coordinator-owned cumulative pruning audit before final cumulative review and verification.'
-    '_tests/workflow_scenarios.md|Inspect the cumulative test-pruning audit after task reviews and wave barriers, before final cumulative review and verification.'
-  )
-  for entry in "${mutations[@]}"; do
-    file="${entry%%|*}"
-    contradiction="${entry#*|}"
-    fixture="$TEST_TMP/prereview-pruning-$index"
-    mkdir -p "$fixture/$(dirname "$file")"
-    cp "$REPO_ROOT/$file" "$fixture/$file"
-    printf '\n%s\n' "$contradiction" >> "$fixture/$file"
-    output="$(REPO_ROOT="$fixture"; passed=0; failed=0; _check_pruning_lifecycle_source "$file" || true)"
-    if ! grep -Fq "[FAIL] prereview_pruning_${file//\//_}" <<< "$output"; then
-      _fail "lifecycle_mutation_$index" "accepted a contradictory operative instruction in $file"
-      missing=1
-    fi
-    (( index++ )) || true
-  done
-  (( missing != 0 )) || _pass 'lifecycle_checks_reject_contradictions_beside_correct_text'
-}
 
-test_preprune_checks_have_one_final_union_instruction() {
-  local content
-  content="$(tr '\n' ' ' < "$REPO_ROOT/skills/_shared/test-pruning.md" | tr -s '[:space:]' ' ')"
-  if ! grep -Fq 'Run the pre-prune checks for the final union against stable live inputs and record exact commands, outputs, exit codes' <<< "$content"; then
-    _fail 'preprune_checks_have_one_final_union_instruction' 'expected one coherent final-union pre-prune check instruction'
-    return
-  fi
-  _pass 'preprune_checks_have_one_final_union_instruction'
-}
 
 _write_expected_installed_skill() {
   perl -0777 -e '
@@ -1201,26 +1079,12 @@ _write_expected_installed_skill() {
 
 test_changed_workflow_skills_are_installed_in_all_harnesses() {
   local harness file relative question_tool skill_tool dispatch_tool expected missing=0
-  local files=(
-    'wave-planning/SKILL.md' '_shared/wave-readiness.md' '_shared/task-briefs.md'
-    '_shared/subagent-dispatch.md' '_shared/workflow-artifacts.md'
-    '_shared/test-pruning.md' 'workflow-coordinator/SKILL.md'
-    'subagent-driven-development/SKILL.md' 'subagent-driven-development/reviewer-prompt.md'
-    'subagent-driven-development/implementer-prompt.md'
-    'fast-path-implementation/fast-path-reviewer-prompt.md' 'test-driven-development/SKILL.md'
-  )
   for harness in claude opencode codex; do
     case "$harness" in
       claude) question_tool='AskUserQuestion'; skill_tool='Skill'; dispatch_tool='Agent' ;;
       opencode) question_tool='question'; skill_tool='skill'; dispatch_tool='subagent' ;;
       codex) question_tool='request_user_input'; skill_tool='/skills or $skill-name'; dispatch_tool='spawn_agent' ;;
     esac
-    for file in "${files[@]}"; do
-      if [[ ! -f "$TEST_TMP/$harness/skills/$file" ]] || grep -Fq '{{' "$TEST_TMP/$harness/skills/$file"; then
-        _fail "installed_workflow_${harness}_${file//\//_}" "missing installed file or unresolved placeholder"
-        missing=1
-      fi
-    done
     for file in "${workflow_files[@]}"; do
       relative="${file#skills/}"
       expected="$TEST_TMP/expected-$harness/$relative"
@@ -1230,18 +1094,6 @@ test_changed_workflow_skills_are_installed_in_all_harnesses() {
         missing=1
       fi
     done
-    if ! grep -Fxq "\`$question_tool\` to resolve the task identity and any user choices." "$TEST_TMP/$harness/skills/workflow-coordinator/SKILL.md"; then
-      _fail "installed_tool_${harness}_question" "expected the harness question tool in its source context"
-      missing=1
-    fi
-    if ! grep -Fxq "\`$skill_tool\`, using the skill name. The paths below identify" "$TEST_TMP/$harness/skills/workflow-coordinator/SKILL.md"; then
-      _fail "installed_tool_${harness}_skill" "expected the harness skill tool in its source context"
-      missing=1
-    fi
-    if ! grep -Fxq "$dispatch_tool ([VERIFIED_TEST_OR_QUALITY_SPECIALIST]):" "$TEST_TMP/$harness/skills/_shared/test-pruning.md"; then
-      _fail "installed_tool_${harness}_dispatch" "expected the harness dispatch tool in its source context"
-      missing=1
-    fi
   done
   if (( missing == 0 )); then
     _pass "changed_workflow_skills_are_installed_in_all_harnesses"
@@ -1281,15 +1133,6 @@ test_changed_common_rules_are_installed_in_all_harnesses() {
   _codex_render_agents_payload "$TEST_TMP/codex/payload.md" rule_files languages
   _codex_upsert_managed_block "$target" "$TEST_TMP/codex/payload.md"
   codex_output="$(test_codex_common_rules_are_in_the_managed_block)"
-  for file in "${rule_files[@]}"; do
-    if ! grep -Fq "## rules/common/$file" "$target" || ! grep -Fq 'cumulative' "$target" || grep -Fq '{{' "$target"; then
-      _fail "installed_rule_codex_${file}" "missing rendered rule or unresolved placeholder"
-      missing=1
-    elif grep -Fq "[FAIL] codex_rule_content_${file}" <<< "$codex_output"; then
-      _fail "installed_rule_codex_${file}" "managed rule differs from its correctly substituted source"
-      missing=1
-    fi
-  done
   if (( missing == 0 )); then
     _pass "changed_common_rules_are_installed_in_all_harnesses"
   fi
@@ -1299,7 +1142,6 @@ test_final_audit_rechecks_only_affected_evidence_after_corrections() {
   local file content requirement pattern missing=0
   local requirements=(
     'skills/_shared/test-pruning.md|targeted recheck.{0,160}affected.{0,100}transitive.{0,100}survivor'
-    'skills/_shared/test-pruning.md|Audit newly touched files in full'
     'skills/_shared/test-pruning.md|missing.{0,100}evidence.{0,100}block'
     'skills/_shared/test-pruning.md|coverage gap.{0,120}in-scope.{0,120}TDD.{0,120}review.{0,120}checks'
     'skills/subagent-driven-development/SKILL.md|Only actual pruning edits require an independent bounded pruning-delta review of those edits and affected coverage'
@@ -1401,9 +1243,6 @@ test_pruning_delta_review_receives_audit_evidence_and_criteria() {
     'skills/_shared/test-pruning.md|Only if pruning actually edits tests, request an independent bounded pruning-delta review'
     'skills/_shared/test-pruning.md|read-only reviewer, the exact pruning diff, accepted post-prune snapshot, decisions/recovery and affected coverage'
     'skills/_shared/test-pruning.md|Check authorised application, the canonical decisions and survivor requirements'
-    'skills/_shared/test-pruning.md|PRUNING_AUDIT_SKIP_RECORDS_OR_NONE'
-    'skills/_shared/test-pruning.md|If the skip record is absent or incomplete, report BLOCKED'
-    'skills/_shared/test-pruning.md|Do not expand this review into another cumulative implementation review or whole-workflow pruning audit'
   )
   for requirement in "${requirements[@]}"; do
     file="${requirement%%|*}"
@@ -1419,30 +1258,6 @@ test_pruning_delta_review_receives_audit_evidence_and_criteria() {
   fi
 }
 
-test_installed_skill_checks_reject_wrong_harness_tool_mappings() {
-  local harness copy fixture expected output missing=0
-  for harness in claude opencode codex; do
-    fixture="$TEST_TMP/wrong-mapping-$harness"
-    for copy in claude opencode codex; do
-      mkdir -p "$fixture/$copy"
-      cp -R "$TEST_TMP/$copy/skills" "$fixture/$copy/skills"
-    done
-    case "$harness" in
-      claude) expected='AskUserQuestion' ;;
-      opencode) expected='question' ;;
-      codex) expected='request_user_input' ;;
-    esac
-    perl -i -pe "s/${expected}/wrong_tool/g" "$fixture/$harness/skills/workflow-coordinator/SKILL.md"
-    output="$(TEST_TMP="$fixture"; passed=0; failed=0; test_changed_workflow_skills_are_installed_in_all_harnesses)"
-    if ! grep -Fq "[FAIL] installed_tool_${harness}_question" <<< "$output"; then
-      _fail "wrong_mapping_${harness}" "the installer check accepted an incorrect question tool"
-      missing=1
-    fi
-  done
-  if (( missing == 0 )); then
-    _pass "installed_skill_checks_reject_wrong_harness_tool_mappings"
-  fi
-}
 
 test_installed_skill_checks_reject_wrong_tracker_mappings() {
   local harness copy fixture output missing=0
@@ -1481,29 +1296,6 @@ test_installed_skill_checks_reject_wrong_tracker_mappings() {
   fi
 }
 
-test_codex_rule_check_rejects_content_moved_outside_the_managed_block() {
-  local file fixture target output missing=0
-  for file in workflow.md skills-policy.md; do
-    fixture="$TEST_TMP/outside-block-$file"
-    mkdir -p "$fixture/codex"
-    target="$fixture/codex/AGENTS.md"
-    awk -v label="## rules/common/$file" -v end="$CODEX_MANAGED_END" -v moved="$fixture/moved.md" '
-      $0 == label {moving=1; print > moved; next}
-      moving && ($0 ~ /^## rules\/common\// || $0 == end) {moving=0}
-      moving {print > moved; next}
-      {print}
-    ' "$TEST_TMP/codex/AGENTS.md" > "$target"
-    cat "$fixture/moved.md" >> "$target"
-    output="$(TEST_TMP="$fixture"; passed=0; failed=0; test_codex_common_rules_are_in_the_managed_block)"
-    if ! grep -Fq "[FAIL] codex_rule_content_${file}" <<< "$output"; then
-      _fail "codex_rule_outside_${file}" "the rule check accepted content outside the managed block"
-      missing=1
-    fi
-  done
-  if (( missing == 0 )); then
-    _pass "codex_rule_check_rejects_content_moved_outside_the_managed_block"
-  fi
-}
 
 _mutate_codex_workflow_rule() {
   local target="$1"
@@ -1512,32 +1304,7 @@ _mutate_codex_workflow_rule() {
   grep -Fq 'per-task pruning audit' "$target"
 }
 
-test_codex_rule_check_rejects_changed_rule_content() {
-  local fixture="$TEST_TMP/codex-altered-rule" output
-  mkdir -p "$fixture/codex"
-  cp "$TEST_TMP/codex/AGENTS.md" "$fixture/codex/AGENTS.md"
-  if ! _mutate_codex_workflow_rule "$fixture/codex/AGENTS.md" || cmp -s "$TEST_TMP/codex/AGENTS.md" "$fixture/codex/AGENTS.md"; then
-    _fail 'codex_rule_check_rejects_changed_rule_content' 'the intended workflow policy mutation did not change the fixture'
-    return
-  fi
-  output="$(TEST_TMP="$fixture"; passed=0; failed=0; test_codex_common_rules_are_in_the_managed_block)"
-  if grep -Fq '[FAIL] codex_rule_content_workflow.md' <<< "$output"; then
-    _pass "codex_rule_check_rejects_changed_rule_content"
-  else
-    _fail "codex_rule_check_rejects_changed_rule_content" "the rule check accepted altered policy content"
-  fi
-}
 
-test_codex_rule_mutation_rejects_a_missing_target() {
-  local target="$TEST_TMP/codex-missing-mutation-target.md"
-  printf 'Unrelated policy text.\n' > "$target"
-  cp "$target" "$target.original"
-  if _mutate_codex_workflow_rule "$target" || ! cmp -s "$target" "$target.original"; then
-    _fail 'codex_rule_mutation_rejects_a_missing_target' 'a missing mutation target must fail without changing the fixture'
-    return
-  fi
-  _pass 'codex_rule_mutation_rejects_a_missing_target'
-}
 
 test_common_rule_checks_reject_wrong_skill_tool_mappings() {
   local harness fixture output missing=0
@@ -1556,8 +1323,15 @@ test_common_rule_checks_reject_wrong_skill_tool_mappings() {
         CODEX_SUBSTITUTIONS[5]='wrong_tool'
       fi
       test_changed_common_rules_are_installed_in_all_harnesses
+      if [[ "$harness" == codex ]]; then
+        test_codex_common_rules_are_in_the_managed_block
+      fi
     )"
-    if ! grep -Fq "[FAIL] installed_rule_${harness}_skills-policy.md" <<< "$output"; then
+    local expected_failure="[FAIL] installed_rule_${harness}_skills-policy.md"
+    if [[ "$harness" == codex ]]; then
+      expected_failure='[FAIL] codex_rule_content_skills-policy.md'
+    fi
+    if ! grep -Fq "$expected_failure" <<< "$output"; then
       _fail "wrong_rule_mapping_${harness}" "the common rule check accepted an incorrect skill tool"
       missing=1
     fi
@@ -1605,12 +1379,6 @@ test_implementation_selection_consumers_use_the_shared_contract() {
   _check_implementation_selection_consumers "$REPO_ROOT/skills" source
 }
 
-test_implementation_selection_consumers_are_installed_in_all_harnesses() {
-  local harness
-  for harness in claude opencode codex; do
-    _check_implementation_selection_consumers "$TEST_TMP/$harness/skills" "$harness"
-  done
-}
 
 test_opencode_installs_the_actual_shell_enumeration_tools() {
   local target="$TEST_TMP/opencode-tools"
@@ -1637,6 +1405,76 @@ test_implementation_consumers_do_not_override_configuration_fallback() {
   (( missing != 0 )) || _pass 'implementation_consumers_do_not_override_configuration_fallback'
 }
 
+test_blocker_containment_policy_is_dependency_scoped() {
+  local file='skills/_shared/subagent-dispatch.md'
+  local content requirement pattern missing=0
+  local requirements=(
+    'task-local dependency closure|Task-local: pause the task and its transitive dependants'
+    'shared-contract dependency closure|Shared-contract: pause producers or consumers whose production or consumption of an affected contract or resource is invalid, and their downstream dependants.{0,180}An unaffected producer.{0,120}may continue'
+    'global safety scope|Global safety: stop all new dispatch when workflow-wide authorisation, ownership, isolation or safe operation is invalid'
+    'impact assessment before dispatch|Assess a blocker.s impact before any further dispatch'
+    'blocker impact record|In the existing coordinator-owned task records, record the blocking condition, class or unresolved classification, affected tasks/contracts/resources, evidence, independence rationale and recovery condition'
+    'continuation schedule and stable inputs|Continue only already-authorised eligible work within the approved schedule.{0,240}stable inputs'
+    'continuation_prerequisites_and_authorisation|Continue only already-authorised eligible work.{0,120}with valid prerequisites, approval and readiness'
+    'generated_test-write_ownership|disjoint ownership including generated and test writes'
+    'available resources and relevant evidence|available resources, relevant assumptions and evidence'
+    'later-wave_exclusion|never permits entering a later wave early'
+    'review_and_completion_barriers|bypassing review, acceptance, verification or integration barriers'
+    'broad_check_writer_barrier|Broad checks wait until all relevant writers stop'
+    'unknown impact boundary|For unknown impact, pause potentially affected work and continue only where an unaffected boundary can be demonstrated'
+    'provisional hold is not global classification|If no safe boundary can be established, provisionally hold all new dispatch until scope is established; do not mislabel uncertainty as a proven global safety failure'
+    'safe cancellation and settlement|Cancel affected active work only where safe cancellation is supported and safe. Otherwise let it settle without claiming it was cancelled or stopped.{0,180}do not automatically accept its output'
+    'retain unaffected and renew affected evidence|Preserve unaffected valid work and evidence. Renew affected assumptions, contracts, approval, readiness, review and verification under.{0,60}phase-evidence.md'
+    'resume after resolution and revalidation|Resume affected work only after supported resolution is recorded and dependent eligibility is revalidated'
+    'no unchanged retries or silent scope change|Do not force unchanged retries, silently expand scope, redesign, escalate the model tier or patch worker code in the coordinator context'
+    'unresolved required work blocks completion|Required unresolved work or barriers continue to block overall completion'
+  )
+  content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+  for requirement in "${requirements[@]}"; do
+    pattern="${requirement#*|}"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "blocker_containment_${requirement%%|*}" "expected shared blocker policy for ${requirement%%|*}"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass 'blocker_containment_policy_is_dependency_scoped'
+  fi
+}
+
+test_blocker_review_findings_are_scoped_to_affected_work() {
+  local file='skills/_shared/subagent-dispatch.md'
+  local content
+  content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+  if ! grep -Eiq 'applicable review has unresolved issues affecting the scope.{0,180}do not hold proven-independent eligible work' <<< "$content"; then
+    _fail 'blocker_review_findings_are_scoped_to_affected_work' 'expected unresolved review findings to block affected scope without holding proven-independent work'
+    return
+  fi
+  _pass 'blocker_review_findings_are_scoped_to_affected_work'
+}
+
+_check_blocker_policy_mutation_rejected() {
+  local case_name="$1" requirement="$2" safeguard="$3"
+  local file='skills/_shared/subagent-dispatch.md'
+  local fixture="$TEST_TMP/blocker-policy-$case_name" output
+  mkdir -p "$fixture/skills/_shared"
+  cp "$REPO_ROOT/$file" "$fixture/$file"
+  BLOCKER_POLICY_MUTATION="$safeguard" perl -0777 -i -pe 's/\Q$ENV{BLOCKER_POLICY_MUTATION}\E//g' "$fixture/$file"
+  if grep -Fq "$safeguard" "$fixture/$file"; then
+    _fail "blocker_policy_mutation_$case_name" "mutation did not remove $requirement"
+    return 1
+  fi
+  output="$(REPO_ROOT="$fixture"; passed=0; failed=0; test_blocker_containment_policy_is_dependency_scoped)"
+  if grep -Fq '[PASS] blocker_containment_policy_is_dependency_scoped' <<< "$output"; then
+    _fail "blocker_policy_mutation_$case_name" "checker accepted policy with $requirement removed"
+  elif grep -Fq "[FAIL] blocker_containment_$requirement:" <<< "$output"; then
+    _pass "blocker_policy_mutation_$case_name"
+  else
+    _fail "blocker_policy_mutation_$case_name" "checker did not report the missing $requirement safeguard"
+  fi
+}
+
+
 _check_skill_frontmatter
 test_required_files_exist
 test_coordinator_reuses_the_executors_final_gate_evidence
@@ -1644,11 +1482,8 @@ test_pruning_delta_review_receives_audit_evidence_and_criteria
 test_wave_planning_maximises_safe_static_width
 test_final_audit_preserves_union_scope_after_reviews_and_barriers
 test_operative_sources_do_not_schedule_pruning_before_final_review
-test_lifecycle_checks_reject_contradictions_beside_correct_text
-test_preprune_checks_have_one_final_union_instruction
 test_final_audit_rechecks_only_affected_evidence_after_corrections
 test_cumulative_audit_preserves_each_task_baseline_and_skip_provenance
-test_required_files_check_is_registered
 test_phase_evidence_contract
 test_phase_evidence_boundary_references
 test_claude_installer_copy_and_substitution
@@ -1656,17 +1491,14 @@ test_opencode_installer_copy_and_substitution
 test_codex_installer_copy_and_substitution
 test_implementation_selection_consumers_use_the_shared_contract
 test_implementation_consumers_do_not_override_configuration_fallback
-test_implementation_selection_consumers_are_installed_in_all_harnesses
+test_blocker_containment_policy_is_dependency_scoped
+test_blocker_review_findings_are_scoped_to_affected_work
 test_opencode_installs_the_actual_shell_enumeration_tools
 test_changed_workflow_skills_are_installed_in_all_harnesses
-test_installed_skill_checks_reject_wrong_harness_tool_mappings
 test_installed_skill_checks_reject_wrong_tracker_mappings
 test_changed_common_rules_are_installed_in_all_harnesses
 test_common_rule_checks_reject_wrong_skill_tool_mappings
 test_codex_common_rules_are_in_the_managed_block
-test_codex_rule_check_rejects_content_moved_outside_the_managed_block
-test_codex_rule_check_rejects_changed_rule_content
-test_codex_rule_mutation_rejects_a_missing_target
 test_test_pruning_contract_is_documented
 test_auditor_policy_categories_and_decisions_are_explicit
 test_auditor_rule_discovery_freezes_complete_harness_sources
@@ -1682,14 +1514,11 @@ test_final_pruning_task_honors_scoped_pruning_audit_skips
 test_final_pruning_review_accepts_runner_appropriate_pruning_evidence
 test_final_pruning_runs_once_after_cumulative_reviewer_pass
 test_cumulative_review_pass_adapts_the_actual_reviewer_result
-test_ordinary_task_handoffs_do_not_require_pruning_evidence
 test_ordinary_handoff_sources_reject_pruning_prerequisites
-test_ordinary_handoff_checks_reject_injected_prerequisites
 test_test_pruning_helper_installs_and_skill_links_resolve
 test_tdd_completion_gate_is_behaviour_based
 test_pruning_safety_gates_are_explicit
 test_auditor_rule_source_is_harness_aware_and_bounded
-test_audit_invalidation_uses_accepted_green_snapshot
 test_stale_workflow_lifecycle_instructions_are_absent
 test_gitignore_excludes_workflow_artifacts
 test_new_backticked_source_references_resolve

@@ -133,13 +133,16 @@ without routine prompting. Continue only along the approved workflow order and
 do not skip or bypass any review, approval, TDD, debugging, verification or
 explicit-skip gate. A status label or returned report is not evidence by itself.
 
-Pause when the phase requires a user choice or approval, actual Plan-mode
-restrictions prevent the next action, a real blocker or interruption occurs,
-evidence is missing, state is unsafe, required capability is unavailable, or an
-outstanding dependency leaves no safe independent work. Record the blocker and
-next action; do not repeatedly retry unchanged work or dispatch dependants.
-Stable task-local checks may continue while other workers run, but only against
-stable inputs and within dependency and wave barriers.
+Pause only the affected transition or work when a user choice or approval,
+actual Plan-mode restrictions, a real blocker or interruption, missing evidence,
+unsafe state, unavailable capability or an outstanding dependency prevents it.
+Classify blocker scope and unknown-impact holds under
+`../_shared/subagent-dispatch.md`; continue eligible independent work only with a
+demonstrable safe boundary. An outstanding dependency pauses that transition
+when it leaves no safe independent work. Record the blocker and next action.
+Do not repeatedly retry unchanged work or dispatch dependants. Stable task-local
+checks may continue while other workers run, but only against stable inputs and within
+dependency and wave barriers.
 
 Nested investigators and reviewers return to their owning phase for
 reconciliation before that phase hands its result to the coordinator. Assigned
@@ -218,11 +221,20 @@ check skip may be recorded as accepted-unverified, but must not be represented
 as verified or integrated. Checkpoint only reviewed and verified work, or work
 explicitly accepted-unverified under the user's recorded skip. On resume,
 compare active or returned unaccepted task changes separately; do not
-automatically accept them. On a real blocker, stop new dispatch. Cancel active
-work only if safe cancellation is supported; otherwise let it settle without
-claiming it stopped. Preserve state, report the blocker, and resume only after
-its authorisation is resolved. Do not silently retry with a different model or
-expand approved scope.
+automatically accept them. Apply `../_shared/subagent-dispatch.md`: pause the
+affected task and transitive dependants, and affected shared-contract/resource
+consumers and downstream dependants. A proven global safety failure stops all
+new dispatch. Unknown impact pauses potentially affected work. If no safe
+boundary can be demonstrated, provisionally pause all new dispatch until scope
+is established. Do not classify that uncertainty as a proven global safety
+failure. Continue only already-authorised work whose independence and eligibility
+are demonstrated. A review finding blocks acceptance and completion of the
+affected task, not eligible independent progress. Cancel affected active work
+only if safe cancellation is supported; otherwise let it settle without claiming it stopped
+or accepting stale outputs.
+Preserve state, report the blocker, and resume affected work only after its
+authorisation and eligibility are revalidated. Do not silently retry with a
+different model or expand approved scope.
 
 Final review, the final pruning task, final verification and clean-up are
 separate phases. Default behaviour is to run each. Clean-up is allowed after requested work has passed

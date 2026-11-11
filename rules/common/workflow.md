@@ -117,12 +117,15 @@ offer manual compaction. Deferred unsafe boundaries and no-op outcomes are not
 failures. State-file writes and skill invocation alone do not reduce context.
 
 When the return supports the next required phase, invoke that phase without
-routine prompting. Pause for an actual user choice or approval, a Plan-mode
-limitation, a real blocker, missing evidence, unsafe state, unavailable
-capability, interruption, or an outstanding dependency when no safe independent
-work remains. Preserve all existing approval, review, verification, TDD,
-debugging and scoped-skip gates. Continuation never skips a phase or treats a
-status label or worker report as evidence.
+routine prompting. Pause only the affected transition or work for an actual user
+choice or approval, a Plan-mode limitation, a real blocker, missing evidence,
+unsafe state, unavailable capability, interruption, or an outstanding
+dependency. Continue eligible independent work under
+`skills/_shared/subagent-dispatch.md`. An outstanding dependency pauses that
+transition when it leaves no safe independent work in the affected scope.
+Preserve all existing approval, review, verification, TDD, debugging and
+scoped-skip gates. Continuation never skips a phase or treats a status label or
+worker report as evidence.
 
 Nested investigators and reviewers return to their owning phase for
 reconciliation before that phase hands off to the coordinator. Assigned workers
@@ -134,9 +137,22 @@ handoff" ends the current phase procedure, not the overall workflow.
 
 ## Blockers and recovery
 
-A real blocker stops new dispatch. Cancel running work only when safe
-cancellation is supported; otherwise let it settle without claiming it
-stopped. Preserve workflow state and report the blocker. Do not silently
-redesign, expand approved scope, or change model tier. In-scope review
-corrections may be delegated under the approved task contract. Resume only
-after required authorisation is resolved.
+Before further dispatch, classify blockers under
+`skills/_shared/subagent-dispatch.md`: a task-local blocker pauses that task and
+its transitive dependants; a shared-contract/resource blocker pauses affected
+producers, consumers or resource users and their downstream dependants; a proven
+global safety failure stops all new dispatch. Continue only already-authorised,
+demonstrably independent scheduled work with valid prerequisites, stable inputs,
+disjoint ownership and available resources. For unknown impact, pause potentially
+affected work. If no unaffected boundary can be demonstrated, provisionally
+pause all new dispatch until scope is established. Do not classify that
+uncertainty as a proven global safety failure. A review finding blocks
+acceptance and completion of its affected task, not eligible independent
+progress.
+
+Cancel affected running work only when safe cancellation is supported; otherwise
+let it settle without claiming it stopped or accepting stale outputs. Preserve
+workflow state and report the blocker. Do not silently redesign, expand approved
+scope, or change model tier. In-scope review corrections may be delegated under
+the approved task contract. Resume affected work only after required
+authorisation and eligibility are revalidated.
