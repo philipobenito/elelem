@@ -260,12 +260,68 @@ unverified. Do not add runtime wrappers or configuration to make a test possible
 2. Skip an optional verification step explicitly, then complete the remaining work.
    - Expected evidence: the final report discloses that verification was skipped and the result is unverified; it does not imply the check passed.
    - Failure: skipped verification is omitted or represented as successful.
-3. Complete all tasks and request cleanup before final review and fresh final verification have run.
-   - Expected evidence: cleanup waits for final review and fresh final verification; task completion alone does not trigger cleanup or a completion claim.
-   - Failure: workflow artefacts are cleaned up before the final review and verification barrier.
-4. Complete final review and fresh verification, then inspect the final report and workspace.
-   - Expected evidence: the report summarises task outcomes, reviews, checks, unresolved risks, and cleanup; only owned transient artefacts are cleaned up after the final gates.
-   - Failure: completion is claimed with outstanding work hidden, or cleanup deletes user-owned or unregistered files.
+3. Complete all tasks and request cleanup before final review and final verification evidence has been validated against settled inputs.
+    - Expected evidence: cleanup waits for final review and final verification evidence validated against settled inputs; task completion alone does not trigger cleanup or a completion claim.
+    - Failure: workflow artefacts are cleaned up before the final review and verification barrier.
+4. Complete final review and validate final verification evidence against the final inputs, then inspect the final report and workspace.
+    - Expected evidence: the report summarises task outcomes, reviews, checks, unresolved risks, and cleanup; only owned transient artefacts are cleaned up after the final gates.
+    - Failure: completion is claimed with outstanding work hidden, or cleanup deletes user-owned or unregistered files.
+
+## Verification evidence validity
+
+These scenarios document expected policy judgement. They were not run as live
+agent tests and do not establish runtime enforcement.
+
+1. Capture a successful check with its exact command and arguments, working
+   directory, checked scope, source/test/configuration/dependency/fixture and
+   generated input identities, dirty and untracked contents, environment and
+   mutable resource assumptions, actual output, exit status, provenance and
+   verifier identity. Continue in a later message and a resumed session without
+   changing any relevant input.
+   - Expected evidence: the gate locates and revalidates the actual execution,
+     then cites the earlier output as reused, not newly run. A message or
+     session change alone does not invalidate it.
+   - Failure: earlier evidence is rejected solely due to a new turn/session, or
+     a summary or self-report is passed off as captured output.
+2. Change one relevant source, test, configuration, dependency, fixture,
+   generated input, dirty/untracked file, environment assumption or mutable
+   resource state. Separately make a demonstrably unrelated change, then leave
+   a relevant input's scope uncertain.
+   - Expected evidence: only affected checks are invalidated; unrelated changes
+     preserve evidence whose independence is demonstrated. Missing or uncertain
+     relevant equivalence triggers an affected rerun, conservatively when scope
+     cannot be established. A commit identity alone does not identify dirty
+     inputs.
+   - Failure: all checks are rerun after every unrelated change, or potentially
+     stale evidence is accepted without input comparison.
+3. Withhold actual captured output, exit status, accessible provenance or
+   verifier identity, and separately make a worker report the only evidence.
+   - Expected evidence: the gate runs the missing check when possible; a worker
+     report never substitutes for independent diff inspection or verification.
+     An inaccessible or unavailable execution cannot support a success claim.
+   - Failure: a report, review verdict, status label or assertion of a prior run
+     is treated as execution evidence.
+4. Preserve an observed intended RED from the original implementation and a
+   current GREEN from the corrected implementation using a materially
+   equivalent test. Then repeat with a syntax/import failure as the purported
+   RED, and with no accessible RED evidence.
+   - Expected evidence: supported original RED and current GREEN outputs are
+     considered together, with their distinct production revisions and the
+     correction relationship. A questionable or missing RED prompts an
+     authorised safe isolated counterfactual or equivalent demonstration; if
+     unavailable or unsafe, the regression coverage claim is blocked. No
+     universal revert/restore procedure is assumed.
+   - Failure: syntax/import failures count as RED, GREEN alone proves the
+     regression, or unrelated work is reverted to manufacture evidence.
+5. Complete worker checks, all relevant writers, test pruning and review
+   corrections, then inspect final integrated verification evidence. Separately
+   change a combined input after that check.
+   - Expected evidence: final checks cover settled combined inputs after all
+     writers, pruning edits and corrections. Matching final evidence can be
+     revalidated and reused; task-local checks and worker self-reports cannot
+     substitute. A later relevant change invalidates only affected evidence.
+   - Failure: task-local output is presented as final integration evidence, or
+     the final result is claimed against changed inputs.
 
 ## Test pruning audit and recovery
 

@@ -33,7 +33,8 @@ own procedures and the current scope, revision and current assumptions:
   autonomous Research.
 - Planning: explicit method selection, selected-mode invocation and proposal
   provenance. `brainstorming-skip` is lightweight Planning, not a phase skip.
-- Other phases: required procedures, outputs, verdicts, approval or fresh checks
+- Other phases: required procedures, outputs, verdicts, approval or checks valid
+  for the current inputs
   under their owning skills, or an exact-source scoped skip. Keep review
   verdicts, explicit user approval and verification distinct.
 
@@ -66,6 +67,24 @@ the procedure actually occurred. Reuse it only after validating scope, revision
 and assumptions against the baseline and accepted checkpoints. An absent local
 record alone does not invalidate real evidence; an inaccessible or unsupported
 claim cannot satisfy the gate.
+
+Verification validity follows the exact command, working directory, checked
+scope and input identities, not conversational turns. Apply
+`../../rules/common/verification.md` and the `verification-before-completion`
+gate. Preserve accessible references to actual captured output, exit status,
+execution provenance, verifier identity and independence, and the relevant
+environment or mutable resource assumptions. A new message or resumed session
+alone does not invalidate matching evidence. Revalidate evidence against the
+current scope and inputs before reusing it; report reused output as prior
+execution, not newly run.
+
+Relevant changes invalidate affected evidence. Demonstrably unrelated changes
+preserve unaffected evidence. If input equivalence, mutable resource state or
+dependency scope is missing or uncertain, rerun the affected check, conservatively
+when scope is unknown. A task report or self-report is not execution or
+independent verification evidence. Final integrated checks cover combined
+settled inputs after relevant writers, pruning edits and review corrections;
+matching evidence for those exact inputs can be revalidated and reused.
 
 On a gap, stop the affected transition or dispatch and return to the earliest
 unsupported phase. Preserve useful findings, code, user work and genuinely

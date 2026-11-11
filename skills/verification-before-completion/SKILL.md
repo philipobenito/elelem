@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: Runs the gate function that produces fresh verification evidence before a completion claim. Identifies the proving command, runs it fresh in the current message, reads the output, and only states the claim with cited evidence.
+description: Runs the gate function that validates or executes checks against current relevant inputs before a completion claim. Reads actual output, compares it with the claim, and cites evidence with its reuse status.
 metadata:
   model: openai/gpt-6.1-sol
   reasoning_effort: medium
@@ -14,13 +14,37 @@ Before running the gate function below, you **MUST** read `RULES.md` (sibling fi
 
 ## The Gate Function
 
-Run these five steps, in order, every time. Skipping any step means the gate has not been passed, and you **MUST NOT** state the claim.
+Run these steps in order for every claim. Skipping any step means the gate has
+not been passed, and you **MUST NOT** state the claim.
 
-1. **Identify the command.** Name the exact command whose output would prove the claim (test runner, build, linter, type checker, diff inspection, requirement checklist). If you cannot name one, the claim is not verifiable, and you **MUST NOT** make it.
-2. **Run it fresh.** Execute the full command in the current message, after your most recent change to the code it verifies. No partial runs. No reuse of earlier output.
-3. **Read the output.** Read exit code, pass/fail counts, error lines. Do not scan. Do not assume. If the output is long, read the summary line and the failure lines in full.
-4. **Compare to the claim.** Does the output actually prove the claim you are about to make? If the claim is "tests pass", the output must show zero failures and the expected test count. If the claim is "bug fixed", the reproducing test must now pass. If the claim is "subagent task complete", the VCS diff must show the expected changes and the verification commands must pass against that diff.
-5. **State the claim with the evidence.** Quote or reference the command and its relevant output alongside the claim. A claim without cited evidence is a claim that has not passed the gate.
+1. **Identify the claim and check.** Name the exact command and arguments,
+   working directory and checked scope that would prove the claim. Identify
+   relevant source, test, configuration, dependency, fixture and generated
+   inputs, including dirty and untracked contents, as well as material
+   environment and mutable resource assumptions. A commit identity alone does
+   not establish dirty-input identity.
+2. **Locate and validate execution evidence.** Find actual captured output,
+   exit status, accessible provenance, verifier identity and independence. Check
+   that the evidence covers the identified scope and that relevant input
+   identities and assumptions still match. A new message or resumed session
+   alone does not invalidate matching evidence. Demonstrably unrelated changes
+   preserve unaffected evidence.
+3. **Run or revalidate.** If matching evidence is available, revalidate it for
+   this claim and retain its original execution identity. If evidence is
+   missing, inaccessible, incomplete, or input or mutable resource equivalence
+   is uncertain, execute the affected check. Rerun conservatively when the
+   dependency scope cannot be established.
+4. **Read and compare.** Read the actual output and exit status, including
+   relevant counts and errors, then compare them with the exact claim. A worker
+   report or self-report cannot replace required independent diff inspection or
+   checks. Final integrated verification covers combined settled inputs after
+   relevant writers, pruning edits and review corrections. Matching evidence
+   for those exact inputs may be revalidated and reused; task-local output is
+   not a substitute.
+5. **Cite the evidence.** State the command, scope, result and accessible output
+   reference, and say whether the output was reused or newly executed. Never
+   describe reused output as newly run. A claim without cited evidence has not
+   passed the gate.
 
 If step 4 fails, you **MUST** state the actual status with the evidence, not the claim you hoped to make.
 
@@ -28,21 +52,24 @@ If step 4 fails, you **MUST** state the actual status with the evidence, not the
 
 ### Tests
 
-1. Identify: `uv run pytest tests/test_widget.py -x`
-2. Run: execute it now, in this message
-3. Read: `12 passed in 0.43s`, exit 0
-4. Compare: the claim is "the widget tests pass"; output confirms 12/12 pass
-5. State: "Widget tests pass: 12/12, `uv run pytest tests/test_widget.py -x` exit 0"
+1. Identify: `uv run pytest tests/test_widget.py -x`, its working directory,
+   test scope and relevant input identities.
+2. Locate actual output and validate its provenance and current input identities.
+3. Reuse the matching output if still valid, or execute the test if not.
+4. Read `12 passed in 0.43s`, exit 0, and compare it with the claim.
+5. State whether the output was reused or newly run, citing the command and
+   accessible output.
 
-Incorrect: "Widget tests should pass now" with no command run.
+Incorrect: claiming a reused check was newly executed, or citing no output and
+input-validity evidence.
 
 ### Build
 
 1. Identify: `pnpm build`
-2. Run: execute it now
-3. Read: exit 0, no TypeScript errors, bundle emitted
-4. Compare: the claim is "the build succeeds"; output confirms
-5. State: "Build succeeds: `pnpm build` exit 0, no TS errors"
+2. Locate its actual output and validate provenance and current input identities.
+3. Reuse matching output or execute the build if evidence is missing or invalid.
+4. Read: exit 0, no TypeScript errors, bundle emitted
+5. Compare the output with the claim and state whether it was reused or newly run.
 
 Incorrect: "Linter passed, build should be fine." The linter is not the build.
 
@@ -50,23 +77,33 @@ Incorrect: "Linter passed, build should be fine." The linter is not the build.
 
 See `../../rules/common/testing.md` for the full red-green rules. The verification-layer procedure is:
 
-1. Identify: the reproducing test command, and the fix revert step
-2. Run the test against the fix: must pass
-3. Revert the fix, run the test: must fail with the original symptom
-4. Restore the fix, run the test: must pass again
-5. State: "Regression test confirmed: fails without fix (original symptom reproduced), passes with fix"
-
-A regression test that has only been observed to pass once has not been verified. You **MUST** complete the revert-and-restore cycle before claiming the regression is covered.
+1. Identify the reproducing test, its relevant inputs and the intended defect.
+2. Validate the original observed RED output and the current GREEN output. The
+   RED must be an intended failure, not a syntax, import or unrelated error;
+   the GREEN must exercise a materially equivalent test and current relevant
+   implementation, with a supported relationship between the correction and
+   the observed defect. The RED and GREEN intentionally refer to different
+   production revisions.
+3. If the original RED is missing or questionable, seek an authorised safe,
+   isolated counterfactual or equivalent regression demonstration. Do not
+   disturb unrelated work or assume a universal revert/restore procedure. If a
+   safe demonstration is unavailable or unauthorised, block the regression
+   coverage claim.
+4. Cite both actual outputs, their input identities and provenance, or report
+   that the claim is blocked. A current GREEN alone does not prove the intended
+   regression was exercised.
 
 ### Subagent Handback
 
-1. Identify: the VCS diff command and the verification commands named in the task spec
-2. Run `git status` and `git diff` to inspect what the subagent actually changed
-3. Re-run the task's verification commands yourself against the current working tree
-4. Compare: do the changes match the task spec, and do the verifications pass?
-5. State: "Subagent task complete: diff matches spec (N files, expected changes), `<verify command>` exit 0"
-
-You **MUST NOT** propagate a subagent's "success" report without running steps 2 and 3 yourself. See `../../rules/common/subagents.md`.
+1. Identify the VCS diff command and the verification claims in the task brief.
+2. Inspect the actual diff and validate the reported check's execution identity,
+   scope, provenance and independence. Worker self-reports never establish
+   independent verification.
+3. Reuse matching independent evidence after input validation, or execute the
+   required independent checks against stable current inputs.
+4. Compare the changes and evidence with the task contract. Cite original output
+   and whether it was reused or newly executed. See
+   `../../rules/common/subagents.md`.
 
 ### Requirements Checklist
 
@@ -80,12 +117,14 @@ You **MUST NOT** propagate a subagent's "success" report without running steps 2
 
 ## Completion Gate
 
-You have passed the gate for a given claim only if, in the current message:
+You have passed the gate for a given claim only if, in the current gate:
 
-- You named the verification command
-- You ran it fresh against your latest change
-- You read the output
+- You named the exact command, working directory, scope and relevant inputs
+- You located and validated actual execution evidence against those inputs
+- You ran the affected check when evidence or input equivalence was uncertain
+- You read and compared actual output and exit status
+- You cited the evidence and identified it as reused or newly executed
 - The output proves the exact claim
-- You stated the claim with the evidence cited
+- Any required independent and final integrated checks cover their specified inputs
 
-Any other state is a gate failure. On a gate failure, you **MUST NOT** make the claim. Fix the underlying issue, re-run the gate, or report the actual status honestly.
+Any other state is a gate failure. On a gate failure, you **MUST NOT** make the claim. Correct the evidence gap, rerun affected checks when required, or report the actual status honestly.

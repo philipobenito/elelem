@@ -365,6 +365,9 @@ context_policy_cases=(
   'reduction_respects_authorised_staging|skills/_shared/workflow-artifacts.md|Plan-mode.{0,120}authorised staging.{0,160}Do not trigger reduction requiring unauthorised recovery writes'
   'maintenance_records_observations_not_token_claims|skills/_shared/phase-evidence.md|mechanism.{0,80}phases.{0,80}revision.{0,100}capability.{0,80}inheritance evidence.{0,120}completion reference.{0,100}error.{0,80}unavailable.{0,80}deferred.{0,80}no-op'
   'maintenance_retains_original_provenance|skills/_shared/phase-evidence.md|original evidence and permission references.{0,140}inaccessible or stale provenance.{0,100}blocks.{0,140}Skill invocation or a state-file write is not context reduction'
+  'verification_validity_is_input_based|skills/_shared/phase-evidence.md|verification validity.{0,100}command.{0,80}scope.{0,80}input identities'
+  'verification_reuse_survives_session_resume|skills/_shared/phase-evidence.md|new message or resumed session alone does not invalidate'
+  'final_gate_reuses_matching_evidence|skills/workflow-coordinator/SKILL.md|matching.{0,80}final.gate evidence.{0,100}reuse'
   'completion_is_not_measured_context_reduction|skills/_shared/phase-evidence.md|Completed compaction is not measured token reduction.{0,140}only observed facts.{0,100}metrics'
   'standing_rule_uses_shared_boundary_contracts|rules/common/workflow.md|task-briefs.md.{0,140}subagent-dispatch.md.{0,180}native context maintenance.{0,100}workflow-coordinator.{0,140}workflow-artifacts.md.{0,100}phase-evidence.md'
   'blocker_policy_common_task_dependency_closure|rules/common/workflow.md|task.local.{0,100}transitive dependants'
@@ -610,4 +613,9 @@ done
 
 
 printf 'Cases: %d, Passed: %d, Failed: %d\n' "$(( ${#test_names[@]} + ${#context_policy_cases[@]} ))" "$passed" "$failed"
+for harness in claude opencode codex; do
+  run_case "${harness}_installer_delivers_context_boundary_policy" test_installer_delivers_context_boundary_policy "$harness"
+done
+
+printf 'Cases: %d, Passed: %d, Failed: %d\n' "$(( ${#test_names[@]} + 3 ))" "$passed" "$failed"
 (( failed == 0 ))
