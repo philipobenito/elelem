@@ -6,17 +6,21 @@ These rules apply once the `verification-before-completion` skill has been invok
 
 | Claim                  | Required evidence                                       | Not sufficient                         |
 |------------------------|---------------------------------------------------------|----------------------------------------|
-| Tests pass             | Test command output in this message, exit 0, 0 failures | Previous run, "should pass", linter ok |
-| Linter clean           | Linter output in this message, 0 errors, 0 warnings     | Partial file check, extrapolation      |
-| Build succeeds         | Build command output in this message, exit 0            | Linter passing, logs "look fine"       |
+| Tests pass             | Actual command output, exit 0, 0 failures, validated against current inputs | Previous output without input validation, "should pass", linter ok |
+| Linter clean           | Actual linter output, 0 errors, 0 warnings, validated against current inputs | Partial file check, extrapolation      |
+| Build succeeds         | Actual build output, exit 0, validated against current inputs | Linter passing, logs "look fine"       |
 | Bug fixed              | Failing test now passes; see `../../rules/common/testing.md` for red-green | Code changed, assumed fixed            |
-| Regression test works  | Red-green cycle executed per `../../rules/common/testing.md`               | Test passed once after the fix         |
-| Subagent task complete | VCS diff inspected, verification commands re-run        | Subagent's own "success" report        |
+| Regression test works  | Supported original RED and current GREEN relationship per `../../rules/common/testing.md` | Test passed once with no RED evidence |
+| Subagent task complete | VCS diff inspected, independent evidence validated or checks executed | Subagent's own "success" report        |
 | Requirements met       | Line-by-line checklist against the approved design      | Tests passing in general               |
+
+Matching evidence may be revalidated and reused when its execution provenance,
+scope, input identities and assumptions still match the claim. A new message or
+resumed session alone does not invalidate it.
 
 ## Rationalisation Prevention
 
-Every excuse below means **stop and run the verification**:
+Every excuse below means **stop and apply the evidence gate**:
 
 | Excuse                                    | Reality                                               |
 |-------------------------------------------|-------------------------------------------------------|
@@ -27,17 +31,17 @@ Every excuse below means **stop and run the verification**:
 | "The subagent said it succeeded"          | Verify independently. See `../../rules/common/subagents.md`.             |
 | "I'm tired"                               | Exhaustion is not an exemption.                       |
 | "A partial check is enough"               | Partial checks prove nothing about the whole.         |
-| "I verified earlier in the session"       | Not fresh. Run it again after the last change.        |
+| "I verified earlier in the session"       | Revalidate the exact inputs and provenance; rerun affected checks when they changed or are uncertain. |
 | "Different wording so the rule is moot"   | Spirit over letter. The rule applies to implications. |
 | "The change is too small to break things" | Small changes break things. Run the verification.     |
 
 ## Red Flags: Stop Immediately
 
-If any of the following is true, you **MUST** stop, run verification, and only then continue:
+If any of the following is true, you **MUST** stop, apply the evidence gate, and only then continue:
 
 - You are about to write "should", "probably", "seems", "looks", or any hedged success wording
-- You are about to express satisfaction ("Great", "Perfect", "Done") without having just read verification output
-- You are about to commit, push, or open a PR without fresh verification in this message
+- You are about to express satisfaction ("Great", "Perfect", "Done") without having just read and evaluated actual output and input-validity evidence
+- You are about to commit, push, or open a PR without validating the required evidence gate
 - You are about to trust a subagent's self-report without inspecting the diff
-- You are about to rely on verification output from earlier in the session
+- You are about to reuse earlier output without validating its input identities and provenance
 - You are about to say "just this once" or "this case is different"

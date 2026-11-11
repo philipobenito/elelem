@@ -54,11 +54,14 @@ harness:
     `../test-pruning/SKILL.md` and `../_shared/test-pruning.md`. Only actual
     pruning edits require an independent bounded pruning-delta review. Final
     verification follows the last edit and review correction, then clean-up.
-    The executor returns final review, pruning and verification evidence. The
-    coordinator records or reuses matching, fresh evidence rather than invoking
-    the same gate again, then cleans up under the shared artefact contract.
-    Rerun a gate only when a relevant change invalidates its evidence or
-    required evidence is missing.
+     The executor returns final review, pruning and verification evidence. The
+     coordinator validates the evidence's command, scope, input identities,
+     provenance, assumptions and independence against the settled combined
+     inputs. Matching final-gate evidence is revalidated and reused rather than
+     invoking the same gate again; cite its original output as reused, not newly
+     executed. Rerun affected checks when relevant inputs change, evidence is
+     missing or inaccessible, or equivalence is uncertain. Then clean up under
+     the shared artefact contract.
 
 Do not use user approval as the pruning trigger or require pruning evidence
 before ordinary task review. Accumulate actual touched-path history from every
