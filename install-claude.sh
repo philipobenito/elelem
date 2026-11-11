@@ -3,9 +3,7 @@
 # Installs Claude Code rules and skills from this repo.
 #
 # Rules (./rules/) install to ~/.claude/rules/ (user scope) or
-# <project>/.claude/rules/ (project scope). Common rules (rules/common/*.md)
-# are always-on and have no frontmatter. Language packs (rules/<lang>/*.md)
-# use YAML `paths:` frontmatter and are auto-loaded when Claude reads matching files.
+# <project>/.claude/rules/ (project scope).
 #
 # Skills (./skills/) install to ~/.claude/skills/ or <project>/.claude/skills/.
 #
@@ -267,6 +265,14 @@ assert_manifest_base_matches "$manifest_file" "$base"
 manifest_entries=()
 changed_paths=()
 
+bootstrap="$rules_target/elelem-language-packs.md"
+if [[ -e "$bootstrap" || -L "$bootstrap" ]]; then
+  if [[ ! -f "$bootstrap" || -L "$bootstrap" || ! -f "$manifest_file" ]] || ! tail -n +2 "$manifest_file" | grep -Fxq rules/elelem-language-packs.md; then
+    say_err "unmanaged activation bootstrap collision at '$bootstrap'; move or remove it, then rerun."
+    exit 1
+  fi
+fi
+
 mkdir -p "$rules_target"
 
 echo
@@ -297,42 +303,6 @@ else
   install_files_from_dir "$RULES_SOURCE/common" "$rules_target/common" "rules/common" manifest_entries common_files
   substitute_tool_names "$rules_target/common" CLAUDE_PLACEHOLDERS CLAUDE_SUBSTITUTIONS
   say_ok "installed: ${common_selected[*]}"
-fi
-
-lang_dirs=()
-for dir in "$RULES_SOURCE"/*/; do
-  name="$(basename "$dir")"
-  [[ "$name" == "common" ]] && continue
-  if compgen -G "$dir*.md" > /dev/null; then
-    lang_dirs+=("$name")
-  fi
-done
-
-if (( ${#lang_dirs[@]} > 0 )); then
-  lang_defaults=()
-  for _ in "${lang_dirs[@]}"; do
-    lang_defaults+=(0)
-  done
-  echo
-  say_step "Language packs to install (none selected by default):"
-  multiselect lang_selected lang_dirs lang_defaults
-
-  if (( ${#lang_selected[@]} > 0 )); then
-    for pick in "${lang_selected[@]}"; do
-      lang_files=()
-      for _f in "$RULES_SOURCE/$pick/"*.md; do
-        [[ -f "$_f" ]] || continue
-        lang_files+=("$(basename "$_f")")
-      done
-      mkdir -p "$rules_target/$pick"
-      install_files_from_dir "$RULES_SOURCE/$pick" "$rules_target/$pick" "rules/$pick" manifest_entries lang_files
-      substitute_tool_names "$rules_target/$pick" CLAUDE_PLACEHOLDERS CLAUDE_SUBSTITUTIONS
-      say_ok "installed: $pick"
-    done
-  fi
-else
-  echo
-  say_info "No language packs found in $RULES_SOURCE (common-only install)."
 fi
 
 if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
@@ -380,6 +350,15 @@ if (( ${#agent_bundle_selected[@]} > 0 )); then
   install_agent_bundle_notice "$SCRIPT_DIR/agents/LICENSE" "$base/agents.LICENSE" "agents.LICENSE" manifest_entries changed_paths
   install_agent_bundle_files "$SCRIPT_DIR/agents/claude" "$base/agents" "agents" manifest_entries agent_bundle_files changed_paths
 fi
+
+install_language_packs "$RULES_SOURCE" "$skills_target" skills "$manifest_file" manifest_entries CLAUDE_PLACEHOLDERS CLAUDE_SUBSTITUTIONS
+policy_stage="$(mktemp -d "${TMPDIR:-/tmp}/elelem-language-policy.XXXXXX")"
+render_language_pack_policy > "$policy_stage/elelem-language-packs.md"
+substitute_tool_names "$policy_stage" CLAUDE_PLACEHOLDERS CLAUDE_SUBSTITUTIONS
+cp "$policy_stage/elelem-language-packs.md" "$bootstrap"
+rm "$policy_stage/elelem-language-packs.md"
+rmdir "$policy_stage"
+manifest_entries+=("rules/elelem-language-packs.md")
 
 if ! prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries agents; then
   if (( ${#changed_paths[@]} > 0 )); then

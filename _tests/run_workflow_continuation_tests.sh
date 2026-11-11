@@ -450,7 +450,6 @@ _prepare_codex_install() {
   local files=("${handoff_skill_files[@]}")
   local manifest=()
   local common_files=(workflow.md)
-  local lang_selected=()
   local payload="$root/AGENTS.payload"
   local agents="$root/AGENTS.md"
   SKILLS_SOURCE="$REPO_ROOT/skills"
@@ -460,7 +459,7 @@ _prepare_codex_install() {
   install_files_from_dir "$SKILLS_SOURCE" "$skills_target" .agents/skills manifest files _codex_skill_resolve_dst || return 1
   _codex_substitute_placeholders_tree "$skills_target" || return 1
   scan_no_unsubstituted_placeholders "$skills_target" || return 1
-  _codex_render_agents_payload "$payload" common_files lang_selected || return 1
+  _codex_render_agents_payload "$payload" common_files || return 1
   _codex_upsert_managed_block "$agents" "$payload" || return 1
 }
 
@@ -542,6 +541,28 @@ _delivered_policy_content() {
   fi
 }
 
+test_installer_delivers_context_boundary_policy() {
+  local name="$1" harness="$2" root="$TEST_TMP/$2-context-policy"
+  local requirement case_name relative pattern content
+  if ! "_prepare_${harness}_install" "$root"; then
+    _fail "$name" "$harness installer helper failed"
+    return
+  fi
+  for requirement in "${context_policy_cases[@]}"; do
+    IFS='|' read -r case_name relative pattern <<< "$requirement"
+    if ! content="$(_delivered_policy_content "$root" "$harness" "$relative")" || grep -Fq '{{' <<< "$content"; then
+      _fail "$name" "missing or unsubstituted delivered policy: $relative"
+      return
+    fi
+    content="$(tr '\n' ' ' <<< "$content" | tr -s '[:space:]' ' ')"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "$name" "missing delivered boundary requirement: $case_name in $relative"
+      return
+    fi
+  done
+  _pass "$name"
+}
+
 
 run_case() {
   local name="$1"
@@ -612,10 +633,9 @@ for requirement in "${context_policy_cases[@]}"; do
 done
 
 
-printf 'Cases: %d, Passed: %d, Failed: %d\n' "$(( ${#test_names[@]} + ${#context_policy_cases[@]} ))" "$passed" "$failed"
 for harness in claude opencode codex; do
   run_case "${harness}_installer_delivers_context_boundary_policy" test_installer_delivers_context_boundary_policy "$harness"
 done
 
-printf 'Cases: %d, Passed: %d, Failed: %d\n' "$(( ${#test_names[@]} + 3 ))" "$passed" "$failed"
+printf 'Cases: %d, Passed: %d, Failed: %d\n' "$(( ${#test_names[@]} + ${#context_policy_cases[@]} + 3 ))" "$passed" "$failed"
 (( failed == 0 ))

@@ -4,14 +4,10 @@
 #
 # Rules (./rules/) install to ~/.config/opencode/rules/ (user scope) or
 # <project>/.opencode/rules/ (project scope). Common rules are always-on.
-# Language packs are listed in opencode.json and loaded in every session.
 #
 # Skills (./skills/) install to ~/.config/opencode/skills/ or
 # <project>/.opencode/skills/.
 #
-# After install, opencode.json is written with an `instructions` glob array
-# listing every installed rule directory. AGENTS.md is written with a
-# human-readable preamble describing the OpenCode-specific behaviour.
 #
 # A manifest file (.elelem-manifest-opencode) in this repo tracks installed
 # files for prune-on-reinstall.
@@ -85,6 +81,17 @@ _skill_resolve_dst() {
   printf '%s/%s\n' "$out" "${src#$SKILLS_SOURCE/}"
 }
 
+preflight_opencode_instructions() {
+  local target="$1" previous="$2" ownership="$3" owned document requested
+  shift 3
+  owned="$(_opencode_owned_entries "$previous" "$ownership")" || return 1
+  document="$(_opencode_config_document "$target")" || return 1
+  requested="$(jq -cn --args '$ARGS.positional' -- "$@")" || return 1
+  _opencode_render_owned_update "$document" "$owned" "$requested" > /dev/null || return 1
+  _opencode_destination_writable "$target" || return 1
+  _opencode_destination_writable "$ownership"
+}
+
 resolve_install_base base "$HOME/.config/opencode" ".opencode"
 
 rules_target="$base/rules"
@@ -94,6 +101,14 @@ assert_manifest_base_matches "$manifest_file" "$base"
 manifest_entries=()
 changed_paths=()
 instructions_globs=()
+
+bootstrap="$rules_target/elelem-language-packs.md"
+if [[ -e "$bootstrap" || -L "$bootstrap" ]]; then
+  if [[ ! -f "$bootstrap" || -L "$bootstrap" || ! -f "$manifest_file" ]] || ! tail -n +2 "$manifest_file" | grep -Fxq rules/elelem-language-packs.md; then
+    say_err "unmanaged activation bootstrap collision at '$bootstrap'; move or remove it, then rerun."
+    exit 1
+  fi
+fi
 
 mkdir -p "$rules_target"
 
@@ -121,49 +136,17 @@ else
   for _item in "${common_selected[@]}"; do
     common_files+=("${_item}.md")
   done
+  instructions_globs+=("rules/common/*.md")
+fi
+
+instructions_globs+=("rules/elelem-language-packs.md")
+preflight_opencode_instructions "$base/opencode.json" "$manifest_file" "$base/.elelem-opencode-instructions.json" "${instructions_globs[@]}"
+
+if (( ${#common_selected[@]} > 0 )); then
   mkdir -p "$rules_target/common"
   install_files_from_dir "$RULES_SOURCE/common" "$rules_target/common" "rules/common" manifest_entries common_files
   substitute_tool_names "$rules_target/common" OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
-  instructions_globs+=("rules/common/*.md")
   say_ok "installed: ${common_selected[*]}"
-fi
-
-lang_dirs=()
-for dir in "$RULES_SOURCE"/*/; do
-  name="$(basename "$dir")"
-  [[ "$name" == "common" ]] && continue
-  if compgen -G "$dir*.md" > /dev/null; then
-    lang_dirs+=("$name")
-  fi
-done
-
-if (( ${#lang_dirs[@]} > 0 )); then
-  lang_defaults=()
-  for _ in "${lang_dirs[@]}"; do
-    lang_defaults+=(0)
-  done
-  echo
-  say_info "OpenCode loads selected language packs in every session (no path-based activation)."
-  say_step "Language packs to install (none selected by default):"
-  multiselect lang_selected lang_dirs lang_defaults
-
-  if (( ${#lang_selected[@]} > 0 )); then
-    for pick in "${lang_selected[@]}"; do
-      lang_files=()
-      for _f in "$RULES_SOURCE/$pick/"*.md; do
-        [[ -f "$_f" ]] || continue
-        lang_files+=("$(basename "$_f")")
-      done
-      mkdir -p "$rules_target/$pick"
-      install_files_from_dir "$RULES_SOURCE/$pick" "$rules_target/$pick" "rules/$pick" manifest_entries lang_files
-      substitute_tool_names "$rules_target/$pick" OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
-      instructions_globs+=("rules/$pick/*.md")
-      say_ok "installed: $pick"
-    done
-  fi
-else
-  echo
-  say_info "No language packs found in $RULES_SOURCE (common-only install)."
 fi
 
 if [[ -d "$SKILLS_SOURCE" ]] && compgen -G "$SKILLS_SOURCE/*/" > /dev/null; then
@@ -290,7 +273,16 @@ if (( ${#agent_bundle_selected[@]} > 0 )); then
   install_agent_bundle_files "$SCRIPT_DIR/agents/opencode" "$base/agents" "agents" manifest_entries agent_bundle_files changed_paths
 fi
 
-write_opencode_instructions "$base/opencode.json" "${instructions_globs[@]+"${instructions_globs[@]}"}"
+install_language_packs "$RULES_SOURCE" "$skills_target" skills "$manifest_file" manifest_entries OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
+policy_stage="$(mktemp -d "${TMPDIR:-/tmp}/elelem-language-policy.XXXXXX")"
+render_language_pack_policy > "$policy_stage/elelem-language-packs.md"
+substitute_tool_names "$policy_stage" OPENCODE_PLACEHOLDERS OPENCODE_SUBSTITUTIONS
+cp "$policy_stage/elelem-language-packs.md" "$bootstrap"
+rm "$policy_stage/elelem-language-packs.md"
+rmdir "$policy_stage"
+manifest_entries+=("rules/elelem-language-packs.md")
+
+update_opencode_instructions "$base/opencode.json" "$manifest_file" "$base/.elelem-opencode-instructions.json" "${instructions_globs[@]+"${instructions_globs[@]}"}"
 
 if (( ${#instructions_globs[@]} > 0 )); then
   pushd "$base" > /dev/null
@@ -298,48 +290,36 @@ if (( ${#instructions_globs[@]} > 0 )); then
   popd > /dev/null
 fi
 
-manifest_entries+=("opencode.json")
+manifest_entries+=(".elelem-opencode-instructions.json")
+
+write_agents_rule_groups() {
+  local current_group="" line group heading_initial heading_rest
+  if (( $# == 0 )); then printf 'No rules are currently installed.\n'; return 0; fi
+  while IFS= read -r line; do
+    group="${line#rules/}"
+    group="${group%%/*}"
+    if [[ "$group" != "$current_group" ]]; then
+      current_group="$group"
+      heading_initial="$(printf '%s' "${group:0:1}" | tr '[:lower:]' '[:upper:]')"
+      heading_rest="${group:1}"
+      printf '\n## %s%s\n\n' "$heading_initial" "$heading_rest"
+    fi
+    printf -- '- [%s](%s)\n' "$line" "$line"
+  done < <(printf '%s\n' "$@" | LC_ALL=C sort)
+}
 
 write_agents_md() {
-  local target="$1"
-  local entries_ref="$2"
-
+  local target="$1" entries_ref="$2"
   [[ "$entries_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "write_agents_md: invalid entries variable name: $entries_ref" >&2; return 1; }
-
-  local entries
+  local entries rule_entries=() entry
   eval "entries=(\"\${${entries_ref}[@]+\${${entries_ref}[@]}}\")"
-
-  local rule_entries=()
-  local entry
   for entry in "${entries[@]+"${entries[@]}"}"; do
-    [[ "$entry" == rules/*/*.md ]] && rule_entries+=("$entry")
+    [[ "$entry" == rules/common/*.md || "$entry" == rules/elelem-language-packs.md ]] && rule_entries+=("$entry")
   done
-
   {
     printf '# Project rules\n\n'
     printf 'The following rule files apply to this project. Each entry links to the installed file relative to this AGENTS.md.\n\n'
-
-    if (( ${#rule_entries[@]} == 0 )); then
-      printf 'No rules are currently installed.\n'
-      return 0
-    fi
-
-    local sorted
-    sorted=$(printf '%s\n' "${rule_entries[@]}" | LC_ALL=C sort)
-
-    local current_group=""
-    local line group heading_initial heading_rest
-    while IFS= read -r line; do
-      group="${line#rules/}"
-      group="${group%%/*}"
-      if [[ "$group" != "$current_group" ]]; then
-        current_group="$group"
-        heading_initial="$(printf '%s' "${group:0:1}" | tr '[:lower:]' '[:upper:]')"
-        heading_rest="${group:1}"
-        printf '\n## %s%s\n\n' "$heading_initial" "$heading_rest"
-      fi
-      printf -- '- [%s](%s)\n' "$line" "$line"
-    done <<< "$sorted"
+    write_agents_rule_groups "${rule_entries[@]+"${rule_entries[@]}"}"
   } > "$target"
 }
 

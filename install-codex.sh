@@ -124,47 +124,27 @@ _codex_append_rule_section() {
 _codex_render_agents_payload() {
   local out="$1"
   local common_ref="$2"
-  local lang_ref="$3"
-
   [[ "$common_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "_codex_render_agents_payload: invalid common_ref: $common_ref" >&2; return 1; }
-  [[ "$lang_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "_codex_render_agents_payload: invalid lang_ref: $lang_ref" >&2; return 1; }
 
-  local _codex_common_files _codex_lang_dirs
+  local _codex_common_files
   eval "_codex_common_files=(\"\${${common_ref}[@]+\${${common_ref}[@]}}\")"
-  eval "_codex_lang_dirs=(\"\${${lang_ref}[@]+\${${lang_ref}[@]}}\")"
 
   {
     printf '# elelem for Codex\n\n'
     printf 'This section is managed by the elelem Codex installer. Re-run the installer after changing selections or updating source rules.\n\n'
   } > "$out"
 
-  if (( ${#_codex_common_files[@]} == 0 && ${#_codex_lang_dirs[@]} == 0 )); then
-    printf 'No elelem rules are currently installed for this scope.\n' >> "$out"
-    return 0
+  if (( ${#_codex_common_files[@]} > 0 )); then
+    printf 'The common rules below always apply.\n\n' >> "$out"
   fi
 
-  printf 'The common rules below always apply.\n\n' >> "$out"
-
-  local file dir src
+  local file src
   for file in "${_codex_common_files[@]+"${_codex_common_files[@]}"}"; do
     src="$RULES_SOURCE/common/$file"
     _codex_append_rule_section "$src" "rules/common/$file" "$out"
   done
 
-  if (( ${#_codex_lang_dirs[@]} > 0 )); then
-    {
-      printf '## Language-pack behaviour\n\n'
-      printf 'Codex loads AGENTS.md instructions for the current scope rather than path-scoped rule files. Selected language packs therefore apply in every Codex session for this scope.\n\n'
-    } >> "$out"
-
-    for dir in "${_codex_lang_dirs[@]+"${_codex_lang_dirs[@]}"}"; do
-      for src in "$RULES_SOURCE/$dir/"*.md; do
-        [[ -f "$src" ]] || continue
-        _codex_append_rule_section "$src" "rules/$dir/$(basename "$src")" "$out"
-      done
-    done
-  fi
-
+  render_language_pack_policy >> "$out"
   _codex_substitute_placeholders "$out"
 }
 
@@ -531,38 +511,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   done
   multiselect common_selected common_items common_defaults
 
-  lang_dirs=()
-  for dir in "$RULES_SOURCE"/*/; do
-    name="$(basename "$dir")"
-    [[ "$name" == "common" ]] && continue
-    if compgen -G "$dir*.md" > /dev/null; then
-      lang_dirs+=("$name")
-    fi
-  done
-
-  lang_selected=()
-  if (( ${#lang_dirs[@]} > 0 )); then
-    lang_defaults=()
-    for _ in "${lang_dirs[@]}"; do
-      lang_defaults+=(0)
-    done
-    echo
-    say_info "Codex applies selected language packs globally through AGENTS.md (not path-based activation)."
-    say_step "Language packs to install (none selected by default):"
-    multiselect lang_selected lang_dirs lang_defaults
-  else
-    echo
-    say_info "No language packs found in $RULES_SOURCE (common-only install)."
-  fi
-
   common_files=()
   for _item in "${common_selected[@]+"${common_selected[@]}"}"; do
     common_files+=("${_item}.md")
   done
 
-  if (( ${#common_files[@]} == 0 && ${#lang_selected[@]} == 0 )); then
-    say_warn "no rules selected."
-    confirm_rule_items=("Continue with no rules")
+  if (( ${#common_files[@]} == 0 )); then
+    say_warn "no optional common instructions selected; on-demand language packs and their activation policy remain mandatory."
+    confirm_rule_items=("Continue without optional common instructions")
     confirm_rule_defaults=(0)
     multiselect confirm_rule_selected confirm_rule_items confirm_rule_defaults
     (( ${#confirm_rule_selected[@]} > 0 )) || { say_info "Aborted."; exit 0; }
@@ -574,7 +530,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   payload_file="$(mktemp)"
   trap 'rm -f "$payload_file"' EXIT
-  _codex_render_agents_payload "$payload_file" common_files lang_selected
+  _codex_render_agents_payload "$payload_file" common_files
   _codex_upsert_managed_block "$agents_target" "$payload_file" || exit 1
   _codex_scan_file_for_placeholders "$agents_target" || exit 1
   say_ok "updated managed elelem block in $(basename "$agents_target")"
@@ -620,6 +576,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     install_agent_bundle_notice "$SCRIPT_DIR/agents/LICENSE" "$base/.codex/agents.LICENSE" .codex/agents.LICENSE manifest_entries changed_paths || exit 1
     install_agent_bundle_files "$SCRIPT_DIR/agents/codex" "$base/.codex/agents" .codex/agents manifest_entries agent_bundle_files changed_paths || exit 1
   fi
+
+  echo
+  say_step "Installing all on-demand language packs:"
+  install_language_packs "$RULES_SOURCE" "$skills_target" .agents/skills "$manifest_file" manifest_entries CODEX_PLACEHOLDERS CODEX_SUBSTITUTIONS || exit 1
 
   if ! prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries .codex/agents; then
     report_agent_bundle_changes changed_paths

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-checkout_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+checkout_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 fixture_root="${ELELEM_TEST_ROOT:?Set ELELEM_TEST_ROOT to the retained fixture root}"
+mkdir -p "$fixture_root"
+fixture_root="$(cd "$fixture_root" && pwd -P)"
 
 prepare_case() {
   local case_name="$1"

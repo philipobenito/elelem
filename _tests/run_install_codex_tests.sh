@@ -23,26 +23,6 @@ _fail() {
   (( failed++ )) || true
 }
 
-test_install_codex_exists() {
-  local name="install_codex_exists"
-
-  if [[ -f "$REPO_ROOT/install-codex.sh" ]]; then
-    _pass "$name"
-  else
-    _fail "$name" "install-codex.sh does not exist"
-  fi
-}
-
-test_install_codex_executable() {
-  local name="install_codex_executable"
-
-  if [[ -x "$REPO_ROOT/install-codex.sh" ]]; then
-    _pass "$name"
-  else
-    _fail "$name" "install-codex.sh is not executable"
-  fi
-}
-
 test_codex_resolve_targets_user_scope_populates_caller_variables() {
   local name="codex_resolve_targets_user_scope_populates_caller_variables"
   local original_singleselect
@@ -98,31 +78,30 @@ test_codex_render_agents_payload_strips_frontmatter_and_substitutes_placeholders
   trap "rm -f '$tmpfile'" RETURN
 
   local common_files=("skills-policy.md")
-  local lang_dirs=("python")
+  _codex_render_agents_payload "$tmpfile" common_files
 
-  _codex_render_agents_payload "$tmpfile" common_files lang_dirs
-
-  if grep -q '^globs:' "$tmpfile"; then
-    _fail "$name" "language-pack frontmatter was not stripped"
-    return
+  if grep -Eq '^globs:|\{\{' "$tmpfile" ||
+    ! grep -Fq '/skills or $skill-name' "$tmpfile" ||
+    ! grep -Fq 'rules/common/skills-policy.md' "$tmpfile" ||
+    ! grep -q '^# On-demand language packs' "$tmpfile"; then
+    _fail "$name" "expected selected common rules and substituted activation policy without frontmatter"
+  else
+    _pass "$name"
   fi
+}
 
-  if grep -q '{{' "$tmpfile"; then
-    _fail "$name" "unsubstituted placeholders remain in rendered payload"
-    return
+test_codex_payload_defers_language_bodies() {
+  local tmpfile common_files=()
+  tmpfile="$(mktemp)"
+  trap "rm -f '$tmpfile'" RETURN
+  _codex_render_agents_payload "$tmpfile" common_files
+  if grep -Eq 'rules/(python|go|javascript|typescript|php|rust)/|^globs:|^# Python Coding Style' "$tmpfile"; then
+    _fail codex_payload_defers_language_bodies "language bodies leaked into instructions"
+  elif ! grep -Fq '/skills or $skill-name' "$tmpfile"; then
+    _fail codex_payload_defers_language_bodies "mandatory activation is missing without common rules"
+  else
+    _pass codex_payload_defers_language_bodies
   fi
-
-  if ! grep -Fq '/skills or $skill-name' "$tmpfile"; then
-    _fail "$name" "expected Codex skill substitution not found"
-    return
-  fi
-
-  if ! grep -q 'Language-pack behaviour' "$tmpfile"; then
-    _fail "$name" "expected language-pack guidance missing"
-    return
-  fi
-
-  _pass "$name"
 }
 
 test_codex_upsert_managed_block_preserves_user_content_and_replaces_existing_block() {
@@ -199,12 +178,11 @@ EOF
   _pass "$name"
 }
 
-test_install_codex_exists
-test_install_codex_executable
 test_codex_resolve_targets_user_scope_populates_caller_variables
 test_codex_skill_resolve_dst_preserves_subdirectory_structure
 test_codex_skill_resolve_dst_preserves_nested_files
 test_codex_render_agents_payload_strips_frontmatter_and_substitutes_placeholders
+test_codex_payload_defers_language_bodies
 test_codex_upsert_managed_block_preserves_user_content_and_replaces_existing_block
 test_codex_model_enumeration_placeholder_substitution
 
