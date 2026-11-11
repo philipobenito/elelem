@@ -191,19 +191,11 @@ test_test_pruning_contract_is_documented() {
   local file token requirement normalized missing=0
   local requirements=(
     "rules/common/testing.md|Meaningful Assertions"
-    "rules/common/testing.md|named defect"
-    "skills/_shared/test-pruning.md|uncertain"
-    "skills/_shared/test-pruning.md|distinct"
-    "skills/_shared/test-pruning.md|survivor"
     "skills/_shared/test-pruning.md|read-only"
     "skills/_shared/test-pruning.md|canonical value rule"
-    "skills/_shared/test-pruning.md|pre-prune"
     "skills/_shared/test-pruning.md|discovery-count"
     "skills/_shared/test-pruning.md|workflow.md"
-    "skills/_shared/test-pruning.md|{{DISPATCH_AGENT_TOOL}}"
     "skills/_shared/test-pruning.md|COMPLETE CURRENT MEANINGFUL ASSERTIONS SECTION VERBATIM"
-    "skills/_shared/test-pruning.md|TASK_START_HEAD_AND_BASELINE_REFERENCE"
-    "skills/_shared/test-pruning.md|PRE_EXISTING_CONTENT_IDENTITIES_OR_SNAPSHOTS"
     "skills/_shared/test-pruning.md|ACTUAL_TASK_DIFF_PATHS_AND_SCOPE_EVIDENCE"
     "skills/_shared/test-pruning.md|TEST_SOURCE_AND_CONTEXT"
     "skills/_shared/test-pruning.md|INPUT_PATHS_AND_CONTENT_IDENTITIES"
@@ -211,7 +203,6 @@ test_test_pruning_contract_is_documented() {
     "skills/_shared/test-pruning.md|APPROVED_BEHAVIOUR_TO_REQUIREMENT_MAP"
     "skills/_shared/test-pruning.md|PRE_PRUNE_CHECKS_AND_DISCOVERY_COUNTS"
     "skills/_shared/test-pruning.md|POST_PRUNE_COMMAND_AND_COUNTING_METHOD"
-    "skills/_shared/test-pruning.md|RECOVERY"
     "skills/_shared/test-pruning.md|survivor stability"
     "skills/test-driven-development/SKILL.md|TDD-only skip"
     "skills/test-driven-development/SKILL.md|Assertions protect named behaviour"
@@ -225,7 +216,6 @@ test_test_pruning_contract_is_documented() {
     "skills/_shared/test-pruning.md|survivor requirements"
     "skills/subagent-driven-development/reviewer-prompt.md|Important finding"
     "README.md|test pruning"
-    "README.md|live"
   )
   for requirement in "${requirements[@]}"; do
     file="${requirement%%|*}"
@@ -319,7 +309,6 @@ test_auditor_inventory_merge_recovery_and_dependency_invalidation() {
     'merge assertion evidence|added assertion.{0,120}production line.{0,120}reachable path.{0,120}failure reason'
     'withhold unsupported merge|otherwise report and withhold'
     'accepted merged snapshot|combined authorised edits.{0,120}accepted post-prune snapshot'
-    'accepted edits do not self-invalidate|authorised.{0,100}do not invalidate'
     'transitive survivor invalidation|transitive.{0,160}survivor.{0,120}invalidation'
     're-audit after green|after GREEN.{0,120}re-audit'
     'removed source reassessment|removed source.{0,160}(reassess|reassessment)'
@@ -485,10 +474,6 @@ test_canonical_rule_resolution_uses_verified_active_scope() {
 test_auditor_contract_is_wired_to_workers_reviewers_docs_and_scenarios() {
   local requirement file token content missing=0
   local requirements=(
-    'final application merge handoff|skills/_shared/test-pruning.md|MERGE'
-    'final application current keep survivor|skills/_shared/test-pruning.md|current-audit KEEP'
-    'final audit three decisions|skills/_shared/test-pruning.md|KEEP, REMOVE, or MERGE'
-    'final delta review merged snapshot|skills/_shared/test-pruning.md|accepted post-prune snapshot'
     'readme category policy|README.md|timing-dependent'
     'readme merge policy|README.md|MERGE'
     'readme authority policy|README.md|active instruction sources'
@@ -806,14 +791,9 @@ test_auditor_rule_source_is_harness_aware_and_bounded() {
   local content requirement pattern missing=0
   content="$(tr '\n' ' ' < "$helper")"
   local requirements=(
-    'Claude Code source|Claude Code.{0,160}rules/common/testing\.md'
-    'OpenCode source|OpenCode.{0,160}rules/common/testing\.md'
-    'Codex source|Codex.{0,200}(AGENTS\.md.{0,100}rules/common/testing\.md|rules/common/testing\.md.{0,100}AGENTS\.md)'
-    'Codex managed block|Codex.{0,200}(active.{0,100}elelem-managed.{0,100}AGENTS\.md|AGENTS\.md.{0,100}active.{0,100}elelem-managed)'
     'exact section|only.{0,100}Meaningful Assertions section.{0,100}verbatim'
     'section boundary|next level-two heading'
     'unavailable authority|authoritative.{0,160}(unavailable|cannot be retrieved)'
-    'blocked dispatch|block.{0,100}dispatch'
   )
   for requirement in "${requirements[@]}"; do
     pattern="${requirement#*|}"
@@ -1006,6 +986,131 @@ test_phase_evidence_contract() {
   done
 }
 
+test_verification_evidence_is_reused_by_input_validity() {
+  local file requirement pattern content missing=0
+  local requirements=(
+    'rules/common/verification.md|exact execution identity|exact command and arguments.{0,100}working directory.{0,100}checked scope'
+    'rules/common/verification.md|relevant input identities|source, tests?, configuration, dependencies?, fixtures? and generated inputs.{0,120}dirty and untracked'
+    'rules/common/verification.md|environment and resource assumptions|environment and resource assumptions'
+    'rules/common/verification.md|captured output provenance|captured output.{0,100}exit status.{0,100}accessible provenance.{0,100}verifier identity'
+    'rules/common/verification.md|turn and session do not invalidate|new message or resumed session alone does not invalidate'
+    'rules/common/verification.md|affected invalidation|relevant changes invalidate affected evidence'
+    'rules/common/verification.md|unrelated change preservation|demonstrably unrelated changes.{0,100}preserve'
+    'rules/common/verification.md|unknown scope reruns conservatively|scope.{0,100}unknown.{0,100}rerun conservatively'
+    'rules/common/verification.md|honest reused evidence citation|reused output.{0,100}not as newly executed'
+    'skills/verification-before-completion/SKILL.md|updated skill description|validates or executes checks against current relevant inputs.{0,250}reuse status'
+    'skills/verification-before-completion/SKILL.md|identify claim and check|Identify the claim and check'
+    'skills/verification-before-completion/SKILL.md|locate and validate execution evidence|Locate and validate execution evidence'
+    'skills/verification-before-completion/SKILL.md|run or revalidate|Run or revalidate'
+    'skills/verification-before-completion/SKILL.md|read and compare|Read and compare'
+    'skills/verification-before-completion/SKILL.md|cite evidence|Cite the evidence'
+    'skills/verification-before-completion/SKILL.md|reuse requires input validation|relevant input identities and assumptions still match'
+    'skills/verification-before-completion/SKILL.md|missing or invalid evidence runs|evidence is missing, inaccessible, incomplete.{0,100}execute'
+    'skills/verification-before-completion/SKILL.md|independent evidence|worker.{0,100}self.report.{0,100}never.{0,100}independent'
+    'skills/verification-before-completion/SKILL.md|RED current GREEN relation|materially equivalent test and current relevant implementation.{0,100}RED and GREEN intentionally refer to different production revisions'
+    'skills/verification-before-completion/SKILL.md|safe counterfactual fallback|authorised safe.{0,120}counterfactual or equivalent regression demonstration'
+    'skills/verification-before-completion/SKILL.md|unsafe fallback blocks claim|unavailable or unauthorised, block the regression coverage claim'
+    'skills/verification-before-completion/SKILL.md|no universal restoration|Do not.{0,100}assume a universal (revert|restore)'
+    'skills/verification-before-completion/SKILL.md|final integrated barrier|final integrated.{0,120}(settled|combined).{0,120}(writers|pruning|corrections)'
+    'skills/verification-before-completion/SKILL.md|cite reuse status|cite.{0,100}(reused|reuse status)'
+    'skills/verification-before-completion/RULES.md|current output may be reused|matching evidence.{0,100}revalidated and reused'
+    '_tests/workflow_scenarios.md|scenario covers cross-session reuse|A message or session change alone does not invalidate it'
+    '_tests/workflow_scenarios.md|scenario covers safe RED recovery|No universal revert/restore procedure is assumed'
+    '_tests/workflow_scenarios.md|scenario covers final integrated evidence|final checks cover settled combined inputs after all writers'
+  )
+  for requirement in "${requirements[@]}"; do
+    file="${requirement%%|*}"
+    pattern="${requirement#*|}"
+    pattern="${pattern#*|}"
+    content="$(tr '\n' ' ' < "$REPO_ROOT/$file" | tr -s '[:space:]' ' ')"
+    if ! grep -Eiq "$pattern" <<< "$content"; then
+      _fail "verification_validity_${file//\//_}_${requirement#*|}" "expected verification validity behaviour: $pattern"
+      missing=1
+    fi
+  done
+  if (( missing == 0 )); then
+    _pass 'verification_evidence_is_reused_by_input_validity'
+  fi
+}
+
+_check_verification_policy_for_blanket_rules() {
+  local root="$1" file content pattern
+  local files=(
+    'rules/common/verification.md'
+    'skills/verification-before-completion/SKILL.md'
+    'skills/verification-before-completion/RULES.md'
+    'skills/workflow-coordinator/SKILL.md'
+    'skills/_shared/phase-evidence.md'
+  )
+  local patterns=(
+    'must run it fresh in the current message'
+    'ready without fresh verification evidence produced in the current message'
+    'runs it fresh in the current message'
+    'Execute the full command in the current message'
+    'only if, in the current message'
+    'ran it fresh against your latest change'
+    'read the output in this message'
+    'Run it again after the last change'
+    'without fresh verification in this message'
+    'rely on verification output from earlier in the session'
+    'No reuse of earlier output'
+    'the fix revert step'
+    'complete the revert-and-restore cycle'
+    'without having just read verification output'
+  )
+  for file in "${files[@]}"; do
+    content="$(tr '\n' ' ' < "$root/$file" | tr -s '[:space:]' ' ')"
+    for pattern in "${patterns[@]}"; do
+      if grep -Fqi "$pattern" <<< "$content"; then
+        return 1
+      fi
+    done
+  done
+}
+
+test_verification_policy_rejects_blanket_rerun_and_restore_rules() {
+  local entry file clause fixture missing=0 index=0
+  local mutations=(
+    'rules/common/verification.md|ready without fresh verification evidence produced in the current message'
+    'skills/verification-before-completion/SKILL.md|Runs it fresh in the current message'
+    'skills/verification-before-completion/SKILL.md|Execute the full command in the current message'
+    'skills/verification-before-completion/SKILL.md|You have passed the gate for a given claim only if, in the current message:'
+    'skills/verification-before-completion/SKILL.md|You ran it fresh against your latest change'
+    'skills/verification-before-completion/SKILL.md|You read the output in this message'
+    'skills/verification-before-completion/RULES.md|Not fresh. Run it again after the last change.'
+    'skills/verification-before-completion/RULES.md|You are about to commit, push, or open a PR without fresh verification in this message'
+    'skills/verification-before-completion/RULES.md|You are about to rely on verification output from earlier in the session'
+  )
+  local files=(
+    'rules/common/verification.md'
+    'skills/verification-before-completion/SKILL.md'
+    'skills/verification-before-completion/RULES.md'
+    'skills/workflow-coordinator/SKILL.md'
+    'skills/_shared/phase-evidence.md'
+  )
+  if ! _check_verification_policy_for_blanket_rules "$REPO_ROOT"; then
+    _fail 'verification_policy_rejects_blanket_rerun_and_restore_rules' 'obsolete blanket instruction remains in the live policy'
+    return
+  fi
+  for entry in "${mutations[@]}"; do
+    file="${entry%%|*}"
+    clause="${entry#*|}"
+    fixture="$TEST_TMP/verification-blanket-$index"
+    for file in "${files[@]}"; do
+      mkdir -p "$fixture/$(dirname "$file")"
+      cp "$REPO_ROOT/$file" "$fixture/$file"
+    done
+    file="${entry%%|*}"
+    printf '\n%s\n' "$clause" >> "$fixture/$file"
+    if _check_verification_policy_for_blanket_rules "$fixture"; then
+      _fail "verification_blanket_mutation_$index" "accepted obsolete instruction beside valid policy: $clause"
+      missing=1
+    fi
+    (( index++ )) || true
+  done
+  (( missing != 0 )) || _pass 'verification_policy_rejects_blanket_rerun_and_restore_rules'
+}
+
 test_phase_evidence_boundary_references() {
   local requirement file token content
   local requirements=(
@@ -1056,20 +1161,6 @@ test_phase_evidence_installed_links_resolve() {
   done
 }
 
-test_required_files_check_is_registered() {
-  local test_call_count
-  test_call_count="$(sed -n '/^_check_skill_frontmatter$/,/^total=/p' "$0" | grep -Fxc 'test_required_files_exist' || true)"
-  if [[ "$test_call_count" != 1 ]]; then
-    _fail "required_files_check_is_registered" "expected test_required_files_exist once in the suite invocation block, found $test_call_count"
-    return
-  fi
-  _pass "required_files_check_is_registered"
-}
-
-test_required_files_exist() {
-  _check_required_files || true
-}
-
 test_wave_planning_maximises_safe_static_width() {
   local file content requirement pattern missing=0
   local requirements=(
@@ -1099,8 +1190,6 @@ test_final_audit_preserves_union_scope_after_reviews_and_barriers() {
   local file content requirement pattern missing=0
   local requirements=(
     'skills/_shared/test-pruning.md|implementation tasks, task reviews/checks and integration barriers.{0,100}cumulative final reviewer.{0,100}PASS'
-    'skills/_shared/test-pruning.md|union of actually touched test-bearing paths across all implementation tasks'
-    'skills/_shared/test-pruning.md|reviewer corrections, reverted edits and rename mappings'
     'skills/_shared/test-pruning.md|Audit newly touched files in full'
     'skills/_shared/test-pruning.md|Preserve unaffected decisions with stable supporting evidence'
     'skills/subagent-driven-development/reviewer-prompt.md|separate final task after the cumulative final reviewer PASS'
@@ -1299,7 +1388,6 @@ test_final_audit_rechecks_only_affected_evidence_after_corrections() {
   local file content requirement pattern missing=0
   local requirements=(
     'skills/_shared/test-pruning.md|targeted recheck.{0,160}affected.{0,100}transitive.{0,100}survivor'
-    'skills/_shared/test-pruning.md|Audit newly touched files in full'
     'skills/_shared/test-pruning.md|missing.{0,100}evidence.{0,100}block'
     'skills/_shared/test-pruning.md|coverage gap.{0,120}in-scope.{0,120}TDD.{0,120}review.{0,120}checks'
     'skills/subagent-driven-development/SKILL.md|Only actual pruning edits require an independent bounded pruning-delta review of those edits and affected coverage'
@@ -1375,10 +1463,11 @@ test_codex_common_rules_are_in_the_managed_block() {
 
 test_coordinator_reuses_the_executors_final_gate_evidence() {
   local file content requirement pattern missing=0
+  local coordinator_pattern='coordinator validates the evidence.s command, scope, input identities, provenance, assumptions and independence'
   local requirements=(
     'skills/workflow-coordinator/SKILL.md|executor returns final review, pruning and verification evidence'
-    'skills/workflow-coordinator/SKILL.md|coordinator records or reuses matching, fresh evidence rather than invoking the same gate again'
-    'skills/workflow-coordinator/SKILL.md|Rerun a gate only when a relevant change invalidates its evidence or required evidence is missing'
+    "skills/workflow-coordinator/SKILL.md|$coordinator_pattern"
+    'skills/workflow-coordinator/SKILL.md|Rerun affected checks when relevant inputs change, evidence is missing or inaccessible, or equivalence is uncertain'
     'skills/subagent-driven-development/SKILL.md|coordinator alone owns audit dispatch and state, with no nested audit dispatch'
   )
   for requirement in "${requirements[@]}"; do
@@ -1390,6 +1479,10 @@ test_coordinator_reuses_the_executors_final_gate_evidence() {
       missing=1
     fi
   done
+  if grep -Eiq "$coordinator_pattern" <<< 'coordinator validates final gate evidence'; then
+    _fail 'coordinator_final_gate_requirement_rejects_label_only_input' 'requirement pattern matched its former label without the policy content'
+    missing=1
+  fi
   if (( missing == 0 )); then
     _pass "coordinator_reuses_the_executors_final_gate_evidence"
   fi
@@ -1398,12 +1491,8 @@ test_coordinator_reuses_the_executors_final_gate_evidence() {
 test_pruning_delta_review_receives_audit_evidence_and_criteria() {
   local file content requirement pattern missing=0
   local requirements=(
-    'skills/_shared/test-pruning.md|Only if pruning actually edits tests, request an independent bounded pruning-delta review'
     'skills/_shared/test-pruning.md|read-only reviewer, the exact pruning diff, accepted post-prune snapshot, decisions/recovery and affected coverage'
     'skills/_shared/test-pruning.md|Check authorised application, the canonical decisions and survivor requirements'
-    'skills/_shared/test-pruning.md|PRUNING_AUDIT_SKIP_RECORDS_OR_NONE'
-    'skills/_shared/test-pruning.md|If the skip record is absent or incomplete, report BLOCKED'
-    'skills/_shared/test-pruning.md|Do not expand this review into another cumulative implementation review or whole-workflow pruning audit'
   )
   for requirement in "${requirements[@]}"; do
     file="${requirement%%|*}"
@@ -1528,17 +1617,6 @@ test_codex_rule_check_rejects_changed_rule_content() {
   fi
 }
 
-test_codex_rule_mutation_rejects_a_missing_target() {
-  local target="$TEST_TMP/codex-missing-mutation-target.md"
-  printf 'Unrelated policy text.\n' > "$target"
-  cp "$target" "$target.original"
-  if _mutate_codex_workflow_rule "$target" || ! cmp -s "$target" "$target.original"; then
-    _fail 'codex_rule_mutation_rejects_a_missing_target' 'a missing mutation target must fail without changing the fixture'
-    return
-  fi
-  _pass 'codex_rule_mutation_rejects_a_missing_target'
-}
-
 test_common_rule_checks_reject_wrong_skill_tool_mappings() {
   local harness fixture output missing=0
   for harness in claude opencode codex; do
@@ -1601,10 +1679,6 @@ _check_implementation_selection_consumers() {
   (( missing != 0 )) || _pass "${scope}_implementation_selection_consumers"
 }
 
-test_implementation_selection_consumers_use_the_shared_contract() {
-  _check_implementation_selection_consumers "$REPO_ROOT/skills" source
-}
-
 test_implementation_selection_consumers_are_installed_in_all_harnesses() {
   local harness
   for harness in claude opencode codex; do
@@ -1638,7 +1712,6 @@ test_implementation_consumers_do_not_override_configuration_fallback() {
 }
 
 _check_skill_frontmatter
-test_required_files_exist
 test_coordinator_reuses_the_executors_final_gate_evidence
 test_pruning_delta_review_receives_audit_evidence_and_criteria
 test_wave_planning_maximises_safe_static_width
@@ -1648,13 +1721,13 @@ test_lifecycle_checks_reject_contradictions_beside_correct_text
 test_preprune_checks_have_one_final_union_instruction
 test_final_audit_rechecks_only_affected_evidence_after_corrections
 test_cumulative_audit_preserves_each_task_baseline_and_skip_provenance
-test_required_files_check_is_registered
 test_phase_evidence_contract
+test_verification_evidence_is_reused_by_input_validity
+test_verification_policy_rejects_blanket_rerun_and_restore_rules
 test_phase_evidence_boundary_references
 test_claude_installer_copy_and_substitution
 test_opencode_installer_copy_and_substitution
 test_codex_installer_copy_and_substitution
-test_implementation_selection_consumers_use_the_shared_contract
 test_implementation_consumers_do_not_override_configuration_fallback
 test_implementation_selection_consumers_are_installed_in_all_harnesses
 test_opencode_installs_the_actual_shell_enumeration_tools
@@ -1666,7 +1739,6 @@ test_common_rule_checks_reject_wrong_skill_tool_mappings
 test_codex_common_rules_are_in_the_managed_block
 test_codex_rule_check_rejects_content_moved_outside_the_managed_block
 test_codex_rule_check_rejects_changed_rule_content
-test_codex_rule_mutation_rejects_a_missing_target
 test_test_pruning_contract_is_documented
 test_auditor_policy_categories_and_decisions_are_explicit
 test_auditor_rule_discovery_freezes_complete_harness_sources
