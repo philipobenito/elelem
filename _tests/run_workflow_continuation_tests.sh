@@ -81,7 +81,7 @@ test_coordinator_pauses_for_legitimate_constraints() {
   local file="$REPO_ROOT/skills/workflow-coordinator/SKILL.md"
   local content
   content="$(tr '\n' ' ' < "$file")"
-  if ! grep -Eiq 'Plan.mode.{0,100}(limitation|restriction)' <<< "$content" || ! grep -Eiq 'evidence.{0,80}missing.{0,80}state is unsafe.{0,80}capability is unavailable' <<< "$content" || ! grep -Eiq 'outstanding dependency.{0,120}leaves no safe independent work' <<< "$content"; then
+  if ! grep -Eiq 'Plan.mode.{0,100}(limitation|restriction)' <<< "$content" || ! grep -Eiq 'missing evidence.{0,100}unsafe state.{0,100}unavailable capability' <<< "$content" || ! grep -Eiq 'outstanding dependency.{0,120}leaves no safe independent work' <<< "$content"; then
     _fail "$1" "expected pauses for Plan-mode limits, unsafe or incomplete state, and pending dependencies"
     return
   fi
@@ -264,6 +264,84 @@ test_resume_reuses_valid_phase_evidence() {
   _pass "$1"
 }
 
+blocker_policy_consumers=(
+  rules/common/workflow.md
+  skills/workflow-coordinator/SKILL.md
+  skills/_shared/task-briefs.md
+  skills/subagent-driven-development/SKILL.md
+  skills/dispatching-parallel-agents/SKILL.md
+  skills/fast-path-implementation/SKILL.md
+)
+
+legacy_blocker_clauses=(
+  'A real blocker stops new dispatch.'
+  'On a real blocker, stop new dispatch.'
+  'A real blocker halts new dispatch.'
+  'Any real blocker stops all new dispatch globally.'
+  'Any real blocker stops new dispatch globally.'
+  'Follow the standard blocker policy: stop new dispatch globally,'
+  'If a real blocker occurs, stop new dispatch.'
+)
+
+has_legacy_blocker_stop() {
+  local content="$1"
+  grep -Eiq '(^|[[:space:]])(a|any) real blocker (stops|halts) (all )?new dispatch( globally)?([.!,:;]|$)|on a real blocker, stop new dispatch|follow the standard blocker policy: stop new dispatch globally|if a real blocker occurs, stop new dispatch' <<< "$content"
+}
+
+
+
+test_blocker_containment_consumers_reference_canonical_policy() {
+  local relative file content
+  local references=(
+    'skills/_shared/subagent-dispatch\.md'
+    '\.\./_shared/subagent-dispatch\.md'
+    'subagent-dispatch\.md'
+    '\.\./_shared/subagent-dispatch\.md'
+    '\.\./_shared/subagent-dispatch\.md'
+    '\.\./_shared/subagent-dispatch\.md'
+  )
+  local index
+  for index in "${!blocker_policy_consumers[@]}"; do
+    relative="${blocker_policy_consumers[$index]}"
+    file="$REPO_ROOT/$relative"
+    content="$(tr '\n' ' ' < "$file")"
+    if ! grep -Eiq "${references[$index]}" <<< "$content"; then
+      _fail "$1" "$relative does not reference the canonical blocker procedure"
+      return
+    fi
+    if has_legacy_blocker_stop "$content"; then
+      _fail "$1" "$relative retains unconditional global blocker-stop wording"
+      return
+    fi
+  done
+  _pass "$1"
+}
+
+
+test_generic_pause_clauses_contain_only_affected_transitions() {
+  local common="$REPO_ROOT/rules/common/workflow.md"
+  local coordinator="$REPO_ROOT/skills/workflow-coordinator/SKILL.md"
+  local common_content coordinator_content
+  common_content="$(tr '\n' ' ' < "$common")"
+  coordinator_content="$(tr '\n' ' ' < "$coordinator")"
+  if ! grep -Eiq 'pause only the affected (transition|work)' <<< "$common_content" || ! grep -Eiq 'continue eligible independent work' <<< "$common_content" || ! grep -Eiq 'pause only the affected (transition|work)' <<< "$coordinator_content" || ! grep -Eiq 'continue eligible independent work' <<< "$coordinator_content"; then
+    _fail "$1" "generic pause clauses do not preserve eligible independent work"
+    return
+  fi
+  _pass "$1"
+}
+
+test_review_findings_block_affected_task_without_holding_independent_progress() {
+  local file="$REPO_ROOT/skills/subagent-driven-development/SKILL.md"
+  local content
+  content="$(tr '\n' ' ' < "$file")"
+  if ! grep -Eiq '(review finding|issues).{0,120}affected (task|scope).{0,160}(independent|unaffected).{0,100}(continue|progress)' <<< "$content"; then
+    _fail "$1" "review findings must block affected acceptance without holding independent progress"
+    return
+  fi
+  _pass "$1"
+}
+
 context_policy_cases=(
   'phase_briefs_select_sufficient_inputs|skills/_shared/task-briefs.md|Phase inputs include.{0,120}objective.{0,80}method.{0,80}scope.{0,80}revision.{0,180}constraints.{0,100}required outputs.{0,100}unresolved decisions'
   'phase_briefs_reference_precise_provenance|skills/_shared/task-briefs.md|precise artefact sections.{0,100}accessible source references.{0,160}approval.{0,100}exact-source skips.{0,100}baseline.{0,100}checkpoint.{0,100}evidence'
@@ -292,7 +370,29 @@ context_policy_cases=(
   'final_gate_reuses_matching_evidence|skills/workflow-coordinator/SKILL.md|matching.{0,80}final.gate evidence.{0,100}reuse'
   'completion_is_not_measured_context_reduction|skills/_shared/phase-evidence.md|Completed compaction is not measured token reduction.{0,140}only observed facts.{0,100}metrics'
   'standing_rule_uses_shared_boundary_contracts|rules/common/workflow.md|task-briefs.md.{0,140}subagent-dispatch.md.{0,180}native context maintenance.{0,100}workflow-coordinator.{0,140}workflow-artifacts.md.{0,100}phase-evidence.md'
-)
+  'blocker_policy_common_task_dependency_closure|rules/common/workflow.md|task.local.{0,100}transitive dependants'
+  'blocker_policy_common_shared_contract_scope|rules/common/workflow.md|shared.contract/resource.{0,120}producers, consumers or resource users.{0,100}downstream dependants'
+  'blocker_policy_common_global_safety_scope|rules/common/workflow.md|global safety failure stops all new dispatch'
+  'blocker_policy_common_independent_eligibility|rules/common/workflow.md|demonstrably independent.{0,120}valid prerequisites.{0,80}stable inputs.{0,80}disjoint ownership.{0,80}available resources'
+  'blocker_policy_common_unknown_impact|rules/common/workflow.md|unknown impact.{0,180}unaffected boundary (is demonstrable|can be demonstrated)'
+  'blocker_policy_common_provisional_unknown_hold|rules/common/workflow.md|unknown impact.{0,180}provisionally pause all new dispatch until scope is established.{0,120}Do not classify that uncertainty as a proven global safety failure'
+  'blocker_policy_coordinator_provisional_unknown_hold|skills/workflow-coordinator/SKILL.md|unknown impact.{0,180}provisionally pause all new dispatch until scope is established.{0,120}Do not classify that uncertainty as a proven global safety failure'
+  'blocker_policy_brief_provisional_unknown_hold|skills/_shared/task-briefs.md|unknown impact.{0,180}provisionally pause all new dispatch until scope is established.{0,120}Do not classify that uncertainty as a proven global safety failure'
+  'blocker_policy_executor_provisional_unknown_hold|skills/subagent-driven-development/SKILL.md|unknown impact.{0,180}provisionally pause all new dispatch until scope is established.{0,120}Do not classify that uncertainty as a proven global safety failure'
+  'blocker_policy_dispatch_provisional_unknown_hold|skills/dispatching-parallel-agents/SKILL.md|unknown impact.{0,180}provisionally pause all new dispatch until scope is established.{0,120}Do not classify that uncertainty as a proven global safety failure'
+  'blocker_policy_fast_path_provisional_unknown_hold|skills/fast-path-implementation/SKILL.md|unknown impact.{0,180}provisionally pause all new dispatch until scope is established.{0,120}Do not classify that uncertainty as a proven global safety failure'
+  'blocker_policy_coordinator_scope|skills/workflow-coordinator/SKILL.md|affected task and transitive dependants'
+  'blocker_policy_coordinator_review_scope|skills/workflow-coordinator/SKILL.md|review finding blocks acceptance and completion of the affected task'
+  'blocker_policy_brief_scope|skills/_shared/task-briefs.md|affected task and its transitive dependants'
+  'blocker_policy_brief_review_scope|skills/_shared/task-briefs.md|review finding blocks acceptance and completion of its affected task'
+  'blocker_policy_executor_scope|skills/subagent-driven-development/SKILL.md|affected task and transitive dependants'
+  'blocker_policy_dispatch_affected_scope|skills/dispatching-parallel-agents/SKILL.md|pause affected work and its dependency closure'
+  'blocker_policy_dispatch_global_safety|skills/dispatching-parallel-agents/SKILL.md|proven global safety failure stops all new dispatch'
+  'blocker_policy_dispatch_review_scope|skills/dispatching-parallel-agents/SKILL.md|findings block affected task acceptance.{0,100}eligible independent progress'
+  'blocker_policy_fast_path_affected_scope|skills/fast-path-implementation/SKILL.md|pause only affected work and its dependency closure'
+  'blocker_policy_fast_path_global_safety|skills/fast-path-implementation/SKILL.md|proven global safety failure stops all new dispatch'
+  'blocker_policy_fast_path_review_scope|skills/fast-path-implementation/SKILL.md|review finding blocks acceptance.{0,100}eligible independent progress'
+ )
 
 test_context_boundary_policy() {
   local name="$1" relative="$2" pattern="$3" content
@@ -304,7 +404,7 @@ test_context_boundary_policy() {
   _pass "$name"
 }
 
-handoff_skill_files=(workflow-coordinator/SKILL.md _shared/workflow-artifacts.md _shared/task-briefs.md _shared/subagent-dispatch.md _shared/phase-evidence.md research/SKILL.md brainstorming/SKILL.md brainstorming-standard/SKILL.md brainstorming-guided/SKILL.md brainstorming-committee/SKILL.md brainstorming-skip/SKILL.md design-review/SKILL.md work-on-ticket/SKILL.md debugging/SKILL.md wave-planning/SKILL.md subagent-driven-development/SKILL.md)
+handoff_skill_files=(workflow-coordinator/SKILL.md _shared/workflow-artifacts.md _shared/task-briefs.md _shared/subagent-dispatch.md _shared/phase-evidence.md research/SKILL.md brainstorming/SKILL.md brainstorming-standard/SKILL.md brainstorming-guided/SKILL.md brainstorming-committee/SKILL.md brainstorming-skip/SKILL.md design-review/SKILL.md work-on-ticket/SKILL.md debugging/SKILL.md wave-planning/SKILL.md subagent-driven-development/SKILL.md dispatching-parallel-agents/SKILL.md fast-path-implementation/SKILL.md)
 
 _prepare_claude_install() {
   local root="$1"
@@ -389,11 +489,20 @@ test_supported_installers_deliver_workflow_continuation_policy() {
     return
   fi
   local harness_roots=("$claude_root" "$opencode_root" "$codex_root")
+  local installer_file_assertions=(
+    brainstorming-standard/SKILL.md
+    brainstorming-guided/SKILL.md
+    brainstorming-committee/SKILL.md
+    brainstorming-skip/SKILL.md
+    design-review/SKILL.md
+    debugging/SKILL.md
+    dispatching-parallel-agents/SKILL.md
+  )
   local harness_names=(Claude OpenCode Codex)
   for index in "${!harness_roots[@]}"; do
     harness_root="${harness_roots[$index]}"
     harness="${harness_names[$index]}"
-    for file in "${handoff_skill_files[@]}"; do
+    for file in "${installer_file_assertions[@]}"; do
       if [[ ! -f "$harness_root/skills/$file" ]]; then
         _fail "$1" "$harness installer did not copy $file"
         return
@@ -404,22 +513,18 @@ test_supported_installers_deliver_workflow_continuation_policy() {
       fi
     done
   done
-  if ! grep -Fq 'invoke that phase through `Skill`' "$claude_root/skills/workflow-coordinator/SKILL.md" || ! grep -Fq 'invoke that phase through `skill`' "$opencode_root/skills/workflow-coordinator/SKILL.md" || ! grep -Fq 'invoke that phase through `/skills or $skill-name`' "$codex_root/skills/workflow-coordinator/SKILL.md"; then
-    _fail "$1" "an installer did not apply its native skill substitution"
-    return
-  fi
   claude_rule_content="$(tr '\n' ' ' < "$claude_root/rules/workflow.md")"
   opencode_rule_content="$(tr '\n' ' ' < "$opencode_root/rules/workflow.md")"
-  if ! grep -Eiq 'actual coordinator-managed phase or assigned-task handoffs?' <<< "$claude_rule_content" || ! grep -Fq 'Pause for an actual user choice or approval' <<< "$claude_rule_content" || ! grep -Fq 'invoke that phase without routine prompting' <<< "$claude_rule_content" || ! grep -Fq 'not to each tool call or each interactive question' <<< "$claude_rule_content" || grep -q '{{' "$claude_root/rules/workflow.md"; then
+  if ! grep -Eiq 'actual coordinator-managed phase or assigned-task handoffs?' <<< "$claude_rule_content" || ! grep -Fq 'Pause only the affected transition or work' <<< "$claude_rule_content" || ! grep -Fq 'invoke that phase without routine prompting' <<< "$claude_rule_content" || ! grep -Fq 'not to each tool call or each interactive question' <<< "$claude_rule_content" || grep -q '{{' "$claude_root/rules/workflow.md"; then
     _fail "$1" "Claude rules lack the substituted common workflow policy"
     return
   fi
-  if ! grep -Eiq 'actual coordinator-managed phase or assigned-task handoffs?' <<< "$opencode_rule_content" || ! grep -Fq 'Pause for an actual user choice or approval' <<< "$opencode_rule_content" || ! grep -Fq 'invoke that phase without routine prompting' <<< "$opencode_rule_content" || ! grep -Fq 'not to each tool call or each interactive question' <<< "$opencode_rule_content" || grep -q '{{' "$opencode_root/rules/workflow.md"; then
+  if ! grep -Eiq 'actual coordinator-managed phase or assigned-task handoffs?' <<< "$opencode_rule_content" || ! grep -Fq 'Pause only the affected transition or work' <<< "$opencode_rule_content" || ! grep -Fq 'invoke that phase without routine prompting' <<< "$opencode_rule_content" || ! grep -Fq 'not to each tool call or each interactive question' <<< "$opencode_rule_content" || grep -q '{{' "$opencode_root/rules/workflow.md"; then
     _fail "$1" "OpenCode rules lack the substituted common workflow policy"
     return
   fi
   codex_managed_content="$(awk '/^<!-- elelem:codex:start -->$/ {inside=1; next} /^<!-- elelem:codex:end -->$/ {inside=0} inside' "$codex_agents" | tr '\n' ' ')"
-  if ! grep -Fq '<!-- elelem:codex:start -->' "$codex_agents" || ! grep -Fq 'user-owned content' "$codex_agents" || ! grep -Eiq 'actual coordinator-managed phase or assigned-task handoffs?' <<< "$codex_managed_content" || ! grep -Fq 'Pause for an actual user choice or approval' <<< "$codex_managed_content" || ! grep -Fq 'invoke that phase without routine prompting' <<< "$codex_managed_content" || ! grep -Fq 'not to each tool call or each interactive question' <<< "$codex_managed_content" || grep -q '{{' "$codex_agents"; then
+  if ! grep -Fq '<!-- elelem:codex:start -->' "$codex_agents" || ! grep -Fq 'user-owned content' "$codex_agents" || ! grep -Eiq 'actual coordinator-managed phase or assigned-task handoffs?' <<< "$codex_managed_content" || ! grep -Fq 'Pause only the affected transition or work' <<< "$codex_managed_content" || ! grep -Fq 'invoke that phase without routine prompting' <<< "$codex_managed_content" || ! grep -Fq 'not to each tool call or each interactive question' <<< "$codex_managed_content" || grep -q '{{' "$codex_agents"; then
     _fail "$1" "Codex managed AGENTS content lacks the substituted workflow continuation rule"
     return
   fi
@@ -437,21 +542,6 @@ _delivered_policy_content() {
   fi
 }
 
-test_installer_delivers_context_boundary_policy() {
-  local name="$1" harness="$2" root="$TEST_TMP/$2-context" requirement case_name relative pattern content
-  if ! "_prepare_${harness}_install" "$root"; then
-    _fail "$name" "$harness installer fixture failed"
-    return
-  fi
-  for requirement in "${context_policy_cases[@]}"; do
-    IFS='|' read -r case_name relative pattern <<< "$requirement"
-    if ! content="$(_delivered_policy_content "$root" "$harness" "$relative" | tr '\n' ' ' | tr -s '[:space:]' ' ')" || ! grep -Eiq "$pattern" <<< "$content"; then
-      _fail "$name" "$harness installed content lacks $case_name in $relative"
-      return
-    fi
-  done
-  _pass "$name"
-}
 
 run_case() {
   local name="$1"
@@ -506,6 +596,9 @@ test_names=(
   wave_readiness_result_returns_to_wave_planning_owner
   handoff_preserves_exact_skip_provenance
   resume_reuses_valid_phase_evidence
+  blocker_containment_consumers_reference_canonical_policy
+  generic_pause_clauses_contain_only_affected_transitions
+  review_findings_block_affected_task_without_holding_independent_progress
   supported_installers_deliver_workflow_continuation_policy
 )
 
@@ -513,6 +606,13 @@ for name in "${test_names[@]}"; do
   run_case "$name"
 done
 
+for requirement in "${context_policy_cases[@]}"; do
+  IFS='|' read -r name relative pattern <<< "$requirement"
+  run_case "$name" test_context_boundary_policy "$relative" "$pattern"
+done
+
+
+printf 'Cases: %d, Passed: %d, Failed: %d\n' "$(( ${#test_names[@]} + ${#context_policy_cases[@]} ))" "$passed" "$failed"
 for harness in claude opencode codex; do
   run_case "${harness}_installer_delivers_context_boundary_policy" test_installer_delivers_context_boundary_policy "$harness"
 done

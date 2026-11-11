@@ -72,14 +72,21 @@ infer dependencies, or broaden a task during dispatch.
    the wave's required checks after its writers stop.
 
 Workers report `DONE`, `DONE_WITH_CONCERNS`, `NEEDS_CONTEXT` or `BLOCKED` as
-defined by `../_shared/task-briefs.md`. Any real blocker stops new dispatch
-globally. Cancel active work only when the harness supports safe cancellation;
-otherwise let active work settle and do not claim it was cancelled. Preserve
-state and report the blocker. Do not silently retry with a more expensive
-model, redesign, expand scope or apply worker changes manually. In-scope review
-corrections are delegated within their existing task boundaries. Architectural
-gaps return to planning and require renewed user approval where the design
-changes.
+defined by `../_shared/task-briefs.md`. Classify blocker scope under
+`../_shared/subagent-dispatch.md`: pause affected work and its dependency
+closure. A proven global safety failure stops all new dispatch. Unknown impact
+pauses potentially affected work. If no safe boundary can be demonstrated,
+provisionally pause all new dispatch until scope is established. Do not classify
+that uncertainty as a proven global safety failure. Continue already-authorised
+work only when independence and eligibility are demonstrated.
+Cancel affected active work only if the harness supports safe cancellation;
+otherwise let it settle without claiming it was cancelled or accepting stale
+outputs. Preserve state and report the blocker. Do not silently retry with a
+more expensive model, redesign, expand scope or apply worker changes manually.
+In-scope review corrections are
+delegated within their existing task boundaries; findings block affected task
+acceptance, not eligible independent progress. Architectural gaps return to
+planning and require renewed user approval where the design changes.
 
 For implementation, this skill does not replace independent task review,
 orchestrator verification, wave integration barriers, cumulative final review

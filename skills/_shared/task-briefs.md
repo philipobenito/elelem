@@ -111,9 +111,18 @@ its required verification and wave integration barrier.
 
 ## Blockers and corrections
 
-A real blocker halts new dispatch. Cancel active agents only when safe
-cancellation is supported; otherwise allow them to settle and do not claim
-they stopped. Preserve artefacts and report the blocker. Resume only after the
-required authorisation is resolved. Do not silently expand scope or escalate
-models. In-scope review corrections may be delegated within the approved task
-contract; do not apply worker changes manually in the coordinator context.
+Classify blockers under `subagent-dispatch.md`. Pause the affected task and its
+transitive dependants, affected shared-contract or resource work and downstream
+dependants. A proven global safety failure stops all new dispatch. Unknown
+impact pauses potentially affected work. If no safe boundary can be demonstrated,
+provisionally pause all new dispatch until scope is established. Do not classify
+that uncertainty as a proven global safety failure. Continue only eligible,
+already-authorised independent work. A review finding blocks acceptance and
+completion of its affected task, not independent eligible progress. Cancel
+affected active work only when safe cancellation is supported; otherwise let it
+settle without claiming it stopped or accepting stale outputs. Preserve artefacts
+and report the blocker. Resume affected work only after required authorisation
+and eligibility are revalidated.
+Do not silently expand scope or escalate models. In-scope review corrections may
+be delegated within the approved task contract; do not apply worker changes
+manually in the coordinator context.

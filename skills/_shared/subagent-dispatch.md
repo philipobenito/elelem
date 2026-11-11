@@ -208,7 +208,9 @@ When coordinating a workflow, do not:
 
 - Skip a review unless the user explicitly skipped that scoped phase; record
   the skip and never present it as a verdict.
-- Proceed while an applicable review has unresolved in-scope issues.
+- Proceed while an applicable review has unresolved issues affecting the scope
+  being considered. Do not hold proven-independent eligible work for findings
+  that do not affect it.
 - Accept "close enough" where acceptance criteria are unmet.
 - Treat an implementer's report as independent review or verification.
 - Force an unchanged retry after failure.
@@ -219,9 +221,45 @@ When coordinating a workflow, do not:
 
 ## Blockers and recovery
 
-If a real blocker occurs, stop new dispatch. Cancel active work only if safe
-cancellation is supported; otherwise let it settle without claiming it
-stopped. Preserve workflow state and report the blocker. Do not silently expand
-scope, change model tier or force an unchanged retry. Resume only after the
-required user or coordinator resolution. Never represent failed or blocked
-work as successful.
+Assess a blocker's impact before any further dispatch, using actual task
+dependencies, contracts and resources rather than symptom names. Classify it as:
+
+- Task-local: pause the task and its transitive dependants.
+- Shared-contract: pause producers or consumers whose production or consumption
+  of an affected contract or resource is invalid, and their downstream
+  dependants. An unaffected producer may continue when its authorised work is
+  demonstrably valid.
+- Global safety: stop all new dispatch when workflow-wide authorisation,
+  ownership, isolation or safe operation is invalid.
+
+In the existing coordinator-owned task records, record the blocking condition,
+class or unresolved classification, affected tasks/contracts/resources,
+evidence, independence rationale and recovery condition.
+
+Continue only already-authorised eligible work within the approved schedule,
+with valid prerequisites, approval and readiness, stable inputs, disjoint
+ownership including generated and test writes, available resources, relevant
+assumptions and evidence. A blocker does not by itself stop demonstrably
+unaffected eligible work. Independent progress never permits entering a later
+wave early or bypassing review, acceptance, verification or integration
+barriers. Broad checks wait until all relevant writers stop.
+
+For unknown impact, pause potentially affected work and continue only where an
+unaffected boundary can be demonstrated. If no safe boundary can be established,
+provisionally hold all new dispatch until scope is established; do not mislabel
+uncertainty as a proven global safety failure.
+
+Cancel affected active work only where safe cancellation is supported and safe.
+Otherwise let it settle without claiming it was cancelled or stopped, and do not
+automatically accept its output. Unaffected active work and stable-input checks
+may continue when they meet the continuation criteria. Preserve unaffected valid
+work and evidence. Renew affected assumptions, contracts, approval, readiness,
+review and verification under `./phase-evidence.md`. Resume affected work only
+after supported resolution is recorded and dependent eligibility is revalidated.
+
+Do not force unchanged retries, silently expand scope, redesign, escalate the
+model tier or patch worker code in the coordinator context. Substantive design
+changes return to Planning and require renewed user approval. Report independent
+progress separately from blocked work. Required unresolved work or barriers
+continue to block overall completion; dependent work waits for its prerequisites
+and integration checks. Never represent failed or blocked work as successful.

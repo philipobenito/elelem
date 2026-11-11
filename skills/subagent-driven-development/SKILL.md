@@ -169,13 +169,22 @@ skipped by the user.
 
 Workers report `DONE`, `DONE_WITH_CONCERNS`, `NEEDS_CONTEXT` or `BLOCKED`. Read
 the actual changes and verify evidence for every returned result. `NEEDS_CONTEXT`
-requires supplying existing, authorised context, not guessing. Any real blocker
-stops all new dispatch globally. Cancel active work only if safe cancellation is
-supported; otherwise allow it to settle and do not claim it was cancelled.
-Preserve workflow state and report the blocker to the user. Do not silently
-retry at a higher-cost model, redesign, expand scope, or patch worker code in
-the orchestrator context. If the plan or architecture is inadequate, return to
-the coordinator and planning for user-authorised resolution.
+requires supplying existing, authorised context, not guessing. Apply blocker
+scopes in `../_shared/subagent-dispatch.md`: pause the affected task and
+transitive dependants, affected shared-contract/resource consumers and
+downstream dependants. A proven global safety failure stops all new dispatch.
+Unknown impact pauses potentially affected work. If no safe boundary can be
+demonstrated, provisionally pause all new dispatch until scope is established.
+Do not classify that uncertainty as a proven global safety failure. Continue
+only already-authorised work whose independence and eligibility are demonstrated.
+A review finding blocks acceptance and completion of its affected task, not
+eligible independent progress. Cancel affected active work only if safe cancellation is supported;
+otherwise allow it to settle without claiming it was cancelled or accepting
+stale outputs. Preserve workflow state and report the blocker to the user. Do
+not silently retry at a higher-cost model, redesign, expand scope, or patch
+worker code in the orchestrator context. If the plan or architecture is
+inadequate, return to the coordinator and planning for user-authorised
+resolution.
 
 ## Final feature review and verification
 

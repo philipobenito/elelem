@@ -420,3 +420,117 @@ existing `workflow.md` records, not a new report or copied transcript.
 8. Choose a less-conversational alternative explicitly for Research, then separately choose standard Planning; repeat with conversational Research and later committee Planning.
    - Expected evidence: Research and Planning each retain their own procedure and choice provenance. Planning committee never retrospectively authorises autonomous Research.
    - Failure: one mode choice is silently applied to both phases.
+
+## Blocker containment
+
+Run each scenario separately in every available Claude Code, OpenCode and Codex
+harness. These manual scenarios were not run as part of the automated suite;
+structural checks and installed-fixture checks do not establish runtime
+enforcement. Record the harness version, active policy sources and observed
+evidence for each run. Do not claim an unavailable harness was exercised.
+
+1. A missing task-local fixture blocks only the affected dependency chain.
+    - Setup: Schedule task A with its required local fixture, task C dependent
+      on A, task D dependent on C, and independent eligible task B with separate
+      valid inputs and ownership.
+    - Action: Make A's required fixture unavailable and have A report the
+      blocker before another dispatch.
+    - Expected evidence: A and both dependency levels, C and D, pause with the
+      missing fixture recorded. B remains eligible and progresses within the
+      approved schedule because its inputs, ownership, resources and evidence
+      remain valid.
+    - Failure: B is held solely because A is blocked, or C or D starts before
+      its blocked prerequisite is resolved.
+2. An invalid shared contract contains affected work without holding a valid
+   unaffected producer.
+    - Setup: Have producers P1 and P2 create parts of shared contract K,
+      consumed by C1 and C2, with downstream task D depending on an affected
+      consumer. Producer P2 and resource user R use shared temporary fixture F
+      in separate, non-overlapping scheduled tasks, as required by the approved
+      resource constraints. Include producer U whose authorised output uses
+      neither K nor F.
+    - Action: Establish evidence that K is invalid and F is unusable, then
+      assess affected contracts, resource users and downstream work before
+      further dispatch.
+    - Expected evidence: Affected production of K by P1 and P2, consumption by
+      C1 and C2, use of F by P2 and R, and affected downstream D are paused and
+      recorded. U remains eligible only when its independence and valid
+      authorised work are demonstrable.
+    - Failure: Affected contract production, consumption, resource use or
+      downstream work proceeds, or U is held without an identified impact on
+      its work.
+3. A workflow-wide safety failure stops all new dispatch.
+    - Setup: Schedule multiple otherwise eligible tasks and make a
+      workflow-wide authorisation, ownership, isolation or safe-operation
+      condition invalid.
+    - Action: Present the safety failure to the coordinator before any further
+      dispatch.
+    - Expected evidence: The invalid workflow-wide condition and its evidence
+      are recorded, and no new task is dispatched while it remains unresolved.
+    - Failure: Any new dispatch proceeds during the workflow-wide safety
+      failure.
+4. Unknown impact permits continuation only across a demonstrated safe
+   boundary.
+    - Setup: Prepare two independent cases with an otherwise eligible task B:
+      one where available dependency, resource and ownership evidence proves B
+      is outside the potentially affected boundary, and one where no such
+      boundary can be demonstrated.
+    - Action: Introduce a blocker whose impact is initially unknown and assess
+      each case before dispatching more work.
+    - Expected evidence: In the first case, record the evidence for the
+      unaffected boundary and allow only eligible B to continue. In the second,
+      provisionally hold all new dispatch until scope is established. Record
+      uncertainty as unresolved, not as a proven global safety failure.
+    - Failure: Work proceeds without a demonstrated boundary, a proven global
+      failure is claimed from uncertainty alone, or the provisional hold is
+      omitted when no safe boundary can be established.
+5. Unsupported safe cancellation allows an affected worker to settle without
+   accepting its output automatically.
+    - Setup: Have an affected worker active and establish that the harness does
+      not support safe cancellation.
+    - Action: Request cancellation after the blocker is assessed, then observe
+      the worker settle through the available safe process.
+    - Expected evidence: The worker is allowed to settle; no report claims that
+      it stopped or was cancelled. Its output is retained for assessment and is
+      not automatically accepted while its validity may be affected.
+    - Failure: The report claims cancellation without confirmation, the output
+      is automatically accepted, or unsafe cancellation is attempted.
+6. Recovery renews only affected evidence and revalidates dependent eligibility.
+    - Setup: Record valid work and evidence for unaffected task B, plus affected
+      task A and its dependent tasks with current assumptions, approval,
+      readiness, review, verification and evidence references.
+    - Action: Resolve A's recorded blocking condition and assess the validity of
+      affected assumptions and downstream eligibility.
+    - Expected evidence: The resolution is recorded. Only affected assumptions,
+      approval, readiness, review, verification and evidence are renewed as
+      required; valid unaffected work and evidence for B are preserved. A and
+      its dependants resume only after their eligibility is revalidated.
+    - Failure: Unaffected work is discarded or needlessly repeated, affected
+      evidence is reused without validation, or work resumes before resolution
+      and dependent eligibility are recorded.
+7. Independent progress cannot bypass later-wave or integration prerequisites.
+    - Setup: Schedule independent task B in the current wave and task C in a
+      later wave behind a prerequisite and the current wave's integration
+      barrier. Keep applicable task review, verification and acceptance gates
+      in place.
+    - Action: Let B progress while the prerequisite or integration check needed
+      for C remains incomplete.
+    - Expected evidence: B's progress is recorded separately. C does not start
+      until its prerequisites and integration barrier are satisfied; review,
+      verification and acceptance gates remain required.
+    - Failure: C starts early, independent progress is used to bypass an
+      integration prerequisite, or any review, verification or acceptance gate
+      is skipped or represented as satisfied without evidence.
+8. Unresolved review findings on task A do not prevent independent task B from
+   progressing or permit A to be accepted.
+    - Setup: Give task A an applicable review with unresolved findings that
+      affect A, and identify task B as demonstrably independent and otherwise
+      eligible under the approved schedule.
+    - Action: Keep A's review findings unresolved while the coordinator
+      considers whether B can continue.
+    - Expected evidence: B may progress if its independent eligibility is
+      demonstrated. A remains unaccepted and incomplete until its applicable
+      review findings are resolved and its existing acceptance gates are met.
+    - Failure: A is accepted or completed with unresolved findings, a required
+      review gate is silently skipped, or B is held solely for findings that do
+      not affect it.
