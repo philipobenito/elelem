@@ -6,7 +6,9 @@ if [[ -z "${ELELEM_TEST_ROOT:-}" || ! -d "$ELELEM_TEST_ROOT" ]]; then
   exit 2
 fi
 
-repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ELELEM_TEST_ROOT="$(cd "$ELELEM_TEST_ROOT" && pwd -P)"
+
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
 passed=0
 failed=0
@@ -27,7 +29,7 @@ create_claude_fixture() {
 
   cat > "$fixture_root/run-installer.sh" <<'EOF'
 #!/usr/bin/env bash
-fixture_directory="$(cd "$(dirname "$0")" && pwd)"
+fixture_directory="$(cd "$(dirname "$0")" && pwd -P)"
 cd "$fixture_directory/project" || exit 1
 "$fixture_directory/invocation/install-claude.sh"
 installer_status=$?
@@ -56,7 +58,7 @@ test_claude_installer_offers_the_default_off_agent_bundle_choice() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -92,7 +94,7 @@ test_claude_installer_installs_all_agents_when_selected_in_project_scope() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\033[A\n\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\033[A\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -131,25 +133,6 @@ test_claude_installer_installs_all_agents_when_selected_in_project_scope() {
     fi
   done
 
-  return 0
-}
-
-test_claude_installer_installs_notice_when_selected_in_project_scope() {
-  local name="claude_installer_installs_notice_when_selected_in_project_scope"
-  local manifest_file
-
-  create_claude_fixture
-  manifest_file="$invocation_dir/.elelem-manifest-claude"
-  HOME="$home_directory"
-  XDG_CONFIG_HOME="$xdg_directory"
-  export HOME XDG_CONFIG_HOME
-  printf '\033[A\n\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
-
-  if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
-    printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
-    return 1
-  fi
-
   if [[ ! -f "$fixture_root/project/.claude/agents.LICENSE" ]]; then
     printf '[FAIL] %s: project agent bundle licence is missing\n' "$name"
     return 1
@@ -182,7 +165,7 @@ test_claude_installer_reinstalling_with_bundle_deselected_preserves_installed_ag
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: initial installer run did not exit with status 0\n' "$name"
@@ -194,7 +177,7 @@ test_claude_installer_reinstalling_with_bundle_deselected_preserves_installed_ag
   printf 'User-edited architect reviewer\n' > "$edited_agent"
   cp "$edited_agent" "$expected_edited_agent"
 
-  printf '\n\n\n\n\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: deselected reinstall did not exit with status 0\n' "$name"
@@ -243,7 +226,7 @@ test_claude_installer_preserves_an_edited_notice_when_bundle_is_deselected() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: initial installer run did not exit with status 0\n' "$name"
@@ -265,7 +248,7 @@ test_claude_installer_preserves_an_edited_notice_when_bundle_is_deselected() {
 
   printf 'User-edited agents notice that must be preserved.\n' > "$existing_notice"
   cp "$existing_notice" "$expected_notice"
-  printf '\n\n\n\n\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: deselected reinstall did not exit with status 0\n' "$name"
@@ -301,7 +284,7 @@ test_claude_installer_rejects_a_manifest_base_change_before_writes() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
     printf '[FAIL] %s: installer did not exit with status 1\n' "$name"
@@ -350,7 +333,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \nyes\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \nyes\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -393,7 +376,7 @@ test_claude_installer_refuses_an_unrecognised_notice_replacement_response() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \nyes\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \nyes\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -438,7 +421,7 @@ test_claude_installer_refuses_to_replace_a_managed_canonical_agent() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -486,7 +469,7 @@ test_claude_installer_refuses_to_replace_a_managed_notice() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
     printf '[FAIL] %s: installer did not exit with status 1\n' "$name"
@@ -543,7 +526,7 @@ test_claude_installer_allows_refusing_an_exact_existing_notice_without_claiming_
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\n\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -617,7 +600,7 @@ test_claude_installer_replaces_a_mismatched_notice_when_user_confirms() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -695,7 +678,7 @@ test_claude_installer_replaces_a_mismatched_notice_when_user_confirms_with_upper
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \nY\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \nY\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -783,7 +766,7 @@ EOF
     PATH="$fixture_root/bin:$PATH"
     CLAUDE_NOTICE_STAGE_MARKER="$marker_file"
     export HOME XDG_CONFIG_HOME TMPDIR PATH CLAUDE_NOTICE_STAGE_MARKER
-    printf '\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+    printf '\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   )
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
@@ -818,58 +801,6 @@ EOF
     printf '[FAIL] %s: failed notice stage file remains after installer exit\n' "$name"
     return 1
   fi
-
-  return 0
-}
-
-test_claude_installer_reports_a_failed_notice_stage_copy_path() {
-  local name="claude_installer_reports_a_failed_notice_stage_copy_path"
-  local existing_notice
-  local marker_file
-  local stage_destination
-
-  create_claude_fixture
-  existing_notice="$home_directory/.claude/agents.LICENSE"
-  marker_file="$fixture_root/notice-stage-copy-destination"
-  mkdir -p "$(dirname "$existing_notice")" "$fixture_root/bin" "$fixture_root/tmp"
-  printf 'Distinct user-authored notice before failed stage copy.\n' > "$existing_notice"
-  cat > "$fixture_root/bin/cp" <<'EOF'
-#!/usr/bin/env bash
-if [[ "${2:-}" == *agents.LICENSE.tmp.* ]]; then
-  printf '%s\n' "$2" > "$CLAUDE_NOTICE_STAGE_MARKER"
-  printf 'partial stage bytes\n' > "$2"
-  exit 1
-fi
-exec /bin/cp "$@"
-EOF
-  chmod +x "$fixture_root/bin/cp"
-  (
-    HOME="$home_directory"
-    XDG_CONFIG_HOME="$xdg_directory"
-    TMPDIR="$fixture_root/tmp"
-    PATH="$fixture_root/bin:$PATH"
-    CLAUDE_NOTICE_STAGE_MARKER="$marker_file"
-    export HOME XDG_CONFIG_HOME TMPDIR PATH CLAUDE_NOTICE_STAGE_MARKER
-    printf '\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
-  )
-
-  if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
-    printf '[FAIL] %s: installer did not exit with status 1\n' "$name"
-    return 1
-  fi
-
-  if [[ ! -f "$marker_file" ]]; then
-    printf '[FAIL] %s: fake cp did not record a notice stage destination\n' "$name"
-    return 1
-  fi
-  stage_destination="$(cat "$marker_file")"
-  case "$stage_destination" in
-    "$home_directory/.claude"/agents.LICENSE.tmp.*) ;;
-    *)
-      printf '[FAIL] %s: fake cp intercepted an unexpected destination: %s\n' "$name" "$stage_destination"
-      return 1
-      ;;
-  esac
 
   if ! grep -Fq -- "failed to stage notice at '$stage_destination' for destination '$existing_notice'." "$session_log"; then
     printf '[FAIL] %s: notice stage-copy diagnostic did not identify the stage path and agents.LICENSE destination\n' "$name"
@@ -916,7 +847,7 @@ EOF
     PATH="$fixture_root/bin:$PATH"
     CLAUDE_NOTICE_COMPARE_MARKER="$marker_file"
     export HOME XDG_CONFIG_HOME TMPDIR PATH CLAUDE_NOTICE_COMPARE_MARKER
-    printf '\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+    printf '\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   )
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
@@ -951,64 +882,6 @@ EOF
     printf '[FAIL] %s: failed notice stage file remains after installer exit\n' "$name"
     return 1
   fi
-
-  return 0
-}
-
-test_claude_installer_reports_a_failed_notice_stage_comparison_path() {
-  local name="claude_installer_reports_a_failed_notice_stage_comparison_path"
-  local existing_notice
-  local marker_file
-  local stage_destination
-
-  create_claude_fixture
-  existing_notice="$home_directory/.claude/agents.LICENSE"
-  marker_file="$fixture_root/notice-stage-comparison-destination"
-  mkdir -p "$(dirname "$existing_notice")" "$fixture_root/bin" "$fixture_root/tmp"
-  printf 'Distinct user-authored notice before failed stage comparison.\n' > "$existing_notice"
-  cat > "$fixture_root/bin/cmp" <<'EOF'
-#!/usr/bin/env bash
-if [[ "${1:-}" == -s ]]; then
-  source_file="${2:-}"
-  stage_file="${3:-}"
-else
-  source_file="${1:-}"
-  stage_file="${2:-}"
-fi
-if [[ "$source_file" == */agents/LICENSE && "$stage_file" == *agents.LICENSE.tmp.* ]]; then
-  printf '%s\n' "$stage_file" > "$CLAUDE_NOTICE_COMPARE_MARKER"
-  exit 1
-fi
-exec /usr/bin/cmp "$@"
-EOF
-  chmod +x "$fixture_root/bin/cmp"
-  (
-    HOME="$home_directory"
-    XDG_CONFIG_HOME="$xdg_directory"
-    TMPDIR="$fixture_root/tmp"
-    PATH="$fixture_root/bin:$PATH"
-    CLAUDE_NOTICE_COMPARE_MARKER="$marker_file"
-    export HOME XDG_CONFIG_HOME TMPDIR PATH CLAUDE_NOTICE_COMPARE_MARKER
-    printf '\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
-  )
-
-  if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
-    printf '[FAIL] %s: installer did not exit with status 1\n' "$name"
-    return 1
-  fi
-
-  if [[ ! -f "$marker_file" ]]; then
-    printf '[FAIL] %s: fake cmp did not record a notice stage destination\n' "$name"
-    return 1
-  fi
-  stage_destination="$(cat "$marker_file")"
-  case "$stage_destination" in
-    "$home_directory/.claude"/agents.LICENSE.tmp.*) ;;
-    *)
-      printf '[FAIL] %s: fake cmp intercepted an unexpected destination: %s\n' "$name" "$stage_destination"
-      return 1
-      ;;
-  esac
 
   if ! grep -Fq -- "verification comparison failed for 'agents.LICENSE' at staged path '$stage_destination'." "$session_log"; then
     printf '[FAIL] %s: notice stage-comparison diagnostic did not identify agents.LICENSE and the exact stage path\n' "$name"
@@ -1050,7 +923,7 @@ EOF
     CLAUDE_NOTICE_DESTINATION="$existing_notice"
     CLAUDE_NOTICE_RENAME_MARKER="$marker_file"
     export HOME XDG_CONFIG_HOME TMPDIR PATH CLAUDE_NOTICE_DESTINATION CLAUDE_NOTICE_RENAME_MARKER
-    printf '\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+    printf '\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   )
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
@@ -1091,64 +964,6 @@ EOF
     return 1
   fi
 
-  return 0
-}
-
-test_claude_installer_reports_a_failed_notice_stage_rename_path() {
-  local name="claude_installer_reports_a_failed_notice_stage_rename_path"
-  local existing_notice
-  local marker_file
-  local stage_source
-  local stage_destination
-
-  create_claude_fixture
-  existing_notice="$home_directory/.claude/agents.LICENSE"
-  marker_file="$fixture_root/notice-stage-rename-paths"
-  mkdir -p "$(dirname "$existing_notice")" "$fixture_root/bin" "$fixture_root/tmp"
-  printf 'Distinct user-authored notice before failed stage rename.\n' > "$existing_notice"
-  cat > "$fixture_root/bin/mv" <<'EOF'
-#!/usr/bin/env bash
-if [[ "${2:-}" == *agents.LICENSE.tmp.* && "${3:-}" == "$CLAUDE_NOTICE_DESTINATION" ]]; then
-  printf '%s\n%s\n' "$2" "$3" > "$CLAUDE_NOTICE_RENAME_MARKER"
-  exit 1
-fi
-exec /bin/mv "$@"
-EOF
-  chmod +x "$fixture_root/bin/mv"
-  (
-    HOME="$home_directory"
-    XDG_CONFIG_HOME="$xdg_directory"
-    TMPDIR="$fixture_root/tmp"
-    PATH="$fixture_root/bin:$PATH"
-    CLAUDE_NOTICE_DESTINATION="$existing_notice"
-    CLAUDE_NOTICE_RENAME_MARKER="$marker_file"
-    export HOME XDG_CONFIG_HOME TMPDIR PATH CLAUDE_NOTICE_DESTINATION CLAUDE_NOTICE_RENAME_MARKER
-    printf '\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
-  )
-
-  if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
-    printf '[FAIL] %s: installer did not exit with status 1\n' "$name"
-    return 1
-  fi
-
-  if [[ ! -f "$marker_file" ]]; then
-    printf '[FAIL] %s: fake mv did not record a notice stage-to-destination rename\n' "$name"
-    return 1
-  fi
-  stage_source="$(sed -n '1p' "$marker_file")"
-  stage_destination="$(sed -n '2p' "$marker_file")"
-  case "$stage_source" in
-    "$home_directory/.claude"/agents.LICENSE.tmp.*) ;;
-    *)
-      printf '[FAIL] %s: fake mv intercepted an unexpected stage source: %s\n' "$name" "$stage_source"
-      return 1
-      ;;
-  esac
-  if [[ "$stage_destination" != "$existing_notice" ]]; then
-    printf '[FAIL] %s: fake mv intercepted an unexpected destination: %s\n' "$name" "$stage_destination"
-    return 1
-  fi
-
   if ! grep -Fq -- "failed to rename/move staged notice '$stage_source' to agents.LICENSE destination '$stage_destination'." "$session_log"; then
     printf '[FAIL] %s: notice stage-rename diagnostic did not identify the exact paths\n' "$name"
     return 1
@@ -1183,7 +998,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
     printf '[FAIL] %s: installer did not exit with status 1\n' "$name"
@@ -1238,7 +1053,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
     printf '[FAIL] %s: installer did not exit with status 1\n' "$name"
@@ -1292,7 +1107,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
     printf '[FAIL] %s: installer did not exit with status 1\n' "$name"
@@ -1346,7 +1161,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -1400,7 +1215,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\033[A\n\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\033[A\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
     printf '[FAIL] %s: installer did not exit with status 1\n' "$name"
@@ -1454,7 +1269,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\033[A\n%s\n\n\n\n \n' "$selected_project_path" | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\033[A\n%s\n\n\n \n' "$selected_project_path" | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
     printf '[FAIL] %s: installer did not exit with status 1\n' "$name"
@@ -1509,7 +1324,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -1564,7 +1379,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   chmod 600 "$unreadable_agent"
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
@@ -1639,7 +1454,7 @@ EOF
     CLAUDE_FIND_FAILURE_ROOT="$user_agents_directory"
     CLAUDE_FIND_INTERCEPTION_MARKER="$interception_marker"
     export HOME XDG_CONFIG_HOME PATH CLAUDE_FIND_FAILURE_ROOT CLAUDE_FIND_INTERCEPTION_MARKER
-    printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+    printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   )
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
@@ -1712,7 +1527,7 @@ EOF
     CLAUDE_LS_FAILURE_ROOT="$user_agents_directory"
     CLAUDE_LS_INTERCEPTION_MARKER="$interception_marker"
     export HOME XDG_CONFIG_HOME PATH CLAUDE_LS_FAILURE_ROOT CLAUDE_LS_INTERCEPTION_MARKER
-    printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+    printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   )
 
   if [[ ! -f "$interception_marker" ]] || [[ "$(cat "$interception_marker")" != "$user_agents_directory" ]]; then
@@ -1783,7 +1598,7 @@ EOF
     PATH="$fixture_root/bin:$PATH"
     CLAUDE_AWK_INTERCEPTION_MARKER="$interception_marker"
     export HOME XDG_CONFIG_HOME PATH CLAUDE_AWK_INTERCEPTION_MARKER
-    printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+    printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   )
 
   if [[ ! -f "$interception_marker" ]] || [[ "$(cat "$interception_marker")" != "$competing_agent" ]]; then
@@ -1827,7 +1642,7 @@ test_claude_installer_rejects_a_directory_at_a_canonical_agent_path() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -1871,7 +1686,7 @@ test_claude_installer_rejects_a_directory_at_the_notice_path() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -1927,7 +1742,7 @@ EOF
     CLAUDE_MKDIR_FAILURE_TARGET="$agents_path"
     CLAUDE_MKDIR_INTERCEPTION_MARKER="$interception_marker"
     export HOME XDG_CONFIG_HOME PATH CLAUDE_MKDIR_FAILURE_TARGET CLAUDE_MKDIR_INTERCEPTION_MARKER
-    printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+    printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   )
 
   if [[ ! -f "$interception_marker" ]] || [[ "$(cat "$interception_marker")" != "$agents_path" ]]; then
@@ -1980,7 +1795,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -2034,7 +1849,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \nY\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \nY\n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -2098,7 +1913,7 @@ EOF
     CLAUDE_PARTIAL_AGENT_TARGET="$later_agent_target"
     CLAUDE_PARTIAL_AGENT_MARKER="$marker_file"
     export HOME XDG_CONFIG_HOME TMPDIR PATH CLAUDE_PARTIAL_AGENT_TARGET CLAUDE_PARTIAL_AGENT_MARKER
-    printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+    printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   )
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
@@ -2169,7 +1984,7 @@ EOF
     PATH="$fixture_root/bin:$PATH"
     CLAUDE_MANIFEST_SORT_MARKER="$marker_file"
     export HOME XDG_CONFIG_HOME TMPDIR PATH CLAUDE_MANIFEST_SORT_MARKER
-    printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+    printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   )
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=1'; then
@@ -2273,7 +2088,7 @@ test_claude_installer_reports_stale_prune_failure_with_all_bundle_changes() {
   cp "$repository_root/agents/LICENSE" "$invocation_dir/agents/LICENSE"
   cat > "$fixture_root/run-installer.sh" <<'EOF'
 #!/usr/bin/env bash
-fixture_directory="$(cd "$(dirname "$0")" && pwd)"
+fixture_directory="$(cd "$(dirname "$0")" && pwd -P)"
 cd "$fixture_directory/project" || exit 1
 "$fixture_directory/invocation/install-claude.sh"
 installer_status=$?
@@ -2443,7 +2258,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -2494,7 +2309,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -2545,7 +2360,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -2596,7 +2411,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -2655,7 +2470,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -2707,7 +2522,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -2765,7 +2580,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -2816,7 +2631,7 @@ test_claude_installer_ignores_a_non_markdown_agent_symlink() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'CLAUDE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -2865,7 +2680,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -2910,7 +2725,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -2954,7 +2769,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3002,7 +2817,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3051,7 +2866,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3100,7 +2915,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3158,7 +2973,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
   /bin/chmod 000 "$project_claude_directory"
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
   /bin/chmod "$original_mode" "$project_claude_directory"
 
   restored_mode="$(stat -f '%Lp' "$project_claude_directory")"
@@ -3405,7 +3220,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3453,7 +3268,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3501,7 +3316,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3549,7 +3364,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3599,7 +3414,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3649,7 +3464,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3699,7 +3514,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3743,7 +3558,7 @@ test_claude_installer_blocks_a_conflict_with_crlf_agent_frontmatter() {
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3793,7 +3608,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3844,7 +3659,7 @@ EOF
   HOME="$home_directory"
   XDG_CONFIG_HOME="$xdg_directory"
   export HOME XDG_CONFIG_HOME
-  printf '\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
+  printf '\n\n\n \n' | /usr/bin/script -q "$session_log" "$fixture_root/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^CLAUDE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -3872,7 +3687,6 @@ EOF
 
 run_case 'Claude installer offers the default-off agent bundle choice' test_claude_installer_offers_the_default_off_agent_bundle_choice
 run_case 'Claude installer installs all agents when selected in project scope' test_claude_installer_installs_all_agents_when_selected_in_project_scope
-run_case 'Claude installer installs notice when selected in project scope' test_claude_installer_installs_notice_when_selected_in_project_scope
 run_case 'Claude installer preserves installed agents when reinstalling with bundle deselected' test_claude_installer_reinstalling_with_bundle_deselected_preserves_installed_agents
 run_case 'Claude installer preserves an edited notice when bundle is deselected' test_claude_installer_preserves_an_edited_notice_when_bundle_is_deselected
 run_case 'Claude installer rejects a manifest base change before writes' test_claude_installer_rejects_a_manifest_base_change_before_writes
@@ -3884,11 +3698,8 @@ run_case 'Claude installer allows refusing an exact existing notice without clai
 run_case 'Claude installer replaces a mismatched notice when user confirms' test_claude_installer_replaces_a_mismatched_notice_when_user_confirms
 run_case 'Claude installer replaces a mismatched notice when user confirms with uppercase Y' test_claude_installer_replaces_a_mismatched_notice_when_user_confirms_with_uppercase_y
 run_case 'Claude installer cleans a failed notice stage copy' test_claude_installer_cleans_a_failed_notice_stage_copy
-run_case 'Claude installer reports a failed notice stage copy path' test_claude_installer_reports_a_failed_notice_stage_copy_path
 run_case 'Claude installer cleans a failed notice stage comparison' test_claude_installer_cleans_a_failed_notice_stage_comparison
-run_case 'Claude installer reports a failed notice stage comparison path' test_claude_installer_reports_a_failed_notice_stage_comparison_path
 run_case 'Claude installer cleans a failed notice stage rename' test_claude_installer_cleans_a_failed_notice_stage_rename
-run_case 'Claude installer reports a failed notice stage rename path' test_claude_installer_reports_a_failed_notice_stage_rename_path
 run_case 'Claude installer blocks a project agent conflict before user bundle writes' test_claude_installer_blocks_a_project_agent_conflict_before_user_bundle_writes
 run_case 'Claude installer blocks a conflict with a double-quoted agent identity value' test_claude_installer_blocks_a_conflict_with_a_double_quoted_agent_identity_value
 run_case 'Claude installer blocks a conflict with a single-quoted agent identity value' test_claude_installer_blocks_a_conflict_with_a_single_quoted_agent_identity_value

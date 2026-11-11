@@ -291,40 +291,19 @@ resolve_install_base() {
 #   placeholders_ref  - name of an array variable containing placeholder tokens (without braces)
 #   substitutions_ref - name of an array variable containing replacement strings (parallel to placeholders)
 #
-# Builds a perl -i -pe expression dynamically from the arrays. Compatible with bash 3.2+.
-#
-# NOTE: substitution strings are interpolated directly into a perl s/.../.../g
-# expression. Callers MUST NOT pass substitutions containing '/', '\', '$', or
-# '@'. Escape or switch to a different delimiter strategy before passing such
-# values. The current Claude Code placeholder map (defined in install.sh) is
-# verified safe; a future OpenCode map must be verified before use.
 substitute_tool_names() {
-  local dir="$1"
-  local placeholders_ref="$2"
-  local substitutions_ref="$3"
-
+  local dir="$1" placeholders_ref="$2" substitutions_ref="$3"
   [[ -d "$dir" ]] || return 0
   [[ "$placeholders_ref"  =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "substitute_tool_names: invalid placeholders variable name: $placeholders_ref"  >&2; return 1; }
   [[ "$substitutions_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "substitute_tool_names: invalid substitutions variable name: $substitutions_ref" >&2; return 1; }
-
-  local placeholders substitutions
-  eval "placeholders=(\"\${${placeholders_ref}[@]}\")"
-  eval "substitutions=(\"\${${substitutions_ref}[@]}\")"
-
-  local count="${#placeholders[@]}"
-  if (( count == 0 )); then
-    return 0
-  fi
-
-  local perl_expr=""
-  local i
-  for (( i=0; i<count; i++ )); do
-    local placeholder="${placeholders[$i]}"
-    local substitution="${substitutions[$i]}"
-    perl_expr="${perl_expr}s/\\{\\{${placeholder}\\}\\}/${substitution}/g; "
+  local _stn_placeholders _stn_substitutions i
+  eval "_stn_placeholders=(\"\${${placeholders_ref}[@]+\${${placeholders_ref}[@]}}\")"
+  eval "_stn_substitutions=(\"\${${substitutions_ref}[@]+\${${substitutions_ref}[@]}}\")"
+  [[ ${#_stn_placeholders[@]} == ${#_stn_substitutions[@]} ]] || { say_err 'tool placeholder and substitution counts differ.'; return 1; }
+  for (( i=0; i<${#_stn_placeholders[@]}; i++ )); do
+    ELELEM_PLACEHOLDER="{{${_stn_placeholders[$i]}}}" ELELEM_SUBSTITUTION="${_stn_substitutions[$i]}" \
+      find "$dir" -type f -name '*.md' -exec perl -i -pe 's/\Q$ENV{ELELEM_PLACEHOLDER}\E/$ENV{ELELEM_SUBSTITUTION}/g' {} + || return 1
   done
-
-  find "$dir" -type f -name '*.md' -exec perl -i -pe "$perl_expr" {} +
 }
 
 # Prunes stale entries from the manifest: files present in the old manifest but
@@ -354,6 +333,7 @@ prune_stale_manifest_entries() {
       continue
     fi
     [[ -z "$line" ]] && continue
+    [[ "$line" == opencode.json ]] && continue
     if [[ -n "$preserve_prefix" ]] && {
       [[ "$line" == "$preserve_prefix.LICENSE" ]] ||
         [[ "${line#"$preserve_prefix/"}" != "$line" ]]
@@ -746,4 +726,274 @@ write_opencode_instructions() {
       -- "${globs[@]+"${globs[@]}"}" > "$tmp"
   fi
   cat "$tmp" > "$target"
+}
+
+render_language_pack_policy() {
+  cat <<'EOF'
+# On-demand language packs
+
+Before substantive reading, creating, editing or reviewing current-task files, invoke each applicable `elelem-language-<language>` skill with `{{INVOKE_SKILL_TOOL}}`. Reassess as scope grows; mixed-language tasks may need multiple packs. Load only applicable coding, test and tooling references as instructed by the skill. Source filename globs are matching guidance, not automatic activation.
+
+Use actual task files and context, not a repository language inventory or incidental Markdown mentions. Shared JavaScript/TypeScript tooling needs task context; ask when materially ambiguous. A missing required skill or reference must visibly block affected work. Include applicable skill requirements in delegated task briefs without bulk preloading language bodies.
+EOF
+}
+
+_language_pack_safe_parents() {
+  local path="$1"
+  while [[ -n "$path" && "$path" != / && "$path" != . ]]; do
+    if [[ -L "$path" || ( -e "$path" && ! -d "$path" ) ]]; then
+      say_err "language pack destination '$path' is not a regular directory; move or remove it, then rerun."
+      return 1
+    fi
+    [[ "$path" == */* ]] || break
+    path="${path%/*}"
+  done
+}
+
+_language_pack_owned_path() {
+  [[ -f "$1" ]] && tail -n +2 "$1" | grep -Fxq -- "$2"
+}
+
+_language_pack_check_existing() {
+  local destination="$1" relative="$2" previous="$3" path entry
+  [[ -e "$destination" || -L "$destination" ]] || return 0
+  if [[ -L "$destination" || ! -d "$destination" ]] || ! _language_pack_owned_path "$previous" "$relative/SKILL.md"; then
+    say_err "unmanaged language pack collision at '$destination'; move or remove it, then rerun."
+    return 1
+  fi
+  while IFS= read -r -d '' path; do
+    entry="$relative/${path#"$destination/"}"
+    if [[ ! -L "$path" && -d "$path" && "$path" == "$destination/references" ]]; then continue; fi
+    if [[ -L "$path" || ! -f "$path" ]] || ! _language_pack_owned_path "$previous" "$entry"; then
+      say_err "unmanaged language pack collision at '$path'; move or remove it, then rerun."
+      return 1
+    fi
+  done < <(find "$destination" -mindepth 1 -print0)
+}
+
+_language_pack_preflight() {
+  local source="$1" target="$2" prefix="$3" previous="$4" directory language
+  _language_pack_safe_parents "$target" || return 1
+  if [[ -f "$previous" ]]; then
+    [[ "$target" == */"$prefix" ]] || { say_err 'language pack manifest prefix does not match destination.'; return 1; }
+    assert_manifest_base_matches "$previous" "${target%/"$prefix"}" || return 1
+  fi
+  for directory in "$source"/*; do
+    [[ -d "$directory" && "${directory##*/}" != common ]] || continue
+    language="${directory##*/}"
+    [[ "$language" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || { say_err "invalid language pack name '$language'."; return 1; }
+    _language_pack_check_existing "$target/elelem-language-$language" "$prefix/elelem-language-$language" "$previous" || return 1
+  done
+}
+
+_render_language_pack_reference() {
+  local topic="${1%.md}" triggers="$2"
+  case "$topic" in
+    coding-style) printf 'Use `{{READ_FILE_TOOL}}` to read `references/%s.md` relative to this skill base for substantive work on applicable language files.\n' "$topic" ;;
+    testing) printf 'Use `{{READ_FILE_TOOL}}` to read `references/%s.md` relative to this skill base only when actual task work involves tests or test configuration. Filename guidance: %s.\n' "$topic" "$triggers" ;;
+    tooling) printf 'Use `{{READ_FILE_TOOL}}` to read `references/%s.md` relative to this skill base only when actual task work involves applicable tooling, manifests, dependencies or build configuration. Filename guidance: %s.\n' "$topic" "$triggers" ;;
+    *) printf 'Use `{{READ_FILE_TOOL}}` to read `references/%s.md` relative to this skill base when this topic applies to actual task work. Filename guidance: %s.\n' "$topic" "$triggers" ;;
+  esac
+}
+
+_render_language_pack_wrapper() {
+  local directory="$1" language="${1##*/}" file triggers
+  triggers="$(sed -n 's/^globs: *//p' "$directory"/*.md | tr '\n' ' ')"
+  printf '%s\n' '---' "name: elelem-language-$language"
+  printf 'description: "Apply %s rules before substantive reading, creating, editing or reviewing current-task %s files. Filename guidance: %s"\n' "$language" "$language" "$triggers"
+  printf '%s\n\n' '---'
+  printf '# %s language pack\n\n' "$language"
+  printf '%s\n\n' 'Read only references applicable to actual task files, not a repository language inventory or incidental Markdown mentions. These globs are guidance, not automatic activation. Reassess as scope grows. For shared JavaScript/TypeScript tooling, use task context and ask when materially ambiguous. A missing required reference blocks affected work.'
+  for file in "$directory"/*.md; do
+    [[ -f "$file" ]] || continue
+    triggers="$(sed -n 's/^globs: *//p' "$file")"
+    _render_language_pack_reference "${file##*/}" "${triggers:-task context}"
+  done
+}
+
+_stage_language_packs() {
+  local source="$1" stage="$2" directory file destination
+  for directory in "$source"/*; do
+    [[ -d "$directory" && "${directory##*/}" != common ]] || continue
+    destination="$stage/elelem-language-${directory##*/}"
+    mkdir -p "$destination/references" || return 1
+    _render_language_pack_wrapper "$directory" > "$destination/SKILL.md" || return 1
+    for file in "$directory"/*.md; do
+      [[ -f "$file" ]] || continue
+      cp "$file" "$destination/references/${file##*/}" || return 1
+    done
+  done
+}
+
+_validate_language_pack_markdown() {
+  local directory="$1" file
+  while IFS= read -r -d '' file; do
+    if grep -Fq '{{' "$file"; then
+      say_err "unexpanded placeholder in language pack '$file'; correct the tool substitutions, then rerun."
+      return 1
+    fi
+  done < <(find "$directory" -type f -name '*.md' -print0)
+}
+
+_publish_language_packs() {
+  local stage="$1" target="$2" prefix="$3" manifest_ref="$4" file relative _lp_entry
+  while IFS= read -r -d '' file; do
+    relative="${file#"$stage/"}"
+    mkdir -p "$(dirname "$target/$relative")" || return 1
+    cp "$file" "$target/$relative" || return 1
+    _lp_entry="$prefix/$relative"
+    eval "${manifest_ref}+=(\"\$_lp_entry\")"
+  done < <(find "$stage" -type f -name '*.md' -print0)
+}
+
+install_language_packs() {
+  local source="$1" target="$2" prefix="$3" previous="$4" manifest_ref="$5" placeholders_ref="$6" substitutions_ref="$7" stage status=0
+  [[ "$manifest_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { say_err 'invalid language pack manifest array name.'; return 1; }
+  [[ -d "$source" && -n "$prefix" && "$prefix" != /* && "$prefix" != *..* ]] || { say_err 'invalid language pack source or manifest prefix.'; return 1; }
+  _language_pack_preflight "$source" "$target" "$prefix" "$previous" || return 1
+  stage="$(mktemp -d "${TMPDIR:-/tmp}/elelem-language-packs.XXXXXX")" || return 1
+  if _stage_language_packs "$source" "$stage" &&
+    substitute_tool_names "$stage" "$placeholders_ref" "$substitutions_ref" &&
+    _validate_language_pack_markdown "$stage"; then
+    _publish_language_packs "$stage" "$target" "$prefix" "$manifest_ref" || status=$?
+  else
+    status=1
+  fi
+  rm -rf "$stage"
+  return "$status"
+}
+
+_opencode_validate_json() {
+  local file="$1" require_instructions="$2"
+  jq -es --arg required "$require_instructions" '
+    length == 1 and (.[0] | type == "object" and
+      (if has("instructions") then
+        (.instructions | type == "array" and all(.[]; type == "string"))
+      else $required != "yes" end))
+  ' "$file" > /dev/null 2>&1 || {
+    say_err "invalid JSON object or instruction ownership in '$file'; leaving config and retry metadata unchanged."
+    return 1
+  }
+}
+
+_opencode_legacy_owned_entries() {
+  local previous="$1" ownership="$2" line legacy_config=0 entries=()
+  if [[ -f "$previous" ]]; then
+    while IFS= read -r line; do
+      [[ "$line" != "${ownership##*/}" ]] || { say_err "missing ownership file '$ownership'; restore it before retrying."; return 1; }
+      [[ "$line" != opencode.json ]] || legacy_config=1
+      if [[ "$line" =~ ^rules/([a-zA-Z0-9_-]+)/[^/]+\.md$ ]]; then
+        entries+=("rules/${BASH_REMATCH[1]}/*.md")
+      elif [[ "$line" =~ ^rules/[a-zA-Z0-9_-]+\.md$ ]]; then
+        entries+=("$line")
+      fi
+    done < <(tail -n +2 "$previous")
+  fi
+  if (( legacy_config && ${#entries[@]} == 0 )); then
+    say_err 'legacy opencode.json has no identifiable rule ownership; retain the manifest and resolve ownership before retrying.'
+    return 1
+  fi
+  jq -cn --args '$ARGS.positional | unique' -- "${entries[@]+"${entries[@]}"}"
+}
+
+_opencode_owned_entries() {
+  local previous="$1" ownership="$2" manifest_base=""
+  if [[ -e "$ownership" || -L "$ownership" ]]; then
+    if [[ ! -f "$previous" ]] || ! IFS= read -r manifest_base < "$previous" ||
+      [[ "${ownership%/*}" != "$manifest_base" ]] ||
+      ! tail -n +2 "$previous" | grep -Fx -- "${ownership##*/}" > /dev/null; then
+      say_err "unmanaged ownership file '$ownership'; restore its prior manifest ownership before retrying. Config and metadata are unchanged."
+      return 1
+    fi
+    [[ -f "$ownership" && ! -L "$ownership" ]] || { say_err "ownership collision at '$ownership'; restore the regular ownership file before retrying."; return 1; }
+    _opencode_validate_json "$ownership" yes || return 1
+    jq -c '.instructions' "$ownership"
+  else
+    _opencode_legacy_owned_entries "$previous" "$ownership"
+  fi
+}
+
+_opencode_config_document() {
+  local target="$1"
+  if [[ -e "$target" || -L "$target" ]]; then
+    [[ -f "$target" ]] || { say_err "config '$target' is not a regular file; resolve it before retrying."; return 1; }
+    _opencode_validate_json "$target" no || return 1
+    cat "$target"
+  else
+    printf '%s\n' '{"$schema":"https://opencode.ai/config.json"}'
+  fi
+}
+
+_opencode_warn_unowned_instructions() {
+  local document="$1" owned="$2" entry
+  while IFS= read -r entry; do
+    [[ -n "$entry" ]] || continue
+    say_warn "unowned instruction '$entry' may eagerly include language rules; preserving it. Review it manually if deferred loading is required."
+  done < <(printf '%s\n' "$document" | jq -r --argjson owned "$owned" '
+    (.instructions // [])[] |
+    select(. as $entry | $owned | index($entry) | not) |
+    select(test("(^|/)rules/|\\*.*\\.md"))
+  ')
+}
+
+_opencode_render_owned_update() {
+  local document="$1" owned="$2" requested="$3"
+  printf '%s\n' "$document" | jq --argjson owned "$owned" --argjson requested "$requested" '
+    ((.instructions // []) | map(. as $entry | select($owned | index($entry) | not))) as $kept |
+    if any($requested[]; . as $entry | $kept | index($entry)) then
+      error("unmanaged instruction collision; remove the requested entry manually or restore its ownership metadata")
+    else .instructions = ($kept + $requested) end
+  '
+}
+
+_opencode_destination_writable() {
+  local destination="$1"
+  if [[ -e "$destination" ]]; then
+    [[ -f "$destination" && -w "$destination" ]] || { say_err "cannot write '$destination'; check its type and permissions before retrying."; return 1; }
+  else
+    [[ -d "$(dirname "$destination")" && -w "$(dirname "$destination")" ]] || { say_err "cannot create '$destination'; create a writable parent directory before retrying."; return 1; }
+  fi
+}
+
+_opencode_apply_owned_update() {
+  local target="$1" ownership="$2" mode="$3" document="$4" owned="$5" requested="$6" stage status=0
+  _opencode_destination_writable "$target" || return 1
+  [[ "$mode" != update ]] || _opencode_destination_writable "$ownership" || return 1
+  stage="$(mktemp -d "${TMPDIR:-/tmp}/elelem-opencode-instructions.XXXXXX")" || return 1
+  if _opencode_render_owned_update "$document" "$owned" "$requested" > "$stage/config.json" &&
+    jq -n --argjson entries "$requested" '{instructions: $entries}' > "$stage/ownership.json"; then
+    cat "$stage/config.json" > "$target" || status=1
+    if [[ "$mode" == update && "$status" == 0 ]]; then
+      cat "$stage/ownership.json" > "$ownership" || status=1
+    fi
+  else
+    status=1
+  fi
+  rm -rf "$stage"
+  (( status == 0 )) || say_err 'instruction update failed; retain the manifest and ownership metadata for retry.'
+  return "$status"
+}
+
+_edit_opencode_owned_instructions() {
+  local target="$1" previous="$2" ownership="$3" mode="$4" owned document requested
+  shift 4
+  command -v jq > /dev/null 2>&1 || { say_err 'jq is required for safe instruction ownership updates; install jq and retry without deleting ownership metadata.'; return 1; }
+  [[ "$target" != "$ownership" ]] || { say_err 'config and ownership paths must differ.'; return 1; }
+  assert_manifest_base_matches "$previous" "$(dirname "$target")" || return 1
+  owned="$(_opencode_owned_entries "$previous" "$ownership")" || return 1
+  document="$(_opencode_config_document "$target")" || return 1
+  requested="$(jq -cn --args '$ARGS.positional' -- "$@")" || return 1
+  _opencode_warn_unowned_instructions "$document" "$owned"
+  [[ "$mode" != remove || -e "$target" ]] || return 0
+  _opencode_apply_owned_update "$target" "$ownership" "$mode" "$document" "$owned" "$requested"
+}
+
+update_opencode_instructions() {
+  local target="$1" previous="$2" ownership="$3"
+  shift 3
+  _edit_opencode_owned_instructions "$target" "$previous" "$ownership" update "$@"
+}
+
+remove_opencode_instructions() {
+  _edit_opencode_owned_instructions "$1" "$2" "$3" remove
 }

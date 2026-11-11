@@ -6,7 +6,9 @@ if [[ -z "${ELELEM_TEST_ROOT:-}" || ! -d "$ELELEM_TEST_ROOT" ]]; then
   exit 2
 fi
 
-repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ELELEM_TEST_ROOT="$(cd "$ELELEM_TEST_ROOT" && pwd -P)"
+
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
 test_codex_installer_offers_the_default_off_agent_bundle_choice() {
   local fixture_root
@@ -20,7 +22,7 @@ test_codex_installer_offers_the_default_off_agent_bundle_choice() {
 
   cat > "$fixture_root/tmp/run-installer.sh" <<'EOF'
 #!/usr/bin/env bash
-fixture_root="$(cd "$(dirname "$0")/.." && pwd)"
+fixture_root="$(cd "$(dirname "$0")/.." && pwd -P)"
 cd "$fixture_root/project" || exit 1
 "$fixture_root/invocation/install-codex.sh"
 status=$?
@@ -61,7 +63,7 @@ create_bundle_fixture() {
   cp -R "$repository_root/agents" "$fixture_root/invocation/agents"
   cat > "$fixture_root/tmp/run-installer.sh" <<'EOF'
 #!/usr/bin/env bash
-fixture_root="$(cd "$(dirname "$0")/.." && pwd)"
+fixture_root="$(cd "$(dirname "$0")/.." && pwd -P)"
 cd "$fixture_root/project" || exit 1
 "$fixture_root/invocation/install-codex.sh"
 status=$?
@@ -79,7 +81,7 @@ run_bundle_installer() {
 
 test_codex_installs_the_complete_user_agent_bundle() {
   create_bundle_fixture user-install
-  run_bundle_installer '\n\n\n\n \n' session
+  run_bundle_installer '\n\n\n \n' session
   local source file manifest="$fixture_root/invocation/.elelem-manifest-codex"
   local count=0
   for source in "$fixture_root/invocation/agents/codex/"*.toml; do
@@ -106,7 +108,7 @@ test_codex_installs_the_complete_user_agent_bundle() {
 
 test_codex_installs_the_complete_project_agent_bundle() {
   create_bundle_fixture project-install
-  run_bundle_installer '\033[A\n\n\n\n\n \n' session
+  run_bundle_installer '\033[A\n\n\n\n \n' session
   local source file manifest="$fixture_root/invocation/.elelem-manifest-codex"
   local count=0
   for source in "$fixture_root/invocation/agents/codex/"*.toml; do
@@ -130,7 +132,7 @@ test_codex_installs_the_complete_project_agent_bundle() {
 
 test_codex_rejects_a_project_resolving_to_home() {
   create_bundle_fixture project-home
-  run_bundle_installer "\033[A\n$fixture_root/home/.\n\n\n\n \n" session
+  run_bundle_installer "\033[A\n$fixture_root/home/.\n\n\n \n" session
   if ! grep -Fq 'refusing' "$fixture_root/session.log" ||
     ! grep -Fq 'CODEX_INSTALLER_EXIT=1' "$fixture_root/session.log" ||
     [[ -e "$fixture_root/home/.codex/agents" || -e "$fixture_root/home/.codex/agents.LICENSE" || -e "$fixture_root/invocation/.elelem-manifest-codex" ]]; then
@@ -144,7 +146,7 @@ test_codex_rejects_a_manifest_scope_change_before_writes() {
   create_bundle_fixture scope-change
   printf '%s\n%s\n' "$fixture_root/home" '.codex/agents/existing.toml' > "$fixture_root/invocation/.elelem-manifest-codex"
   cp "$fixture_root/invocation/.elelem-manifest-codex" "$fixture_root/tmp/original-manifest"
-  run_bundle_installer '\033[A\n\n\n\n\n \n' session
+  run_bundle_installer '\033[A\n\n\n\n \n' session
   if ! grep -Fq 'refusing to change install scope' "$fixture_root/session.log" ||
     ! grep -Fq 'CODEX_INSTALLER_EXIT=1' "$fixture_root/session.log" ||
     ! cmp -s "$fixture_root/tmp/original-manifest" "$fixture_root/invocation/.elelem-manifest-codex" ||
@@ -160,7 +162,7 @@ test_codex_preserves_an_unmanaged_notice_when_replacement_is_refused() {
   mkdir -p "$fixture_root/home/.codex"
   printf 'original notice\n' > "$fixture_root/home/.codex/agents.LICENSE"
   cp "$fixture_root/home/.codex/agents.LICENSE" "$fixture_root/tmp/original-notice"
-  run_bundle_installer '\n\n\n\n \nn\n' session
+  run_bundle_installer '\n\n\n \nn\n' session
   if ! grep -Fq "Replace existing notice 'agents.LICENSE'" "$fixture_root/session.log" ||
     ! grep -Fq 'CODEX_INSTALLER_EXIT=1' "$fixture_root/session.log" ||
     ! cmp -s "$fixture_root/tmp/original-notice" "$fixture_root/home/.codex/agents.LICENSE" ||
@@ -177,7 +179,7 @@ test_codex_preserves_an_unmanaged_agent_when_replacement_is_refused() {
   cp "$fixture_root/invocation/agents/codex/architect-reviewer.toml" "$fixture_root/home/.codex/agents/architect-reviewer.toml"
   printf '\n# locally modified\n' >> "$fixture_root/home/.codex/agents/architect-reviewer.toml"
   cp "$fixture_root/home/.codex/agents/architect-reviewer.toml" "$fixture_root/tmp/original-agent"
-  run_bundle_installer '\n\n\n\n \nn\n' session
+  run_bundle_installer '\n\n\n \nn\n' session
   if ! grep -Fq "Replace existing agent 'architect-reviewer.toml'" "$fixture_root/session.log" ||
     ! grep -Fq 'CODEX_INSTALLER_EXIT=0' "$fixture_root/session.log" ||
     ! cmp -s "$fixture_root/tmp/original-agent" "$fixture_root/home/.codex/agents/architect-reviewer.toml" ||
@@ -193,7 +195,7 @@ test_codex_replaces_conflicting_bundle_files_after_confirmation() {
   mkdir -p "$fixture_root/home/.codex/agents"
   printf 'name = "architect-reviewer"\n' > "$fixture_root/home/.codex/agents/architect-reviewer.toml"
   printf 'original notice\n' > "$fixture_root/home/.codex/agents.LICENSE"
-  run_bundle_installer '\n\n\n\n \ny\ny\n' session
+  run_bundle_installer '\n\n\n \ny\ny\n' session
   if ! grep -Fq 'CODEX_INSTALLER_EXIT=0' "$fixture_root/session.log" ||
     ! grep -Fq "Replace existing agent 'architect-reviewer.toml'" "$fixture_root/session.log" ||
     ! grep -Fq "Replace existing notice 'agents.LICENSE'" "$fixture_root/session.log" ||
@@ -215,7 +217,7 @@ test_codex_preserves_tracked_bundle_entries_when_deselected() {
   cp "$fixture_root/home/.codex/agents/architect-reviewer.toml" "$fixture_root/tmp/original-agent"
   cp "$fixture_root/home/.codex/agents.LICENSE" "$fixture_root/tmp/original-notice"
   printf '%s\n%s\n%s\n' "$fixture_root/home" '.codex/agents/architect-reviewer.toml' '.codex/agents.LICENSE' > "$fixture_root/invocation/.elelem-manifest-codex"
-  run_bundle_installer '\n\n\n\n\n' session
+  run_bundle_installer '\n\n\n\n' session
   if ! grep -Fq 'CODEX_INSTALLER_EXIT=0' "$fixture_root/session.log" ||
     ! cmp -s "$fixture_root/tmp/original-agent" "$fixture_root/home/.codex/agents/architect-reviewer.toml" ||
     ! cmp -s "$fixture_root/tmp/original-notice" "$fixture_root/home/.codex/agents.LICENSE" ||
@@ -263,7 +265,7 @@ test_codex_reports_bundle_changes_when_manifest_write_fails() {
     printf '[FAIL] manifest-write-failure: invocation directory remains writable\n'
     return 1
   fi
-  run_bundle_installer '\n\n\n\n \n' session
+  run_bundle_installer '\n\n\n \n' session
   chmod 700 "$fixture_root/invocation"
   assert_bundle_changes_are_reported_after_failure manifest-write-failure || return 1
   printf '[PASS] report bundle changes after manifest write failure\n'
@@ -279,7 +281,7 @@ test_codex_reports_bundle_changes_when_stale_pruning_fails() {
     printf '[FAIL] prune-failure: stale directory remains writable\n'
     return 1
   fi
-  run_bundle_installer '\n\n\n\n \n' session
+  run_bundle_installer '\n\n\n \n' session
   chmod 700 "$fixture_root/home/stale"
   if [[ ! -f "$fixture_root/home/stale/file" ]] || ! grep -Fq 'stale/file' "$fixture_root/session.log"; then
     printf '[FAIL] prune-failure: stale file removal was not attempted\n'
@@ -315,7 +317,7 @@ EOF
   cp "$fixture_root/home/.codex/agents/architect-reviewer.toml" "$fixture_root/tmp/original-agent"
   cp "$fixture_root/home/.codex/agents.LICENSE" "$fixture_root/tmp/original-notice"
   cp "$fixture_root/invocation/.elelem-manifest-codex" "$fixture_root/tmp/original-manifest"
-  run_bundle_installer '\n\n\n\n \nn\n' session
+  run_bundle_installer '\n\n\n \nn\n' session
   if ! grep -F 'identity conflict' "$fixture_root/session.log" | grep -F "$fixture_root/project/.codex/agents/custom.toml" | grep -Fq 'architect-reviewer' ||
     grep -Fq 'inspection error' "$fixture_root/session.log" ||
     grep -Fq "$fixture_root/.codex/config.toml" "$fixture_root/session.log" ||
@@ -392,14 +394,14 @@ test_codex_rejects_a_direct_config_identity() {
   local case_name="config-$1" base input candidate declaration
   create_bundle_fixture "$case_name"
   base="$fixture_root/home"
-  input='\n\n\n\n \nn\n'
+  input='\n\n\n \nn\n'
   case "$1" in
     user) candidate="$fixture_root/home/.codex/config.toml"; declaration='[agents.architect-reviewer]' ;;
     current) candidate="$fixture_root/project/.codex/config.toml"; declaration="[ 'agents' . \"architect-reviewer\" ]" ;;
     selected)
       mkdir -p "$fixture_root/selected"
       base="$fixture_root/selected"
-      input="\033[A\n$base\n\n\n\n \nn\n"
+      input="\033[A\n$base\n\n\n \nn\n"
       candidate="$base/.codex/config.toml"
       declaration="[ \"agents\" . 'architect-reviewer' ]"
       ;;
@@ -434,7 +436,7 @@ test_codex_rejects_a_noncanonical_identity_in_the_target_directory() {
   candidate="$base/.codex/agents/custom.toml"
   printf "name = 'architect-reviewer'\n" > "$candidate"
   cp "$candidate" "$fixture_root/tmp/original-candidate"
-  run_bundle_installer '\n\n\n\n \nn\n' session
+  run_bundle_installer '\n\n\n \nn\n' session
   assert_preflight_rejection "$base" "$candidate" 'identity conflict' || return 1
   cmp -s "$fixture_root/tmp/original-candidate" "$candidate" || return 1
   printf '[PASS] reject noncanonical identity in the target directory\n'
@@ -449,7 +451,7 @@ test_codex_rejects_a_noncanonical_identity_in_the_selected_project() {
   candidate="$base/.codex/agents/custom.toml"
   printf 'name = "architect-reviewer"\n' > "$candidate"
   cp "$candidate" "$fixture_root/tmp/original-candidate"
-  run_bundle_installer "\033[A\n$base\n\n\n\n \nn\n" session
+  run_bundle_installer "\033[A\n$base\n\n\n \nn\n" session
   assert_preflight_rejection "$base" "$candidate" 'identity conflict' || return 1
   cmp -s "$fixture_root/tmp/original-candidate" "$candidate" || return 1
   printf '[PASS] reject noncanonical identity in the selected project\n'
@@ -463,7 +465,7 @@ test_codex_ignores_indirect_agent_sources() {
   printf 'name = "architect-reviewer"\n' > "$fixture_root/project/.codex/agents/nested/custom.toml"
   cp "$fixture_root/.codex/config.toml" "$fixture_root/tmp/original-parent"
   cp "$fixture_root/project/.codex/agents/nested/custom.toml" "$fixture_root/tmp/original-nested"
-  run_bundle_installer '\033[A\n\n\n\n\n \n' session
+  run_bundle_installer '\033[A\n\n\n\n \n' session
   if ! grep -Fq 'CODEX_INSTALLER_EXIT=0' "$fixture_root/session.log" ||
     ! cmp -s "$fixture_root/tmp/original-parent" "$fixture_root/.codex/config.toml" ||
     ! cmp -s "$fixture_root/tmp/original-nested" "$fixture_root/project/.codex/agents/nested/custom.toml"; then
@@ -481,7 +483,7 @@ test_codex_rejects_unsafe_direct_toml() {
   local case_name="inspection-$1" base candidate original_mode input
   create_bundle_fixture "$case_name"
   base="$fixture_root/home"
-  input='\n\n\n\n \nn\n'
+  input='\n\n\n \nn\n'
   prepare_preflight_destinations "$base"
   mkdir -p "$fixture_root/project/.codex/agents"
   printf 'model = "safe"\n' > "$fixture_root/home/.codex/config.toml"

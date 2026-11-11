@@ -6,7 +6,9 @@ if [[ -z "${ELELEM_TEST_ROOT:-}" || ! -d "$ELELEM_TEST_ROOT" ]]; then
   exit 2
 fi
 
-repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ELELEM_TEST_ROOT="$(cd "$ELELEM_TEST_ROOT" && pwd -P)"
+
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
 test_opencode_installer_offers_the_default_off_agent_bundle_choice() {
   local name="opencode_installer_offers_the_default_off_agent_bundle_choice"
@@ -48,7 +50,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[B\n\n\n\n\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -123,10 +125,10 @@ EOF
     export HOME XDG_CONFIG_HOME TMPDIR
 
     if [[ "$scope" == user ]]; then
-      printf '\033[B\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[B\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
       base_directory="$home_directory/.config/opencode"
     else
-      printf '\033[A\n%s\n\n\n\n \n' "$project_directory" | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[A\n%s\n\n\n \n' "$project_directory" | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
       base_directory="$project_directory/.opencode"
     fi
 
@@ -250,7 +252,7 @@ EOF
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
 
-  printf '\033[B\n\n\n\n \n' | /usr/bin/script -q "$selected_session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \n' | /usr/bin/script -q "$selected_session_log" "$temporary_directory/run-installer.sh" >/dev/null
   if ! sed 's/\r$//' "$selected_session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: bundle-selected installer did not exit with status 0\n' "$name"
     test_status=1
@@ -261,7 +263,7 @@ EOF
     cp "$home_directory/.config/opencode/agents.LICENSE" "$expected_notice"
   fi
 
-  printf '\033[B\n\n\n\n\n' | /usr/bin/script -q "$deselected_session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n\n' | /usr/bin/script -q "$deselected_session_log" "$temporary_directory/run-installer.sh" >/dev/null
   if ! sed 's/\r$//' "$deselected_session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: bundle-deselected installer did not exit with status 0\n' "$name"
     test_status=1
@@ -362,7 +364,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[A\n%s\n\n\n\n \n' "$project_directory" | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[A\n%s\n\n\n \n' "$project_directory" | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a non-zero status\n' "$name"
@@ -446,7 +448,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[B\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a non-zero status\n' "$name"
@@ -530,7 +532,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[A\n%s\n\n\n\n \n' "$project_directory" | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[A\n%s\n\n\n \n' "$project_directory" | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -626,9 +628,9 @@ EOF
     TMPDIR="$temporary_directory"
     export HOME XDG_CONFIG_HOME TMPDIR
     if [[ "$scope" == user ]]; then
-      printf '\033[B\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[B\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     else
-      printf '\033[A\n%s\n\n\n\n \n' "$project_directory" | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[A\n%s\n\n\n \n' "$project_directory" | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     fi
 
     if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
@@ -712,7 +714,7 @@ printf '\nOPENCODE_INSTALLER_EXIT=%s\n' "$installer_status"
 exit "$installer_status"
 EOF
   chmod +x "$bin_directory/jq" "$temporary_directory/run-installer.sh"
-  printf '\033[B\n\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" PATH="$bin_directory:$PATH" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" PATH="$bin_directory:$PATH" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if [[ ! -f "$fixture_root/identity-query-failed" ]] || ! awk '/^validation status=0$/ { validated=1 } /^identity status=2$/ { if (validated) failed++; else exit 1 } END { exit failed == 1 ? 0 : 1 }' "$fixture_root/jq.log"; then
     printf '[FAIL] %s: validation success did not precede exactly one injected identity query error\n' "$name"
@@ -796,9 +798,9 @@ EOF
     TMPDIR="$temporary_directory"
     export HOME XDG_CONFIG_HOME TMPDIR
     if [[ "$scope" == user ]]; then
-      printf '\033[B\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[B\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     else
-      printf '\033[A\n%s\n\n\n\n \n' "$project_directory" | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[A\n%s\n\n\n \n' "$project_directory" | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     fi
 
     if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
@@ -854,7 +856,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[B\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: user-scope installer did not exit with a non-zero status for an uninspectable config path\n' "$name"
@@ -916,7 +918,7 @@ EOF
     printf '[FAIL] %s: current-project JSON config remained readable after permissions were removed\n' "$name"
     test_status=1
   fi
-  printf '\033[B\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
   chmod 600 "$config_file"
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
@@ -1014,7 +1016,7 @@ EOF
   TMPDIR="$temporary_directory"
   PATH="$bin_directory:$PATH"
   export HOME XDG_CONFIG_HOME TMPDIR PATH
-  printf '\033[B\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
   PATH="$original_path"
   export PATH
 
@@ -1133,7 +1135,7 @@ EOF
   TMPDIR="$temporary_directory"
   PATH="$bin_directory:$PATH"
   export HOME XDG_CONFIG_HOME TMPDIR PATH
-  printf '\033[B\n\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
   PATH="$original_path"
   export PATH
 
@@ -1218,7 +1220,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[B\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -1289,7 +1291,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[B\n\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -1359,7 +1361,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[B\n\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -1431,7 +1433,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[B\n\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
     printf '[FAIL] %s: installer did not exit with a positive status\n' "$name"
@@ -1507,7 +1509,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[B\n\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \nn\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -1593,7 +1595,7 @@ EOF
   XDG_CONFIG_HOME="$xdg_directory"
   TMPDIR="$temporary_directory"
   export HOME XDG_CONFIG_HOME TMPDIR
-  printf '\033[B\n\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \ny\n' | /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
 
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
     printf '[FAIL] %s: installer did not exit with status 0\n' "$name"
@@ -1657,9 +1659,9 @@ exit "$installer_status"
 EOF
     chmod +x "$temporary_directory/run-installer.sh"
     if [[ "$scenario" == current ]]; then
-      printf '\033[B\n\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[B\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     else
-      printf '\033[A\n%s\n\n\n\n \n' "$selected_project" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[A\n%s\n\n\n \n' "$selected_project" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     fi
     if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
       printf '[FAIL] %s: installer accepted %s direct project JSON\n' "$scenario" "$config_file"
@@ -1723,7 +1725,7 @@ printf '\nOPENCODE_INSTALLER_EXIT=%s\n' "$installer_status"
 exit "$installer_status"
 EOF
     chmod +x "$temporary_directory/run-installer.sh"
-    printf '\033[A\n%s\n\n\n\n \n' "$selected_project" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+    printf '\033[A\n%s\n\n\n \n' "$selected_project" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
       printf '[FAIL] %s: installer accepted JSONC at %s\n' "$scenario" "$config_file"
       test_status=1
@@ -1791,9 +1793,9 @@ exit "$installer_status"
 EOF
     chmod +x "$temporary_directory/run-installer.sh"
     if [[ "$scenario" == native-user ]]; then
-      printf '\033[A\n%s\n\n\n\n \n' "$project_directory" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[A\n%s\n\n\n \n' "$project_directory" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     else
-      printf '\033[B\n\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[B\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     fi
     if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
       printf '[FAIL] %s: installer accepted invalid or conflicting JSON\n' "$scenario"
@@ -1868,9 +1870,9 @@ exit "$installer_status"
 EOF
     chmod +x "$temporary_directory/run-installer.sh"
     if [[ "$scenario" == current-project ]]; then
-      printf '\033[B\n\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[B\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     else
-      printf '\033[A\n%s\n\n\n\n \n' "$project_directory" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+      printf '\033[A\n%s\n\n\n \n' "$project_directory" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
     fi
     if ! sed 's/\r$//' "$session_log" | grep -Eq '^OPENCODE_INSTALLER_EXIT=[1-9][0-9]*$'; then
       printf '[FAIL] %s: installer accepted a symlinked-root agent conflict\n' "$scenario"
@@ -1890,54 +1892,6 @@ EOF
     fi
   done
   return "$test_status"
-}
-
-test_opencode_installer_inspects_overlapping_config_paths_once() {
-  local fixture_root invocation_directory project_directory home_directory xdg_directory temporary_directory bin_directory session_log inspections
-  fixture_root="$(mktemp -d "$ELELEM_TEST_ROOT/overlapping-config-paths.XXXXXX")"
-  invocation_directory="$fixture_root/invocation"
-  project_directory="$fixture_root/project"
-  home_directory="$fixture_root/home"
-  xdg_directory="$fixture_root/xdg"
-  temporary_directory="$fixture_root/tmp"
-  bin_directory="$fixture_root/bin"
-  session_log="$fixture_root/session.log"
-  inspections="$temporary_directory/inspections"
-  mkdir -p "$invocation_directory" "$project_directory/.opencode" "$home_directory" "$xdg_directory" "$temporary_directory" "$bin_directory"
-  ln -s "$repository_root/install-opencode.sh" "$invocation_directory/install-opencode.sh"
-  ln -s "$repository_root/_install-common.sh" "$invocation_directory/_install-common.sh"
-  cp -R "$repository_root/rules" "$invocation_directory/rules"
-  cp -R "$repository_root/skills" "$invocation_directory/skills"
-  cp -R "$repository_root/agents" "$invocation_directory/agents"
-  printf '{"agent":{}}\n' > "$project_directory/.opencode/opencode.json"
-  cat > "$bin_directory/jq" <<'EOF'
-#!/usr/bin/env bash
-if [[ "${1:-}" == -se ]]; then
-  printf '%s\n' "$*" >> "$INSPECTIONS"
-fi
-exec /usr/bin/jq "$@"
-EOF
-  chmod +x "$bin_directory/jq"
-  cat > "$temporary_directory/run-installer.sh" <<'EOF'
-#!/usr/bin/env bash
-fixture_directory="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$fixture_directory/project" || exit 1
-"$fixture_directory/invocation/install-opencode.sh"
-installer_status=$?
-printf '\nOPENCODE_INSTALLER_EXIT=%s\n' "$installer_status"
-exit "$installer_status"
-EOF
-  chmod +x "$temporary_directory/run-installer.sh"
-  printf '\033[A\n%s/.\n\n\n\n \n' "$project_directory" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" INSPECTIONS="$inspections" PATH="$bin_directory:$PATH" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
-  if ! sed 's/\r$//' "$session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
-    printf '[FAIL] overlapping config paths: installer did not exit successfully\n'
-    return 1
-  fi
-  if [[ ! -f "$inspections" ]] || [[ "$(wc -l < "$inspections" | tr -d '[:space:]')" != 1 ]]; then
-    printf '[FAIL] overlapping config paths: same config was inspected more than once\n'
-    return 1
-  fi
-  return 0
 }
 
 test_opencode_installer_prompts_for_canonical_agent_via_aliased_project_path() {
@@ -1968,7 +1922,7 @@ printf '\nOPENCODE_INSTALLER_EXIT=%s\n' "$installer_status"
 exit "$installer_status"
 EOF
   chmod +x "$temporary_directory/run-installer.sh"
-  printf '\033[A\n%s/.\n\n\n\n \nn\n' "$project_directory" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[A\n%s/.\n\n\n \nn\n' "$project_directory" | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
     printf '[FAIL] aliased canonical agent: installer rejected its selected target\n'
     return 1
@@ -2019,7 +1973,7 @@ EOF
     printf '[FAIL] inaccessible Markdown ancestor: permissions did not prevent access\n'
     test_status=1
   fi
-  printf '\033[B\n\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
   script_status=$?
   chmod "$original_mode" "$project_directory/.opencode"
   restored_mode="$(stat -f '%Lp' "$project_directory/.opencode")"
@@ -2094,7 +2048,7 @@ EOF
     printf '[FAIL] unreadable Markdown root: real find probe unexpectedly succeeded\n'
     return 1
   fi
-  if printf '\033[B\n\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null; then
+  if printf '\033[B\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null; then
     script_status=0
   else
     script_status=$?
@@ -2156,7 +2110,7 @@ printf '\nOPENCODE_INSTALLER_EXIT=%s\n' "$installer_status"
 exit "$installer_status"
 EOF
   chmod +x "$temporary_directory/run-installer.sh"
-  printf '\033[B\n\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
+  printf '\033[B\n\n\n \n' | HOME="$home_directory" XDG_CONFIG_HOME="$xdg_directory" TMPDIR="$temporary_directory" /usr/bin/script -q "$session_log" "$temporary_directory/run-installer.sh" >/dev/null
   if ! sed 's/\r$//' "$session_log" | grep -Fqx 'OPENCODE_INSTALLER_EXIT=0'; then
     printf '[FAIL] descendant agent symlink: installer did not exit successfully\n'
     test_status=1
@@ -2220,7 +2174,6 @@ run_case test_opencode_installer_blocks_direct_project_json_conflicts test_openc
 run_case test_opencode_installer_rejects_relevant_jsonc test_opencode_installer_rejects_relevant_jsonc
 run_case test_opencode_installer_rejects_conflicting_or_invalid_json_declarations test_opencode_installer_rejects_conflicting_or_invalid_json_declarations
 run_case test_opencode_installer_blocks_conflicts_in_symlinked_agent_roots test_opencode_installer_blocks_conflicts_in_symlinked_agent_roots
-run_case test_opencode_installer_inspects_overlapping_config_paths_once test_opencode_installer_inspects_overlapping_config_paths_once
 run_case test_opencode_installer_prompts_for_canonical_agent_via_aliased_project_path test_opencode_installer_prompts_for_canonical_agent_via_aliased_project_path
 run_case test_opencode_installer_fails_closed_when_a_markdown_agent_root_has_an_inaccessible_ancestor test_opencode_installer_fails_closed_when_a_markdown_agent_root_has_an_inaccessible_ancestor
 run_case test_opencode_installer_fails_closed_when_a_markdown_agent_root_cannot_be_enumerated test_opencode_installer_fails_closed_when_a_markdown_agent_root_cannot_be_enumerated

@@ -6,7 +6,9 @@ if [[ -z "${ELELEM_TEST_ROOT:-}" || ! -d "$ELELEM_TEST_ROOT" ]]; then
   exit 2
 fi
 
-repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ELELEM_TEST_ROOT="$(cd "$ELELEM_TEST_ROOT" && pwd -P)"
+
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 source "$repository_root/_install-common.sh"
 
 fixture_root="$(mktemp -d "$ELELEM_TEST_ROOT/agent-manifest.XXXXXX")"

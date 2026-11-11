@@ -12,32 +12,31 @@ Pick your harness at the prompt; the front controller execs the matching install
 
 ## Claude Code
 
-The Claude Code installer prompts for scope (user `~/.claude/` or project `<project>/.claude/`) and selections for common rules, language packs, and skills. It installs:
+The Claude Code installer prompts for scope (user `~/.claude/` or project `<project>/.claude/`) and optional common rules, workflow skills and agents. Every language pack and its activation policy are mandatory. It installs:
 
 - Rules under `~/.claude/rules/` or `<project>/.claude/rules/`
 - Skills under `~/.claude/skills/` or `<project>/.claude/skills/`
 
-Common rules (no frontmatter) load unconditionally. Language packs use `globs:` frontmatter and load when Claude reads matching files.
+Selected common rules and `rules/elelem-language-packs.md` load unconditionally. Language bodies live in skills, not the auto-loaded rules tree. See [On-demand language packs](#on-demand-language-packs).
 
 You can also run `./install-claude.sh` directly to skip the harness prompt.
 
 After installing, verify inside Claude Code with `/memory`.
 
-### User-scope caveat
-
-User-scope path-scoped rules have a known issue ([claude-code#21858](https://github.com/anthropics/claude-code/issues/21858)) where `globs:` frontmatter is not honoured under `~/.claude/rules/`. Common rules (no frontmatter) are unaffected. Prefer project scope if you rely on language packs.
-
 ## OpenCode
 
-The OpenCode installer prompts for scope (user `~/.config/opencode/` or project `<project>/.opencode/`) and selections for common rules, language packs, and skills. It installs:
+The OpenCode installer prompts for scope (user `~/.config/opencode/` or project `<project>/.opencode/`) and optional common rules, workflow skills and agents. Every language pack and its activation policy are mandatory. It installs:
 
 - Rules under `~/.config/opencode/rules/` or `<project>/.opencode/rules/`
 - Skills under `~/.config/opencode/skills/` or `<project>/.opencode/skills/`
 
-Unlike Claude Code, OpenCode loads selected language packs in every session, not just when matching files are opened. The installer also writes two generated files:
+Language bodies are deferred skills. The installer also maintains:
 
-- `opencode.json` contains an `instructions` glob array listing every installed rule directory (e.g. `rules/common/*.md`, `rules/python/*.md`)
-- `AGENTS.md` is a human-readable preamble describing OpenCode-specific behaviour and differences from Claude Code
+- `opencode.json`: exact owned instruction entries for selected common rules and the mandatory activation policy, alongside unrelated user settings and instructions
+- `.elelem-opencode-instructions.json`: ownership metadata for those exact entries
+- `AGENTS.md`: a generated preamble linking selected common rules and the activation policy, without eager language links
+
+`opencode.json` is shared configuration, never a whole-file uninstall target. Reinstall and uninstall preserve unrelated entries, settings and an existing config symlink. Even an originally installer-created config is retained.
 
 You can also run `./install-opencode.sh` directly to skip the harness prompt.
 
@@ -55,14 +54,14 @@ Add that line to `~/.zshrc` or `~/.bashrc` to persist it across shell sessions.
 
 ## Codex
 
-The Codex installer prompts for scope and selections for common rules, language packs, and skills. It installs:
+The Codex installer prompts for scope and optional common rules, workflow skills and agents. Every language pack and its activation policy are mandatory. It installs:
 
-- Rules into a managed elelem block inside `~/.codex/AGENTS.md` or `<project>/AGENTS.md`
+- Selected common rules and the activation policy into a managed elelem block inside `~/.codex/AGENTS.md` or `<project>/AGENTS.md`
 - Skills under `~/.agents/skills/` or `<project>/.agents/skills/`
 
 Codex does not use a separate rule directory. Instead, the installer assembles the selected rule files into a generated Markdown block inside `AGENTS.md`. Any content outside that block is preserved. Re-running the installer replaces only the elelem-managed block.
 
-Unlike Claude Code, selected language packs are not path-scoped in Codex. If you install a language pack, its instructions apply in every Codex session for that scope because they are merged into `AGENTS.md`.
+Language bodies are installed as deferred skills, not merged into `AGENTS.md`.
 
 The installer writes `.elelem-manifest-codex` and prunes stale skill files on re-installation. `AGENTS.md` is updated in place rather than pruned via the manifest.
 
@@ -107,7 +106,7 @@ An interrupted installation may leave partial bundle files that are not automati
 │   │   ├── coding-style.md
 │   │   ├── code-organisation.md
 │   │   └── ...
-│   └── python/           Path-scoped rules (with `globs:` frontmatter)
+│   └── python/           Canonical language topics and filename guidance
 │       ├── coding-style.md
 │       ├── testing.md
 │       └── tooling.md
@@ -120,7 +119,7 @@ An interrupted installation may leave partial bundle files that are not automati
     ├── ...
 ```
 
-The source layout deliberately mirrors the installer inputs: `rules/` is copied directly for Claude Code and OpenCode, while Codex assembles selected rule files into `AGENTS.md`. `skills/` installs to the harness-specific skills location:
+Selected `rules/common/` files are copied for Claude Code and OpenCode, while Codex assembles them into its managed block. Canonical `rules/<language>/` files generate language skills at install time. Workflow `skills/` remain optional. Both skill types use the harness-specific skills location:
 
 - Claude Code: `~/.claude/skills/` or `<project>/.claude/skills/`
 - OpenCode: `~/.config/opencode/skills/` or `<project>/.opencode/skills/`
@@ -129,7 +128,7 @@ The source layout deliberately mirrors the installer inputs: `rules/` is copied 
 Cross-references between files use relative paths from the citing file's location (for example, `../../rules/common/debugging.md` from inside `skills/debugging/SKILL.md`) so that they resolve correctly in the source repo and in the directory-based installations.
 
 - `rules/common/` rules have no frontmatter and load unconditionally.
-- Language packs (`rules/python/`, future `rules/typescript/`, etc.) use `globs:` frontmatter. Claude Code keeps that path-scoped behaviour; OpenCode and Codex treat selected language packs as always-on for the chosen scope.
+- Language packs (`rules/python/`, `rules/typescript/`, etc.) use `globs:` as filename guidance for generated skills, not harness-native activation.
 - Each skill folder has a `SKILL.md` that defines the procedure. Skill folders may also contain a `RULES.md`, prompt-template files, or other supporting files.
 - `skills/_shared/` holds files referenced by more than one skill.
 
@@ -437,9 +436,25 @@ neither review nor verification. A cumulative-review skip is not `PASS` and
 requires explicit sequencing authorisation before pruning. Source edits alone
 do not activate installed policy or establish live compliance.
 
+## On-demand language packs
+
+Every install includes Go, JavaScript, PHP, Python, Rust and TypeScript packs, even when optional common rules and workflow skills are declined. Each generated `elelem-language-<language>/` directory contains a thin `SKILL.md` and `references/` copies of its canonical topics. Tool placeholders are substituted in wrappers and references.
+
+The always-loaded policy directs the assistant to invoke applicable language skills before substantive reading, creating, editing or reviewing current-task files. The wrapper directs explicit reads of relative references: coding style for language work, testing for actual test work and tooling for applicable manifests/build configuration. Multiple packs may apply, and scope growth requires reassessment. Repository language inventories and incidental Markdown mentions do not activate packs. Shared JavaScript/TypeScript tooling needs task context; material ambiguity requires a question. Delegated briefs carry applicable skill requirements without bulk-preloading bodies. A missing required skill or reference blocks affected work visibly.
+
+This is assistant-directed loading, not deterministic routing. It does not unload previously read context or promise measured performance improvements. Installer checks verify delivery, references and ownership, not live assistant compliance.
+
+### Migration and uninstall
+
+Rerun the matching installer from the checkout that holds its `.elelem-manifest-<harness>`. Existing manifests identify stale managed language rules to prune; all generated wrappers, references and policy files become managed. Unmanaged namespaced skill or policy collisions block installation with a remediation message rather than overwrite user files. Existing managed-file replacement behaviour remains unchanged. Keep the manifest for future migration and uninstall; changing its recorded scope is rejected.
+
+For OpenCode, legacy exact instruction ownership is inferred only from installed rule paths in the old manifest, including manifests that formerly listed the whole config. Ambiguous custom eager inclusions are preserved with a warning, so review those manually if you want to remove old eager loading. Malformed config, missing parsing dependencies or uncertain ownership block safe cleanup and retain retry metadata. Correct the reported issue and rerun; do not delete ownership records to bypass the check. Codex preserves content outside its managed block during reinstall and uninstall.
+
+Run `./uninstall.sh` from the installer checkout, select its manifests and confirm the listed removals. Unmanaged files are preserved. OpenCode cleanup removes identifiable owned instruction entries, not the shared config or its symlink.
+
 ## Writing a new language pack
 
-Create `rules/<language>/<topic>.md` and start the file with the only frontmatter format that is known to work reliably:
+Keep language bodies canonical under `rules/<language>/`, normally in `coding-style.md`, `testing.md` and `tooling.md`. Use a lowercase language directory name. Give each topic concrete filename guidance in a single comma-separated `globs:` line:
 
 ```yaml
 ---
@@ -447,31 +462,7 @@ globs: pattern1, pattern2, pattern3
 ---
 ```
 
-Critical rules (per [claude-code#17204](https://github.com/anthropics/claude-code/issues/17204)):
-
-- Field name MUST be `globs`, not `paths`
-- Value MUST be a single unquoted string of comma-separated glob patterns
-- Do NOT use a YAML list (`- "**/*.ts"`), quoted strings, or JSON array syntax; they silently fail to match
-- A single-pattern value is fine: `globs: **/*.php`
-
-Working:
-
-```yaml
-#file: noinspection YAMLUnresolvedAlias
----
-globs: **/*.ts, **/*.tsx, **/*.js
----
-```
-
-Broken:
-
-```yaml
----
-paths:
-  - "**/*.ts"
-  - "**/*.tsx"
----
-```
+The generator reads `globs:` lines as metadata, not a runtime matcher. Do not replace them with YAML lists or `paths:`. Include source, test and tooling filenames in their relevant topics. Installers discover language directories automatically; do not duplicate bodies under `skills/` or add eager imports. Use tool placeholders where needed, then run the packaging and integration suites below after changing a pack.
 
 ## Rule authoring conventions
 
@@ -508,8 +499,18 @@ After any change to rules or skills:
 
 1. Run `./install.sh` against a test project, or run `./install-claude.sh`, `./install-opencode.sh`, or `./install-codex.sh` directly.
 2. For Claude Code, open Claude Code in that project and run `/memory` to confirm expected files are listed.
-3. For OpenCode, confirm `opencode.json` exists in the installation base and contains an `instructions` array.
-4. For Codex, confirm the target `AGENTS.md` contains the elelem managed block and skills are installed under `.agents/skills/`.
+3. For OpenCode, confirm `opencode.json` instructions contain only selected common/bootstrap entries plus unrelated user entries, not managed language globs.
+4. For Codex, confirm the target `AGENTS.md` contains the elelem managed block without language bodies and skills are installed under `.agents/skills/`.
+5. For every harness, inspect generated language wrappers and relative references. In a safe fresh session, observe actual skill/reference reads for single-language, mixed-language, new TypeScript tests and later scope growth. Markdown/shell mentions alone should not load packs. Without observable reads, report behavioural checks unverified.
+
+Automated isolated installer checks (Bash, Perl, jq and Expect, with Python 3 for broader workflow suites):
+
+```sh
+bash _tests/run_language_pack_helpers_tests.sh
+bash _tests/run_opencode_instruction_ownership_tests.sh
+ELELEM_TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/elelem-tests.XXXXXX")" bash _tests/run_language_pack_install_tests.sh
+bash _tests/run_language_pack_integration_tests.sh
+```
 
 ## FAQ
 
@@ -528,8 +529,8 @@ Codex consumes persistent repository instructions from `AGENTS.md`, not from a d
 </details>
 
 <details>
-<summary><strong>Why do Codex language packs apply globally instead of by file path?</strong></summary>
+<summary><strong>Are language packs automatically attached by file path?</strong></summary>
 
-The source rule format is path-scoped via `globs:` so that Claude Code can auto-attach the language pack when matching files are read. Codex's installed instruction surface is `AGENTS.md`, which is scope-based rather than path-based, so selected language-pack content is merged into the active instructions for that entire scope.
+No. All three harnesses discover generated skills, while the mandatory policy directs the assistant to invoke the relevant packs and read applicable topics for current-task files. Source globs supply filename guidance only. Installed delivery does not prove a live assistant followed that policy.
 
 </details>
