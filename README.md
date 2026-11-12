@@ -34,7 +34,9 @@ Language bodies are deferred skills. The installer also maintains:
 
 - `opencode.json`: exact owned instruction entries for selected common rules and the mandatory activation policy, alongside unrelated user settings and instructions
 - `.elelem-opencode-instructions.json`: ownership metadata for those exact entries
-- `AGENTS.md`: a generated preamble linking selected common rules and the activation policy, without eager language links
+- `AGENTS.md`: an elelem-managed preamble block linking selected common rules and the activation policy, without eager language links
+
+The managed block is delimited by standalone `<!-- elelem:opencode:start -->` and `<!-- elelem:opencode:end -->` markers. Duplicate, nested, reversed, unmatched, embedded or otherwise malformed reserved markers are rejected without changing files. Symlinked or non-regular `AGENTS.md` targets are also rejected before installation or uninstall changes. Installation prepends the block to an existing custom `AGENTS.md`, then replaces only that block on later installs. Uninstall removes only the block and retains the file and all content outside it. Exact generated legacy documents are migrated only when the OpenCode manifest confirms ownership; edited or unrecognised content is preserved.
 
 `opencode.json` is shared configuration, never a whole-file uninstall target. Reinstall and uninstall preserve unrelated entries, settings and an existing config symlink. Even an originally installer-created config is retained.
 

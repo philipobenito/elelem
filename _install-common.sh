@@ -317,6 +317,7 @@ prune_stale_manifest_entries() {
   local base="$2"
   local new_entries_ref="$3"
   local preserve_prefix="${4:-}"
+  local preserve_agents_md="${5:-}"
 
   assert_manifest_base_matches "$manifest_file" "$base" || return 1
   [[ -f "$manifest_file" ]] || return 0
@@ -333,6 +334,20 @@ prune_stale_manifest_entries() {
       continue
     fi
     [[ -z "$line" ]] && continue
+    if [[ "$preserve_agents_md" == opencode ]]; then
+      local normalised_entry="$line"
+      while [[ "$normalised_entry" == ./* ]]; do normalised_entry="${normalised_entry#./}"; done
+      if [[ "$normalised_entry" == AGENTS.md ]]; then
+        local has_agents_entry=0
+        local existing_agents_entry
+        for existing_agents_entry in "${new_entries[@]+"${new_entries[@]}"}"; do
+          [[ "$existing_agents_entry" == AGENTS.md ]] && has_agents_entry=1
+        done
+        (( has_agents_entry )) || new_entries+=(AGENTS.md)
+        continue
+      fi
+      [[ "$normalised_entry" != opencode.json ]] || continue
+    fi
     [[ "$line" == opencode.json ]] && continue
     if [[ -n "$preserve_prefix" ]] && {
       [[ "$line" == "$preserve_prefix.LICENSE" ]] ||
@@ -997,3 +1012,288 @@ update_opencode_instructions() {
 remove_opencode_instructions() {
   _edit_opencode_owned_instructions "$1" "$2" "$3" remove
 }
+
+_opencode_agents_select_rule_entries() {
+  local entries_ref="$1" rendering="$2" entry
+  local -a entries=()
+  [[ "$entries_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { say_err 'invalid OpenCode AGENTS manifest array name.'; return 1; }
+  eval "entries=(\"\${${entries_ref}[@]+\${${entries_ref}[@]}}\")"
+  for entry in "${entries[@]+"${entries[@]}"}"; do
+    if [[ "$rendering" == historical && "$entry" == rules/*/*.md ]] ||
+      [[ "$rendering" == current && ( "$entry" == rules/common/*.md || "$entry" == rules/elelem-language-packs.md ) ]]; then
+      printf '%s\n' "$entry"
+    fi
+  done
+}
+
+_opencode_agents_render_rule_groups() {
+  local entry group current_group="" heading_initial heading_rest
+  local -a entries=("$@")
+  if (( ${#entries[@]} == 0 )); then
+    printf 'No rules are currently installed.\n'
+    return 0
+  fi
+  while IFS= read -r entry; do
+    group="${entry#rules/}"
+    group="${group%%/*}"
+    if [[ "$group" != "$current_group" ]]; then
+      current_group="$group"
+      heading_initial="$(printf '%s' "${group:0:1}" | tr '[:lower:]' '[:upper:]')"
+      heading_rest="${group:1}"
+      printf '\n## %s%s\n\n' "$heading_initial" "$heading_rest"
+    fi
+    printf -- '- [%s](%s)\n' "$entry" "$entry"
+  done < <(printf '%s\n' "${entries[@]}" | LC_ALL=C sort)
+}
+
+_opencode_agents_render_document() {
+  local entries_ref="$1" rendering="$2" entry rule_entries
+  local -a selected_entries=()
+  rule_entries="$(_opencode_agents_select_rule_entries "$entries_ref" "$rendering")" || return 1
+  while IFS= read -r entry; do
+    [[ -n "$entry" ]] && selected_entries+=("$entry")
+  done <<< "$rule_entries"
+  printf '# Project rules\n\nThe following rule files apply to this project. Each entry links to the installed file relative to this AGENTS.md.\n\n'
+  _opencode_agents_render_rule_groups "${selected_entries[@]+"${selected_entries[@]}"}"
+}
+
+_opencode_agents_render_body() {
+  printf '<!-- elelem:opencode:start -->\n'
+  _opencode_agents_render_document "$1" current || return 1
+  printf '\n<!-- elelem:opencode:end -->\n'
+}
+
+_opencode_agents_render_static_legacy() {
+  cat <<'LEGACY'
+# elelem opencode configuration
+
+This directory was populated by `install-opencode.sh`. Rules are loaded via the
+`instructions` array in `opencode.json`; skills are auto-discovered from
+`skills/` per the opencode skills documentation. See `opencode.json` for the
+loading manifest.
+
+## opencode notes
+
+elelem installs the same rules and skills under Claude Code and opencode.
+Most primitives have direct opencode equivalents and the installer
+substitutes them automatically. Two small differences are worth knowing:
+
+**Plan mode.** opencode has plan mode, toggled by the user pressing Tab. The
+assistant cannot enter or exit plan mode itself. Skills that currently say
+"enter plan mode" or "exit plan mode" will ask you (the user) to press Tab
+at the relevant point. The design-before-implementation rule still applies.
+Skills affected: brainstorming, brainstorming-standard, brainstorming-guided,
+brainstorming-skip. The skip path still works via explicit user approval but
+is no longer structurally distinct from brainstorming-standard under opencode.
+
+**Subagent dispatch.** opencode supports subagents via the `task` tool. The
+installer substitutes `{{DISPATCH_AGENT_TOOL}}` with `task`. Subagent types
+in dispatch templates (e.g. `subagent_type: "general-purpose"`) are advisory
+under opencode; @mention the corresponding opencode subagent if your setup
+requires explicit selection. All skills that dispatch subagents
+(subagent-driven-development, fast-path-implementation, dispatching-parallel-agents,
+design-review, requesting-code-review, brainstorming-committee, debugging's
+Autonomous mode) work under opencode after substitution.
+
+**User questions.** `{{ASK_USER_QUESTION_TOOL}}` substitutes to opencode's
+built-in `question` tool. No degradation.
+
+No skills are currently unsupported under opencode. If you find a skill that
+does not work as expected, file an issue against the elelem repo.
+LEGACY
+}
+
+_opencode_agents_manifest_owns_target() {
+  local manifest="$1" target="$2" manifest_base="" line
+  [[ -f "$manifest" ]] || return 1
+  IFS= read -r manifest_base < "$manifest" || return 1
+  [[ "$manifest_base" == "$(dirname "$target")" ]] || return 1
+  while IFS= read -r line; do
+    [[ "$line" == AGENTS.md ]] && return 0
+  done < <(tail -n +2 "$manifest")
+  return 1
+}
+
+_opencode_agents_legacy_kind() {
+  local source="$1" target="$2" previous="$3" line
+  local -a legacy_entries=()
+  _opencode_agents_manifest_owns_target "$previous" "$target" || return 0
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && legacy_entries+=("$line")
+  done < <(tail -n +2 "$previous")
+  if cmp -s "$source" <(_opencode_agents_render_static_legacy); then
+    printf static
+  elif cmp -s "$source" <(_opencode_agents_render_document legacy_entries historical); then
+    printf historical
+  elif cmp -s "$source" <(_opencode_agents_render_document legacy_entries current); then
+    printf current
+  fi
+}
+
+_opencode_agents_transform() {
+  local source="$1" body="$2" action="$3" legacy_kind="$4"
+  perl - "$source" "$body" "$action" "$legacy_kind" <<'PERL'
+use strict;
+use warnings;
+sub marker_at {
+  my ($source, $offset) = @_;
+  my $close = index($source, '-->', $offset + 4);
+  if ($close < 0) {
+    die "malformed reserved OpenCode AGENTS marker comment\n" if index(substr($source, $offset), 'elelem:opencode') >= 0;
+    return (length($source), undef);
+  }
+  my $comment = substr($source, $offset, $close + 3 - $offset);
+  return ($close + 3, undef) if index($comment, 'elelem:opencode') < 0;
+  die "malformed reserved OpenCode AGENTS marker comment\n"
+    unless $comment eq '<!-- elelem:opencode:start -->' || $comment eq '<!-- elelem:opencode:end -->';
+  return ($close + 3, marker_line($source, $offset, $close, $comment));
+}
+sub marker_line {
+  my ($source, $offset, $close, $comment) = @_;
+  my $line_start = rindex(substr($source, 0, $offset), "\n") + 1;
+  my $line_end = index($source, "\n", $close + 3);
+  my $has_terminator = $line_end >= 0;
+  my $line_stop = $has_terminator ? $line_end : length($source);
+  my $line = substr($source, $line_start, $line_stop - $line_start);
+  $line =~ s/\r\z// if $has_terminator;
+  die "OpenCode AGENTS markers must occupy standalone lines\n" unless $line eq $comment;
+  my $has_carriage_return = $has_terminator && substr($source, $line_end - 1, 1) eq "\r";
+  return [$comment, $line_start, $has_terminator ? $line_end + 1 : $line_stop, $has_terminator, $has_carriage_return];
+}
+sub find_markers {
+  my ($source) = @_;
+  my @markers;
+  my $offset = 0;
+  while (($offset = index($source, '<!--', $offset)) >= 0) {
+    my ($next_offset, $marker) = marker_at($source, $offset);
+    push @markers, $marker if defined $marker;
+    $offset = $next_offset;
+  }
+  return \@markers;
+}
+sub ordered_pair {
+  my ($markers) = @_;
+  return undef unless @$markers;
+  my @starts = grep { $_->[0] eq '<!-- elelem:opencode:start -->' } @$markers;
+  my @ends = grep { $_->[0] eq '<!-- elelem:opencode:end -->' } @$markers;
+  die "OpenCode AGENTS markers must be absent or one ordered pair\n"
+    unless @$markers == 2 && @starts == 1 && @ends == 1 && $starts[0][1] < $ends[0][1];
+  return [$starts[0], $ends[0]];
+}
+sub replace_block {
+  my ($source, $body, $start, $end) = @_;
+  my $ending = $start->[4] ? "\r\n" : "\n";
+  $body =~ s/\n/$ending/g if $start->[4];
+  $body =~ s/\r?\n\z//;
+  $body .= $end->[3] ? ($end->[4] ? "\r\n" : "\n") : '';
+  return substr($source, 0, $start->[1]) . $body . substr($source, $end->[2]);
+}
+sub transform_source {
+  my ($source, $body, $action, $legacy_kind) = @_;
+  my $pair = ordered_pair(find_markers($source));
+  if ($pair && $action eq 'update') { return replace_block($source, $body, @$pair); }
+  if ($pair && $action eq 'remove') { return substr($source, 0, $pair->[0][1]) . substr($source, $pair->[1][2]); }
+  if ($legacy_kind && $action eq 'update') { return $body; }
+  if ($legacy_kind && $action eq 'remove') { return ''; }
+  return $action eq 'update' ? $body . $source : $source;
+}
+my ($source_path, $body_path, $action, $legacy_kind) = @ARGV;
+open my $source_file, '<:raw', $source_path or die "cannot read OpenCode AGENTS source: $!\n";
+local $/;
+my $source = <$source_file>;
+open my $body_file, '<:raw', $body_path or die "cannot read generated OpenCode AGENTS body: $!\n";
+my $body = <$body_file>;
+binmode STDOUT, ':raw' or die "cannot write transformed OpenCode AGENTS bytes: $!\n";
+print transform_source($source, $body, $action, $legacy_kind);
+PERL
+}
+
+_opencode_agents_publish() {
+  local target="$1" stage="$2" source="$3" mode="$4" existed="$5"
+  if cmp -s "$stage" "$source"; then return 0; fi
+  if { (( existed )) && ! cmp -s "$target" "$source"; } || { (( ! existed )) && [[ -e "$target" || -L "$target" ]]; }; then
+    say_err "OpenCode AGENTS.md changed during processing; preserve the current contents and retry: '$target'."
+    return 1
+  fi
+  chmod "$mode" "$stage" || { say_err "cannot preserve OpenCode AGENTS.md permissions for '$target'."; return 1; }
+  mv -f "$stage" "$target" || { say_err "cannot publish staged OpenCode AGENTS.md '$target'; retain retry metadata and try again."; return 1; }
+}
+
+_opencode_agents_check_target() {
+  local target="$1" action="$2" directory
+  directory="$(dirname "$target")"
+  if [[ ! -d "$directory" ]]; then
+    [[ "$action" == remove || "$action" == preflight ]] && return 2
+    say_err "OpenCode AGENTS.md parent directory does not exist: '$directory'."
+    return 1
+  fi
+  [[ "$action" != remove || -e "$target" || -L "$target" ]] || return 2
+  if [[ -L "$target" || ( -e "$target" && ! -f "$target" ) ]]; then
+    say_err "OpenCode AGENTS.md must be a regular file, not a symlink or special path: '$target'."
+    return 1
+  fi
+  if [[ -e "$target" && ( ! -r "$target" || ! -w "$target" ) ]]; then
+    say_err "OpenCode AGENTS.md must be readable and writable: '$target'."
+    return 1
+  fi
+  return 0
+}
+
+_opencode_agents_stage() {
+  local target="$1" entries_ref="$2" action="$3" previous="$4" stage="$5" body="$6" source="$7" legacy_kind
+  if [[ "$action" == update ]]; then
+    _opencode_agents_render_body "$entries_ref" > "$body" || return 1
+  else
+    : > "$body"
+  fi
+  if [[ -e "$target" ]]; then
+    cp "$target" "$source" || { say_err "cannot snapshot OpenCode AGENTS.md '$target'."; return 1; }
+  else
+    : > "$source"
+  fi
+  legacy_kind="$(_opencode_agents_legacy_kind "$source" "$target" "$previous")"
+  _opencode_agents_transform "$source" "$body" "$action" "$legacy_kind" > "$stage" || {
+    say_err "cannot safely process OpenCode AGENTS.md '$target'; preserve its current contents and retry."
+    return 1
+  }
+}
+
+_opencode_agents_process() {
+  local target="$1" entries_ref="$2" action="$3" previous="$4" mode="$5" existed="$6" stage_directory="$7" stage body source
+  stage="$(mktemp "$stage_directory/elelem-opencode-agents.XXXXXX")" || { say_err "cannot stage OpenCode AGENTS.md processing for '$target'."; return 1; }
+  body="$(mktemp "${TMPDIR:-/tmp}/elelem-opencode-agents-body.XXXXXX")" || { rm -f "$stage"; say_err 'cannot create OpenCode AGENTS.md render staging file.'; return 1; }
+  source="$(mktemp "${TMPDIR:-/tmp}/elelem-opencode-agents-source.XXXXXX")" || { rm -f "$stage" "$body"; say_err 'cannot create OpenCode AGENTS.md source snapshot.'; return 1; }
+  if ! _opencode_agents_stage "$target" "$entries_ref" "$action" "$previous" "$stage" "$body" "$source"; then
+    rm -f "$stage" "$body" "$source"
+    return 1
+  fi
+  if [[ "$action" == preflight ]]; then
+    rm -f "$stage" "$body" "$source"
+    return 0
+  fi
+  _opencode_agents_publish "$target" "$stage" "$source" "$mode" "$existed" || { rm -f "$stage" "$body" "$source"; return 1; }
+  rm -f "$stage" "$body" "$source"
+}
+
+_opencode_agents_apply() {
+  local target="$1" entries_ref="$2" action="$3" previous="${4:-}" directory stage_directory mode=644 existed=0 check_status
+  if _opencode_agents_check_target "$target" "$action"; then
+    :
+  else
+    check_status=$?
+    if (( check_status == 2 )); then return 0; fi
+    return "$check_status"
+  fi
+  if [[ -e "$target" ]]; then
+    existed=1
+    mode="$(perl -e 'my @status = stat($ARGV[0]); die unless @status; printf "%04o", $status[2] & 07777' "$target")" || { say_err "cannot inspect OpenCode AGENTS.md permissions with Perl for '$target'; ensure Perl is available and retry."; return 1; }
+  fi
+  directory="$(dirname "$target")"
+  stage_directory="$directory"
+  [[ "$action" != preflight ]] || stage_directory="${TMPDIR:-/tmp}"
+  _opencode_agents_process "$target" "$entries_ref" "$action" "$previous" "$mode" "$existed" "$stage_directory"
+}
+
+opencode_agents_update() { _opencode_agents_apply "$1" "$2" update "${3:-}"; }
+opencode_agents_remove() { _opencode_agents_apply "$1" '' remove "${2:-}"; }
+opencode_agents_preflight() { _opencode_agents_apply "$1" '' preflight "${2:-}"; }

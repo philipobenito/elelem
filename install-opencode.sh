@@ -98,6 +98,7 @@ rules_target="$base/rules"
 skills_target="$base/skills"
 manifest_file="$SCRIPT_DIR/.elelem-manifest-opencode"
 assert_manifest_base_matches "$manifest_file" "$base"
+opencode_agents_preflight "$base/AGENTS.md" "$manifest_file"
 manifest_entries=()
 changed_paths=()
 instructions_globs=()
@@ -292,42 +293,11 @@ fi
 
 manifest_entries+=(".elelem-opencode-instructions.json")
 
-write_agents_rule_groups() {
-  local current_group="" line group heading_initial heading_rest
-  if (( $# == 0 )); then printf 'No rules are currently installed.\n'; return 0; fi
-  while IFS= read -r line; do
-    group="${line#rules/}"
-    group="${group%%/*}"
-    if [[ "$group" != "$current_group" ]]; then
-      current_group="$group"
-      heading_initial="$(printf '%s' "${group:0:1}" | tr '[:lower:]' '[:upper:]')"
-      heading_rest="${group:1}"
-      printf '\n## %s%s\n\n' "$heading_initial" "$heading_rest"
-    fi
-    printf -- '- [%s](%s)\n' "$line" "$line"
-  done < <(printf '%s\n' "$@" | LC_ALL=C sort)
-}
-
-write_agents_md() {
-  local target="$1" entries_ref="$2"
-  [[ "$entries_ref" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "write_agents_md: invalid entries variable name: $entries_ref" >&2; return 1; }
-  local entries rule_entries=() entry
-  eval "entries=(\"\${${entries_ref}[@]+\${${entries_ref}[@]}}\")"
-  for entry in "${entries[@]+"${entries[@]}"}"; do
-    [[ "$entry" == rules/common/*.md || "$entry" == rules/elelem-language-packs.md ]] && rule_entries+=("$entry")
-  done
-  {
-    printf '# Project rules\n\n'
-    printf 'The following rule files apply to this project. Each entry links to the installed file relative to this AGENTS.md.\n\n'
-    write_agents_rule_groups "${rule_entries[@]+"${rule_entries[@]}"}"
-  } > "$target"
-}
-
-write_agents_md "$base/AGENTS.md" manifest_entries
+opencode_agents_update "$base/AGENTS.md" manifest_entries "$manifest_file"
 
 manifest_entries+=("AGENTS.md")
 
-if ! prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries agents; then
+if ! prune_stale_manifest_entries "$manifest_file" "$base" manifest_entries agents opencode; then
   if (( ${#changed_paths[@]} > 0 )); then
     report_agent_bundle_changes changed_paths
   fi
